@@ -8,7 +8,10 @@ import huggingface_hub
 import numpy as np
 import onnxruntime as rt
 import pandas as pd
-from huggingface_hub.errors import LocalEntryNotFoundError
+try:
+    from huggingface_hub.utils._errors import LocalEntryNotFoundError
+except ImportError:
+    from huggingface_hub.errors import LocalEntryNotFoundError
 from PIL import Image
 
 from ..utils.logger import logger
