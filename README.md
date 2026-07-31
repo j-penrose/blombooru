@@ -452,8 +452,8 @@ If you want multiple Blombooru instances to share the same tag database (so tags
     pip install -r requirements.txt
     ```
 
-    > [!NOTE]
-    > If you plan to use an Nvidia GPU for AI tagging, install the CUDA requirements file instead (`requirements-cuda.txt`). You will also need the appropriate Nvidia drivers and CUDA toolkit installed on your host system.
+> [!NOTE]
+> If you plan to use an Nvidia GPU for AI tagging, install the CUDA requirements file instead (`requirements-cuda.txt`). You will also need the appropriate Nvidia drivers and CUDA toolkit installed on your host system.
 
 3. **Create a PostgreSQL database**  
     Create a new database and a user with permissions for that database. Blombooru will handle creating the necessary tables.
