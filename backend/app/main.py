@@ -17,6 +17,20 @@ if os.name == 'posix':
             os.environ['LD_LIBRARY_PATH'] = f"{new_ld_path}:{current_ld_path}"
             os.execv(sys.executable, [sys.executable] + sys.argv)
 
+elif os.name == "nt":
+    try:
+        import onnxruntime as ort
+        if "CUDAExecutionProvider" in ort.get_available_providers():
+            ort.preload_dlls(directory="")
+            site_packages = sysconfig.get_paths()["purelib"]
+            nvidia_bin_dirs = glob.glob(
+                os.path.join(site_packages, "nvidia", "*", "bin")
+            )
+            if nvidia_bin_dirs:
+                os.environ["PATH"] = os.pathsep.join(nvidia_bin_dirs) + os.pathsep + os.environ.get("PATH", "")
+    except ImportError:
+        pass
+
 import asyncio
 import json
 import subprocess
