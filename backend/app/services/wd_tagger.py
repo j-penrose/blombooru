@@ -8,6 +8,7 @@ import huggingface_hub
 import numpy as np
 import onnxruntime as rt
 import pandas as pd
+from huggingface_hub.errors import LocalEntryNotFoundError
 from PIL import Image
 
 from ..utils.logger import logger
@@ -258,7 +259,7 @@ class WDTagger:
                     huggingface_hub.hf_hub_download(model_repo, self.LABEL_FILENAME, local_files_only=True),
                     huggingface_hub.hf_hub_download(model_repo, self.MODEL_FILENAME, local_files_only=True)
                 )
-            except huggingface_hub.LocalEntryNotFoundError:
+            except LocalEntryNotFoundError:
                 logger.info(f"Model '{model_name}' not found in cache. Downloading from HuggingFace...")
                 return _fetch_paths(force_download=True)
 
