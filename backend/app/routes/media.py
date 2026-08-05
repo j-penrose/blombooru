@@ -316,7 +316,7 @@ def update_tag_counts(db: Session, tag_ids: List[int]):
             synchronize_session=False
         )
 
-def get_or_create_tags(db: Session, tag_names: List[str], category_hints: Optional[dict] = None) -> List[Tag]:
+def get_or_create_tags(db: Session, tag_names: List[str], category_hints: Optional[dict] = None, expand: bool = True) -> List[Tag]:
     """Get or create tags by name, resolving aliases and applying implications.
 
     Args:
@@ -326,6 +326,7 @@ def get_or_create_tags(db: Session, tag_names: List[str], category_hints: Option
                        (e.g. {"artist_name": "artist", "char_name": "character"}).
                        When a tag doesn't exist and a hint is provided, the tag
                        is created with that category instead of the default "general".
+        expand: Whether to recursively expand tag implications. Defaults to True.
     """
     from ..models import TagAlias
     from ..utils.tag_utils import expand_implications, resolve_aliases
@@ -361,7 +362,8 @@ def get_or_create_tags(db: Session, tag_names: List[str], category_hints: Option
         if tag and tag.id not in tag_set:
             tag_set[tag.id] = tag
 
-    expand_implications(db, tag_set)
+    if expand:
+        expand_implications(db, tag_set)
 
     return list(tag_set.values())
 
@@ -732,7 +734,7 @@ async def update_media(
     affected_tag_ids = []
     if updates.tags is not None:
         old_tag_ids = [tag.id for tag in media.tags]
-        media.tags = get_or_create_tags(db, updates.tags)
+        media.tags = get_or_create_tags(db, updates.tags, expand=False)
         new_tag_ids = [tag.id for tag in media.tags]
         affected_tag_ids = list(set(old_tag_ids + new_tag_ids))
 
