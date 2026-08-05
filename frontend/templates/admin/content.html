@@ -237,9 +237,12 @@
                         </div>
                     </div>
                 </div>
-                <div class="mt-4 flex gap-2">
+                <div class="mt-4 flex flex-wrap gap-2">
                     <button type="submit" class="btn-primary">
                         {{ t('common.save') }}
+                    </button>
+                    <button type="button" id="apply-all-implications" class="btn-danger">
+                        {{ t('admin.tags_implications.apply_all') }}
                     </button>
                     <button type="button" id="tag-implication-cancel" class="btn" style="display: none;">
                         {{ t('common.cancel') }}

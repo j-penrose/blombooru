@@ -8,6 +8,7 @@ class TagImplicationManager {
         this.impliedInput = document.getElementById('tag-implication-implies');
         this.saveBtn = this.form.querySelector('button[type="submit"]');
         this.cancelBtn = document.getElementById('tag-implication-cancel');
+        this.applyAllBtn = document.getElementById('apply-all-implications');
         this.editingId = null;
         this.tagInputHelper = new TagInputHelper();
 
@@ -19,6 +20,10 @@ class TagImplicationManager {
 
         if (this.cancelBtn) {
             this.cancelBtn.addEventListener('click', () => this.resetForm());
+        }
+
+        if (this.applyAllBtn) {
+            this.applyAllBtn.addEventListener('click', () => this.handleApplyAll());
         }
 
         // Target input: validation + autocomplete.
@@ -221,6 +226,67 @@ class TagImplicationManager {
                 }
             }
         }).show();
+    }
+
+    handleApplyAll() {
+        new ModalHelper({
+            type: 'warning',
+            title: window.i18n.t('admin.tags_implications.apply_all_confirm_1_title'),
+            message: window.i18n.t('admin.tags_implications.apply_all_confirm_1_msg'),
+            confirmText: window.i18n.t('common.yes'),
+            cancelText: window.i18n.t('common.no'),
+            onConfirm: () => {
+                new ModalHelper({
+                    type: 'danger',
+                    title: window.i18n.t('admin.tags_implications.apply_all_confirm_2_title'),
+                    message: window.i18n.t('admin.tags_implications.apply_all_confirm_2_msg'),
+                    confirmText: window.i18n.t('common.yes'),
+                    cancelText: window.i18n.t('common.no'),
+                    onConfirm: async () => {
+                        this.executeApplyAll();
+                    }
+                }).show();
+            }
+        }).show();
+    }
+
+    async executeApplyAll() {
+        this.showStatus(window.i18n.t('admin.tags_implications.apply_all_processing'), 'info');
+        try {
+            const response = await fetch('/api/tag-implications/simulate-apply-all', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Failed to apply implications');
+            }
+
+            const data = await response.json();
+            const affectedMedia = data.affected_media || [];
+
+            if (affectedMedia.length === 0) {
+                this.showStatus(window.i18n.t('admin.tags_implications.apply_all_no_affected'), 'info');
+                return;
+            }
+
+            if (typeof BulkManualTagEditorModal !== 'undefined') {
+                const affectedIds = affectedMedia.map(m => m.media_id);
+                const prefillTags = {};
+                affectedMedia.forEach(m => {
+                    prefillTags[m.media_id] = m.added_tags;
+                });
+                
+                const modal = new BulkManualTagEditorModal({ prefillTags });
+                modal.show(affectedIds);
+            } else {
+                this.showStatus(`Found ${affectedMedia.length} affected media items, but bulk editor is not loaded.`, 'error');
+            }
+        } catch (e) {
+            console.error('Error applying tag implications:', e);
+            this.showStatus(e.message, 'error');
+        }
     }
 
     escapeHtml(text) {
