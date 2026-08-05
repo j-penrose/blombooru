@@ -1,12 +1,14 @@
+import asyncio
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from ..auth import require_admin_mode
 from ..database import get_db
-from ..models import Tag, TagImplication, User
+from ..models import Media, Tag, TagImplication, User
+from ..utils.tag_utils import expand_implications
 
 router = APIRouter(prefix="/api/tag-implications", tags=["tag-implications"])
 
@@ -172,3 +174,43 @@ async def delete_implication(
     db.commit()
 
     return {"status": "success"}
+
+@router.post("/simulate-apply-all")
+async def simulate_apply_all_implications(
+    current_user: User = Depends(require_admin_mode),
+    db: Session = Depends(get_db)
+):
+    """
+    Simulate applying all tag implications to all media in the database.
+    Runs asynchronously in an executor to avoid blocking the event loop.
+    Returns a list of affected media along with the newly implied tags.
+    """
+    loop = asyncio.get_event_loop()
+
+    def do_simulate_apply_all():
+        implications = db.query(TagImplication).all()
+        if not implications:
+            return []
+
+        media_items = db.query(Media).options(joinedload(Media.tags)).all()
+        affected_media = []
+
+        for media in media_items:
+            tag_dict = {t.id: t for t in media.tags}
+            original_tag_ids = set(tag_dict.keys())
+            
+            expand_implications(db, tag_dict, implications=implications)
+            
+            new_tag_ids = set(tag_dict.keys()) - original_tag_ids
+            if new_tag_ids:
+                added_tags = [tag_dict[tid].name for tid in new_tag_ids]
+                affected_media.append({
+                    "media_id": media.id,
+                    "added_tags": added_tags
+                })
+
+        return affected_media
+
+    affected_media = await loop.run_in_executor(None, do_simulate_apply_all)
+    return {"affected_media": affected_media}
+

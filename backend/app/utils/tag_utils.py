@@ -1,5 +1,5 @@
 import fnmatch
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from sqlalchemy.orm import Session
 
@@ -16,11 +16,12 @@ def resolve_aliases(db: Session, raw_names: List[str]) -> Dict[str, Tuple[str, s
         for a in aliases
     }
 
-def expand_implications(db: Session, tag_set: Dict[int, object]) -> None:
+def expand_implications(db: Session, tag_set: Dict[int, object], implications: Optional[List[object]] = None) -> None:
     """Recursively expand tag implications into *tag_set*, mutating it in place."""
     from ..models import TagImplication
 
-    implications = db.query(TagImplication).all()
+    if implications is None:
+        implications = db.query(TagImplication).all()
     if not implications:
         return
 
