@@ -151,7 +151,8 @@ class TagInputHelper {
             validationCache = this.tagValidationCache,
             checkFunction = (tag) => this.checkTagExists(tag),
             invertLogic = false, // If true, invalid means exists (for admin new tags)
-            allowWildcards = false // If true, tokens containing * are never marked invalid
+            allowWildcards = false, // If true, tokens containing * are never marked invalid
+            highlightTags = null // Set of tag names (lowercase) to highlight as new
         } = options;
 
         if (!inputElement) return;
@@ -193,6 +194,7 @@ class TagInputHelper {
                 const normalized = part.trim().toLowerCase();
                 const isValid = validationCache.get(normalized);
                 const isWildcardPattern = allowWildcards && (normalized.includes('*') || normalized.includes('?'));
+                const isHighlighted = highlightTags && highlightTags.has(normalized);
 
                 let shouldMarkInvalid;
                 if (invertLogic) {
@@ -203,7 +205,7 @@ class TagInputHelper {
                     shouldMarkInvalid = !(isValid || isWildcardPattern);
                 }
 
-                tags.push({ text: part, isInvalid: shouldMarkInvalid });
+                tags.push({ text: part, isInvalid: shouldMarkInvalid, isHighlighted: isHighlighted });
             } else {
                 tags.push({ text: part, isWhitespace: true });
             }
@@ -216,6 +218,8 @@ class TagInputHelper {
                 html += this.escapeHtml(tag.text);
             } else if (tag.isInvalid) {
                 html += `<span class="invalid-tag">${this.escapeHtml(tag.text)}</span>`;
+            } else if (tag.isHighlighted) {
+                html += `<span class="new-tag">${this.escapeHtml(tag.text)}</span>`;
             } else {
                 html += this.escapeHtml(tag.text);
             }
@@ -335,7 +339,8 @@ class TagInputHelper {
             checkFunction = (tag) => this.checkTagExists(tag),
             invertLogic = false,
             expandImplications = true,
-            allowWildcards = false // If true, tokens containing * are never marked invalid
+            allowWildcards = false, // If true, tokens containing * are never marked invalid
+            getHighlightTags = null // Function that returns a Set of tags to highlight
         } = options;
 
         if (!inputElement) return;
@@ -356,11 +361,13 @@ class TagInputHelper {
                 clearTimeout(this.validationTimeouts.get(inputId));
             }
             const timeout = setTimeout(async () => {
+                const highlightTags = getHighlightTags ? getHighlightTags(inputElement) : null;
                 await this.validateAndStyleTags(inputElement, {
                     validationCache,
                     checkFunction,
                     invertLogic,
-                    allowWildcards
+                    allowWildcards,
+                    highlightTags
                 });
                 if (onValidate) onValidate();
             }, validateDelay);
@@ -373,20 +380,25 @@ class TagInputHelper {
                 if (this.validationTimeouts.has(inputId)) {
                     clearTimeout(this.validationTimeouts.get(inputId));
                 }
+
+                let highlightTags = getHighlightTags ? getHighlightTags(inputElement) : null;
                 await this.validateAndStyleTags(inputElement, {
                     validationCache,
                     checkFunction,
                     invertLogic,
-                    allowWildcards
+                    allowWildcards,
+                    highlightTags
                 });
                 if (expandImplications) {
                     const added = await this.expandImplications(inputElement);
                     if (added) {
+                        highlightTags = getHighlightTags ? getHighlightTags(inputElement) : null;
                         await this.validateAndStyleTags(inputElement, {
                             validationCache,
                             checkFunction,
                             invertLogic,
-                            allowWildcards
+                            allowWildcards,
+                            highlightTags
                         });
                     }
                 }

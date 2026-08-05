@@ -174,10 +174,24 @@ class BulkManualTagEditorModal extends BulkTagModalBase {
                 });
 
                 const currentTags = tags.map(t => t.name || t);
+                let newTags = [...currentTags];
+                let prefilledTags = [];
+
+                if (this.options.prefillTags && this.options.prefillTags[item.id]) {
+                    const added = this.options.prefillTags[item.id];
+                    added.forEach(t => {
+                        if (!newTags.includes(t)) {
+                            newTags.push(t);
+                            prefilledTags.push(t);
+                        }
+                    });
+                }
+
                 return {
                     mediaId: item.id,
                     currentTags: [...currentTags],
-                    newTags: [...currentTags],
+                    newTags: newTags,
+                    prefilledTags: prefilledTags,
                     filename: item.filename || window.i18n.t('bulk_modal.ai_tags.default_media_name', { id: item.id })
                 };
             });

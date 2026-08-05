@@ -4,6 +4,7 @@ class MediaViewer extends MediaViewerBase {
         this.mediaId = mediaId;
         this.externalShareUrl = externalShareUrl;
         this.tagInputHelper = new TagInputHelper();
+        this.prefilledTags = new Set();
         this.validationTimeout = null;
         this.tooltipHelper = null;
         this.ratingSelect = null;
@@ -275,7 +276,17 @@ class MediaViewer extends MediaViewerBase {
         this.tagInputHelper.setupTagInput(tagsInput, 'media-tags-input', {
             onValidate: () => { },
             validationCache: this.tagInputHelper.tagValidationCache,
-            checkFunction: (tag) => this.tagInputHelper.checkTagExists(tag)
+            checkFunction: (tag) => this.tagInputHelper.checkTagExists(tag),
+            getHighlightTags: (inputElement) => {
+                const inputTags = this.tagInputHelper.getPlainTextFromDiv(inputElement).split(/\s+/).filter(t => t.length > 0);
+                const highlightTags = new Set();
+                for (const t of inputTags) {
+                    if (this.prefilledTags.has(t.toLowerCase())) {
+                        highlightTags.add(t.toLowerCase());
+                    }
+                }
+                return highlightTags;
+            }
         });
     }
 
@@ -283,9 +294,18 @@ class MediaViewer extends MediaViewerBase {
         const tagsInput = this.el('tags-input');
         if (!tagsInput) return;
 
+        const inputTags = this.tagInputHelper.getPlainTextFromDiv(tagsInput).split(/\s+/).filter(t => t.length > 0);
+        const highlightTags = new Set();
+        for (const t of inputTags) {
+            if (this.prefilledTags.has(t.toLowerCase())) {
+                highlightTags.add(t.toLowerCase());
+            }
+        }
+
         await this.tagInputHelper.validateAndStyleTags(tagsInput, {
             validationCache: this.tagInputHelper.tagValidationCache,
-            checkFunction: (tag) => this.tagInputHelper.checkTagExists(tag)
+            checkFunction: (tag) => this.tagInputHelper.checkTagExists(tag),
+            highlightTags: highlightTags
         });
     }
 
@@ -687,6 +707,7 @@ class MediaViewer extends MediaViewerBase {
             } else {
                 const allTags = [...currentTags, ...validTags];
                 tagsInput.textContent = allTags.join(' ');
+                validTags.forEach(t => this.prefilledTags.add(t.toLowerCase()));
                 await this.validateAndStyleTags();
                 app.showNotification(window.i18n.t('notifications.media.tags_added', { count: validTags.length }), 'success');
             }
@@ -975,6 +996,8 @@ class MediaViewer extends MediaViewerBase {
 
             const allTags = [...currentTags, ...newTags];
             tagsInput.textContent = allTags.join(' ');
+
+            newTags.forEach(t => this.prefilledTags.add(t.toLowerCase()));
 
             await this.validateAndStyleTags();
             app.showNotification(window.i18n.t('media.ai_tags.appended_count', { count: newTags.length }), 'success');

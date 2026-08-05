@@ -461,9 +461,26 @@ class BulkTagModalBase {
 
     triggerValidation(input) {
         if (this.tagInputHelper) {
+            const index = input.getAttribute('data-index');
+            let highlightTags = null;
+            if (index !== null && this.itemsData && this.itemsData[index]) {
+                const item = this.itemsData[index];
+                if (item.prefilledTags) {
+                    const prefilledSet = new Set(item.prefilledTags.map(t => t.toLowerCase()));
+                    const inputTags = this.tagInputHelper.getPlainTextFromDiv(input).split(/\s+/).filter(t => t.length > 0);
+                    highlightTags = new Set();
+                    for (const t of inputTags) {
+                        if (prefilledSet.has(t.toLowerCase())) {
+                            highlightTags.add(t.toLowerCase());
+                        }
+                    }
+                }
+            }
+
             this.tagInputHelper.validateAndStyleTags(input, {
                 validationCache: this.tagInputHelper.tagValidationCache,
-                checkFunction: (tag) => this.tagInputHelper.checkTagExists(tag)
+                checkFunction: (tag) => this.tagInputHelper.checkTagExists(tag),
+                highlightTags: highlightTags
             });
         }
     }
@@ -520,7 +537,25 @@ class BulkTagModalBase {
             this.tagInputHelper.setupTagInput(input, `${prefix}-${input.dataset.index}`, {
                 onValidate: () => { },
                 validationCache: this.tagInputHelper.tagValidationCache,
-                checkFunction: (tag) => this.tagInputHelper.checkTagExists(tag)
+                checkFunction: (tag) => this.tagInputHelper.checkTagExists(tag),
+                getHighlightTags: (inputElement) => {
+                    const idx = inputElement.getAttribute('data-index');
+                    if (idx !== null && this.itemsData && this.itemsData[idx]) {
+                        const item = this.itemsData[idx];
+                        if (!item.prefilledTags) return null;
+                        
+                        const prefilledSet = new Set(item.prefilledTags.map(t => t.toLowerCase()));
+                        const inputTags = this.tagInputHelper.getPlainTextFromDiv(inputElement).split(/\s+/).filter(t => t.length > 0);
+                        const highlightTags = new Set();
+                        for (const t of inputTags) {
+                            if (prefilledSet.has(t.toLowerCase())) {
+                                highlightTags.add(t.toLowerCase());
+                            }
+                        }
+                        return highlightTags;
+                    }
+                    return null;
+                }
             });
 
             await new Promise(r => setTimeout(r, 0));

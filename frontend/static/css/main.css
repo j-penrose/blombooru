@@ -115,6 +115,11 @@ span.checked:hover {
     color: var(--danger);
 }
 
+#tags-input .new-tag,
+[contenteditable="true"] .new-tag {
+    color: var(--success);
+}
+
 /* Tag suggestion styling */
 .tag-suggestions {
     position: absolute;
