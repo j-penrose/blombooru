@@ -32,4 +32,4 @@ class SimpleRateLimiter:
         return True
 
 # Global instance
-shared_limiter = SimpleRateLimiter(requests_per_minute=60)
+shared_limiter = SimpleRateLimiter(requests_per_minute=600)
