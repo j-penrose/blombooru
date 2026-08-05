@@ -382,7 +382,14 @@
             "target_tags_placeholder": "",
             "implies_tags_placeholder": "",
             "configured_implications": "",
-            "description": ""
+            "description": "",
+            "apply_all": "",
+            "apply_all_confirm_1_title": "",
+            "apply_all_confirm_1_msg": "",
+            "apply_all_confirm_2_title": "",
+            "apply_all_confirm_2_msg": "",
+            "apply_all_processing": "",
+            "apply_all_no_affected": ""
         },
         "ai_tagger": {
             "title": "",

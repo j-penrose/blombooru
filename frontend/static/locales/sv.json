@@ -382,7 +382,14 @@
             "target_tags_placeholder": "t.ex. tag1 *_tag2",
             "implies_tags_placeholder": "t.ex. implied_tag1 implied_tag2",
             "configured_implications": "Konfigurerade implikationer",
-            "description": "Med taggimplikationer kan du definiera relationer mellan taggar. När en måltagg tillämpas på ett medieobjekt läggs även de implicerade taggarna till automatiskt. Om det finns fler än en måltagg (eller ett mönster), kommer de implicerade taggarna endast att läggas till om alla måltaggar matchas. Jokertecken (* och ?) stöds i måltaggar."
+            "description": "Med taggimplikationer kan du definiera relationer mellan taggar. När en måltagg tillämpas på ett medieobjekt läggs även de implicerade taggarna till automatiskt. Om det finns fler än en måltagg (eller ett mönster), kommer de implicerade taggarna endast att läggas till om alla måltaggar matchas. Jokertecken (* och ?) stöds i måltaggar.",
+            "apply_all": "Tillämpa på All Media",
+            "apply_all_confirm_1_title": "Är du säker?",
+            "apply_all_confirm_1_msg": "Detta kommer att skanna all media i ditt bibliotek och tillämpa konfigurerade taggimplikationer.",
+            "apply_all_confirm_2_title": "Är du verkligen säker?",
+            "apply_all_confirm_2_msg": "Detta kommer att tillämpa alla taggimplikationer på varje medieobjekt i ditt bibliotek. Berörda medieobjekt öppnas i en batchredigeringsmodal för granskning.",
+            "apply_all_processing": "Tillämpar taggimplikationer på all media...",
+            "apply_all_no_affected": "Inga medieobjekt berördes av de nuvarande taggimplikationerna."
         },
         "ai_tagger": {
             "title": "AI-taggförutsägare",
