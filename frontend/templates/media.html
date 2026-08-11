@@ -319,7 +319,8 @@
     document.addEventListener('DOMContentLoaded', () => {
         const mediaId = "{{ media_id }}";
         const externalShareUrl = "{{ external_share_url }}" === "None" ? null : "{{ external_share_url }}";
-        new MediaViewer(mediaId, externalShareUrl);
+        const albumId = "{{ album_id if album_id else '' }}" || null;
+        new MediaViewer(mediaId, externalShareUrl, albumId);
     });
 </script>
 {% endblock %}

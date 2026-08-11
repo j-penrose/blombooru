@@ -1,8 +1,14 @@
 class MediaViewer extends MediaViewerBase {
-    constructor(mediaId, externalShareUrl = null) {
+    constructor(mediaId, externalShareUrl = null, albumId = null) {
         super();
         this.mediaId = mediaId;
         this.externalShareUrl = externalShareUrl;
+        if (albumId) {
+            this.albumId = albumId;
+        } else {
+            const albumMatch = window.location.pathname.match(/\/album\/(\d+)\/media\//);
+            this.albumId = albumMatch ? albumMatch[1] : null;
+        }
         this.tagInputHelper = new TagInputHelper();
         this.prefilledTags = new Set();
         this.validationTimeout = null;
@@ -339,7 +345,7 @@ class MediaViewer extends MediaViewerBase {
         }
 
         const currentMediaId = parseInt(this.mediaId);
-        const minTags = Math.min(3, generalTags.length);
+        const minTags = this.albumId ? 1 : Math.min(3, generalTags.length);
 
         const relatedMediaEl = this.el('related-media');
         const relatedMediaSection = this.el('related-media-section') || relatedMediaEl?.parentElement;
@@ -357,9 +363,12 @@ class MediaViewer extends MediaViewerBase {
             }
 
             const actualNumTags = Math.min(numTags, shuffled.length);
-            const tagQuery = shuffled.slice(0, actualNumTags).map(t => t.name).join(' ');
+            let tagQuery = shuffled.slice(0, actualNumTags).map(t => t.name).join(' ');
+            if (this.albumId) {
+                tagQuery = `album:${this.albumId} ${tagQuery}`;
+            }
 
-            const res = await fetch(`/api/search?q=${encodeURIComponent(tagQuery)}&limit=12`, {
+            const res = await fetch(`/api/search?q=${encodeURIComponent(tagQuery.trim())}&limit=12`, {
                 credentials: 'include'
             });
             const data = await res.json();
@@ -431,7 +440,8 @@ class MediaViewer extends MediaViewerBase {
         item.dataset.rating = media.rating;
 
         const link = document.createElement('a');
-        link.href = `/media/${media.id}${queryString ? '?' + queryString : ''}`;
+        const basePath = this.albumId ? `/album/${this.albumId}/media/${media.id}` : `/media/${media.id}`;
+        link.href = `${basePath}${queryString ? '?' + queryString : ''}`;
 
         const img = document.createElement('img');
         img.alt = media.filename;
