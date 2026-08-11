@@ -367,6 +367,7 @@
             "tag_name": "Tag Name",
             "tag_category": "Tag Category",
             "tag_aliases": "Tag Aliases",
+            "tag_aliases_hint": "Space-separated list of aliases.",
             "tags_exist_hint": "Tags that already exist (or exist as aliases) will be ignored.",
             "tags_to_add": "Tags to Add",
             "tags_without_prefix": "Tags without a prefix will be added as \"general\" category.",

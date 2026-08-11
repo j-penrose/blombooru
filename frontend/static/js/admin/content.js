@@ -752,9 +752,23 @@ class AdminContent {
         document.addEventListener('keydown', handleEscape);
     }
 
-    showTagEditModal(tagId, tagName, tagCategory) {
+    async showTagEditModal(tagId, tagName, tagCategory) {
         const existingModal = document.getElementById('tag-edit-modal');
         if (existingModal) existingModal.remove();
+
+        // Fetch tag details including aliases
+        let currentAliases = [];
+        try {
+            const res = await fetch(`/api/admin/tags/${tagId}`);
+            if (res.ok) {
+                const data = await res.json();
+                if (Array.isArray(data.aliases)) {
+                    currentAliases = data.aliases;
+                }
+            }
+        } catch (e) {
+            console.error('Error fetching tag details:', e);
+        }
 
         const categories = [
             { value: 'general', label: window.i18n.t('common.tag_category_general') },
@@ -787,7 +801,7 @@ class AdminContent {
                     <p id="tag-edit-name-error" class="text-xs text-danger mt-1" style="display:none;"></p>
                 </div>
 
-                <div class="mb-6">
+                <div class="mb-4">
                     <label class="block text-xs font-bold mb-2">${window.i18n.t('admin.tags_management.tag_category')}</label>
                     <div id="tag-edit-category-select" class="custom-select w-full" data-value="${tagCategory}">
                         <button class="custom-select-trigger w-full flex items-center justify-between gap-3 px-3 py-2 bg border text-xs cursor-pointer focus:outline-none hover:border-primary transition-colors focus:border-primary" type="button">
@@ -800,6 +814,13 @@ class AdminContent {
                             ${categoryOptions}
                         </div>
                     </div>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-xs font-bold mb-2">${window.i18n.t('admin.tags_management.tag_aliases')}</label>
+                    <div id="tag-edit-aliases" contenteditable="true" spellcheck="false"
+                        class="w-full bg px-3 py-2 border text-xs min-h-[60px] max-h-[120px] overflow-y-auto focus:outline-none hover:border-primary transition-colors focus:border-primary"></div>
+                    <p class="text-xs text-secondary mt-1">${window.i18n.t('admin.tags_management.tag_aliases_hint')}</p>
                 </div>
 
                 <div class="flex gap-3 justify-center">
@@ -818,6 +839,40 @@ class AdminContent {
         const categorySelectEl = document.getElementById('tag-edit-category-select');
         const categorySelect = new CustomSelect(categorySelectEl);
         categorySelect.setValue(tagCategory);
+
+        const aliasesInput = document.getElementById('tag-edit-aliases');
+        const currentAliasSet = new Set(currentAliases.map(a => a.toLowerCase()));
+
+        // Prepopulate aliases input
+        if (currentAliases.length > 0) {
+            aliasesInput.textContent = currentAliases.join(' ') + ' ';
+        }
+
+        // Setup alias validation using TagInputHelper in inverted mode
+        const aliasValidationCache = new Map();
+        const checkAliasConflict = async (alias) => {
+            const normalized = alias.toLowerCase().trim();
+            // If it's one of this tag's own aliases or the tag's current/new name, it's not a conflict
+            if (currentAliasSet.has(normalized) || normalized === tagName.toLowerCase()) {
+                return false;
+            }
+            return await this.app.tagInputHelper.checkTagOrAliasExists(normalized);
+        };
+
+        if (this.app.tagInputHelper) {
+            this.app.tagInputHelper.setupTagInput(aliasesInput, 'tag-edit-aliases', {
+                validationCache: aliasValidationCache,
+                checkFunction: checkAliasConflict,
+                invertLogic: true,
+                expandImplications: false
+            });
+            // Initial styling pass
+            await this.app.tagInputHelper.validateAndStyleTags(aliasesInput, {
+                validationCache: aliasValidationCache,
+                checkFunction: checkAliasConflict,
+                invertLogic: true
+            });
+        }
 
         // Inverse validation with current tag's own name seeded as "not a conflict"
         const nameInput = document.getElementById('tag-edit-name');
@@ -896,12 +951,36 @@ class AdminContent {
                 nameInput.focus();
                 return;
             }
+
+            // Collect non-conflicting aliases from aliasesInput
+            const aliasText = this.app.tagInputHelper ? this.app.tagInputHelper.getPlainTextFromDiv(aliasesInput) : (aliasesInput.textContent || '');
+            const rawAliasTokens = aliasText.split(/\s+/).filter(t => t.length > 0);
+            const validAliases = [];
+            let aliasConflictFound = false;
+
+            for (const token of rawAliasTokens) {
+                const norm = token.toLowerCase().trim();
+                // Check if marked invalid in cache
+                if (aliasValidationCache.get(norm) === true) {
+                    // In invertLogic, true means exists (conflict)
+                    aliasConflictFound = true;
+                } else {
+                    validAliases.push(norm);
+                }
+            }
+
+            if (aliasConflictFound) {
+                aliasesInput.focus();
+                app.showNotification(window.i18n.t('notifications.admin.tag_name_conflict') || 'Some aliases conflict with existing tags or aliases', 'error');
+                return;
+            }
+
             const newCategory = categorySelect.getValue();
             closeModal();
             try {
                 const result = await app.apiCall(`/api/admin/tags/${tagId}`, {
                     method: 'PUT',
-                    body: JSON.stringify({ name: newName, category: newCategory })
+                    body: JSON.stringify({ name: newName, category: newCategory, aliases: validAliases })
                 });
                 app.showNotification(
                     window.i18n.t('notifications.admin.tag_updated', { old_name: result.old_name }),

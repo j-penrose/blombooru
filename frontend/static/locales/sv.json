@@ -367,6 +367,7 @@
             "tag_name": "Taggnamn",
             "tag_category": "Taggkategori",
             "tag_aliases": "Taggalias",
+            "tag_aliases_hint": "Mellanslags-separerad lista med taggalias",
             "tags_exist_hint": "Taggar som redan finns (eller finns som alias) kommer att ignoreras.",
             "tags_to_add": "Taggar att lägga till",
             "tags_without_prefix": "Taggar utan prefix läggs till som \"allmän\" kategori.",

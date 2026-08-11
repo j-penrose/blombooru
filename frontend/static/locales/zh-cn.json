@@ -367,6 +367,7 @@
             "tag_name": "",
             "tag_category": "",
             "tag_aliases": "标签别名",
+            "tag_aliases_hint": "",
             "tags_exist_hint": "已存在（或作为别名存在）的标签将被忽略。",
             "tags_to_add": "待添加标签",
             "tags_without_prefix": "不带前缀的标签将被添加为“常规”类别。",
