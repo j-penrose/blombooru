@@ -231,14 +231,14 @@ class TagImplicationManager {
     handleApplyAll() {
         new ModalHelper({
             type: 'warning',
-            title: window.i18n.t('admin.tags_implications.apply_all_confirm_1_title'),
+            title: window.i18n.t('common.confirm_1_title'),
             message: window.i18n.t('admin.tags_implications.apply_all_confirm_1_msg'),
             confirmText: window.i18n.t('common.yes'),
             cancelText: window.i18n.t('common.no'),
             onConfirm: () => {
                 new ModalHelper({
                     type: 'danger',
-                    title: window.i18n.t('admin.tags_implications.apply_all_confirm_2_title'),
+                    title: window.i18n.t('common.confirm_2_title'),
                     message: window.i18n.t('admin.tags_implications.apply_all_confirm_2_msg'),
                     confirmText: window.i18n.t('common.yes'),
                     cancelText: window.i18n.t('common.no'),
@@ -251,6 +251,10 @@ class TagImplicationManager {
     }
 
     async executeApplyAll() {
+        if (this.applyAllBtn) {
+            this.applyAllBtn.disabled = true;
+        }
+
         this.showStatus(window.i18n.t('admin.tags_implications.apply_all_processing'), 'info');
         try {
             const response = await fetch('/api/tag-implications/simulate-apply-all', {
@@ -277,7 +281,7 @@ class TagImplicationManager {
                 affectedMedia.forEach(m => {
                     prefillTags[m.media_id] = m.added_tags;
                 });
-                
+
                 const modal = new BulkManualTagEditorModal({ prefillTags });
                 modal.show(affectedIds);
             } else {
@@ -286,6 +290,10 @@ class TagImplicationManager {
         } catch (e) {
             console.error('Error applying tag implications:', e);
             this.showStatus(e.message, 'error');
+        } finally {
+            if (this.applyAllBtn) {
+                this.applyAllBtn.disabled = false;
+            }
         }
     }
 

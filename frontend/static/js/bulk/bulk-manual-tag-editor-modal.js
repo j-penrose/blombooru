@@ -177,6 +177,11 @@ class BulkManualTagEditorModal extends BulkTagModalBase {
                 let newTags = [...currentTags];
                 let prefilledTags = [];
 
+                if (this.options.removeTags && this.options.removeTags[item.id]) {
+                    const removed = this.options.removeTags[item.id];
+                    newTags = newTags.filter(t => !removed.includes(t));
+                }
+
                 if (this.options.prefillTags && this.options.prefillTags[item.id]) {
                     const added = this.options.prefillTags[item.id];
                     added.forEach(t => {
@@ -187,6 +192,14 @@ class BulkManualTagEditorModal extends BulkTagModalBase {
                     });
                 }
 
+                const currentSet = new Set(currentTags);
+                const newSet = new Set(newTags);
+                const hasChanges = currentSet.size !== newSet.size || [...currentSet].some(t => !newSet.has(t));
+
+                if (!hasChanges && (this.options.removeTags || this.options.prefillTags)) {
+                    return null;
+                }
+
                 return {
                     mediaId: item.id,
                     currentTags: [...currentTags],
@@ -194,7 +207,12 @@ class BulkManualTagEditorModal extends BulkTagModalBase {
                     prefilledTags: prefilledTags,
                     filename: item.filename || window.i18n.t('bulk_modal.ai_tags.default_media_name', { id: item.id })
                 };
-            });
+            }).filter(Boolean);
+
+            if (this.itemsData.length === 0) {
+                this.showState('empty');
+                return;
+            }
 
             this.renderItems();
             await this.initializeInputHelpers(itemsContainer);

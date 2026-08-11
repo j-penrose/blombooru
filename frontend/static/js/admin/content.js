@@ -490,6 +490,9 @@ class AdminContent {
             }
         });
 
+        const applyAliasesBtn = document.getElementById('apply-aliases-btn');
+        applyAliasesBtn?.addEventListener('click', () => this.handleApplyAllAliases());
+
         // Clear tags
         const clearBtn = document.getElementById('clear-tags-btn');
         clearBtn?.addEventListener('click', () => this.clearAllTags());
@@ -1043,6 +1046,96 @@ class AdminContent {
         });
 
         firstModal.show();
+    }
+
+    handleApplyAllAliases() {
+        new ModalHelper({
+            type: 'warning',
+            title: window.i18n.t('common.confirm_1_title'),
+            message: window.i18n.t('admin.tags_management.apply_aliases_confirm_1_msg'),
+            confirmText: window.i18n.t('common.yes'),
+            cancelText: window.i18n.t('common.no'),
+            onConfirm: () => {
+                new ModalHelper({
+                    type: 'danger',
+                    title: window.i18n.t('common.confirm_2_title'),
+                    message: window.i18n.t('admin.tags_management.apply_aliases_confirm_2_msg'),
+                    confirmText: window.i18n.t('common.yes'),
+                    cancelText: window.i18n.t('common.no'),
+                    onConfirm: async () => {
+                        this.executeApplyAllAliases();
+                    }
+                }).show();
+            }
+        }).show();
+    }
+
+    async executeApplyAllAliases() {
+        const applyBtn = document.getElementById('apply-aliases-btn');
+        if (applyBtn) {
+            applyBtn.disabled = true;
+        }
+
+        if (typeof app !== 'undefined' && app.showNotification) {
+            app.showNotification(window.i18n.t('admin.tags_management.apply_aliases_processing'), 'info');
+        }
+
+        try {
+            const response = await fetch('/api/admin/simulate-apply-aliases', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Failed to apply aliases');
+            }
+
+            const data = await response.json();
+            const affectedMedia = data.affected_media || [];
+
+            if (affectedMedia.length === 0) {
+                if (typeof app !== 'undefined' && app.showNotification) {
+                    app.showNotification(window.i18n.t('admin.tags_management.apply_aliases_no_affected'), 'info');
+                }
+            } else if (typeof BulkManualTagEditorModal !== 'undefined') {
+                const affectedIds = affectedMedia.map(m => m.media_id);
+                const prefillTags = {};
+                const removeTags = {};
+                affectedMedia.forEach(m => {
+                    if (m.added_tags && m.added_tags.length) {
+                        prefillTags[m.media_id] = m.added_tags;
+                    }
+                    if (m.removed_tags && m.removed_tags.length) {
+                        removeTags[m.media_id] = m.removed_tags;
+                    }
+                });
+
+                const modal = new BulkManualTagEditorModal({
+                    prefillTags,
+                    removeTags,
+                    onSave: async () => {
+                        try {
+                            await fetch('/api/admin/cleanup-aliased-tags', { method: 'POST' });
+                        } catch (e) {
+                            console.error('Error cleaning up aliased tags:', e);
+                        }
+                    }
+                });
+                modal.show(affectedIds);
+            } else {
+                console.error('BulkManualTagEditorModal is not loaded');
+            }
+        } catch (e) {
+            console.error('Error applying tag aliases:', e);
+            if (typeof app !== 'undefined' && app.showNotification) {
+                app.showNotification(e.message, 'error');
+            }
+        } finally {
+            if (applyBtn) {
+                applyBtn.disabled = false;
+            }
+        }
     }
 
     setupAlbumManagement() {
