@@ -1095,7 +1095,6 @@ class MediaViewer extends MediaViewerBase {
     setupHierarchyToggle() {
         const toggle = this.el('hierarchy-media-toggle');
         const content = this.el('hierarchy-media-content');
-        const chevron = this.el('hierarchy-media-chevron');
 
         if (!toggle || !content) return;
 
@@ -1105,12 +1104,16 @@ class MediaViewer extends MediaViewerBase {
         const newToggle = toggle.cloneNode(true);
         toggle.parentNode.replaceChild(newToggle, toggle);
 
+        const liveChevron = newToggle.querySelector('#hierarchy-media-chevron');
+        if (liveChevron) {
+            liveChevron.style.transform = content.style.display === 'none' ? 'rotate(0deg)' : 'rotate(180deg)';
+        }
+
         newToggle.addEventListener('click', () => {
             const isHidden = content.style.display === 'none';
             content.style.display = isHidden ? 'block' : 'none';
-            if (chevron) {
-                // Point up when expanded (block), point down when collapsed (none)
-                chevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+            if (liveChevron) {
+                liveChevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
             }
         });
     }
