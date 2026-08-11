@@ -194,7 +194,8 @@ class AlbumViewer extends BaseGallery {
             data.media.forEach(media => {
                 const item = this.createGalleryItem(media, {
                     checkboxClass: 'album-item-checkbox checkbox',
-                    preserveQueryParams: false
+                    linkUrl: `/album/${this.albumId}/media/${media.id}`,
+                    preserveQueryParams: true
                 });
                 this.elements.grid.appendChild(item);
             });

@@ -403,6 +403,22 @@ async def media_page(request: Request, media_id: int, db: Session = Depends(get_
         "external_share_url": settings.EXTERNAL_SHARE_URL
     })
 
+@app.get("/album/{album_id}/media/{media_id}", response_class=HTMLResponse)
+async def album_media_page(request: Request, album_id: int, media_id: int, db: Session = Depends(get_db)):
+    """Media detail page accessed from within an album"""
+    media_item = db.query(Media).filter(Media.id == media_id).first()
+    if media_item is None:
+        raise StarletteHTTPException(status_code=404, detail="Media not found")
+        
+    return templates.TemplateResponse("media.html", {
+        "request": request,
+        "app_name": settings.APP_NAME,
+        "media_id": media_id,
+        "album_id": album_id,
+        "media": media_item,
+        "external_share_url": settings.EXTERNAL_SHARE_URL
+    })
+
 @app.get("/shared/{share_uuid}", response_class=HTMLResponse)
 async def shared_page(request: Request, share_uuid: str, db: Session = Depends(get_db)):
     """Shared content page"""
