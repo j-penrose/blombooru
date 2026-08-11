@@ -1,7 +1,7 @@
 ## Admin: Tags
 
 > [!NOTE]
-> Last updated: `May 31, 2026`
+> Last updated: `August 11, 2026`
 
 **Base path:** `/api/admin`
 
@@ -24,6 +24,25 @@ GET /api/admin/search-tags?q=fox
 ```
 
 Returns `{ "tags": TagResponse[] }` (up to 50 results).
+
+### Get tag details (admin)
+
+Requires `require_admin_mode`. Returns tag details including post count and aliases.
+
+```
+GET /api/admin/tags/{id}
+```
+
+**Response:**
+```json
+{
+  "id": 123,
+  "name": "fox",
+  "category": "general",
+  "post_count": 42,
+  "aliases": ["kitsune", "renard"]
+}
+```
 
 ### Import tags from CSV
 
@@ -70,18 +89,22 @@ Also deletes from the shared tag database if shared tags are enabled.
 
 ### Rename or update a tag (admin)
 
-Requires `require_admin_mode`. Renames the tag and/or changes its category.
+Requires `require_admin_mode`. Renames the tag, changes its category, and/or updates its aliases.
 
 ```
 PUT /api/admin/tags/{id}
 Content-Type: application/json
 
-{ "name": "new_name", "category": "artist" }
+{
+  "name": "new_name",
+  "category": "artist",
+  "aliases": ["kitsune", "renard"]
+}
 ```
 
-Both fields are required. Returns `409` if the new name conflicts with an existing tag or alias.
+The `aliases` array is optional. If provided, it replaces the tag's current aliases. Returns `409` if the new name or any specified alias conflicts with an existing tag or alias.
 
-**Response:** `{ "old_name": "fox", "tag_name": "new_name", "category": "artist" }`
+**Response:** `{ "old_name": "fox", "tag_name": "new_name", "category": "artist", "aliases": ["kitsune", "renard"] }`
 
 ### Delete all tags
 

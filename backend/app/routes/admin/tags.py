@@ -14,7 +14,6 @@ from ...utils.logger import logger
 
 router = APIRouter()
 
-
 def import_tags_csv_logic(csv_text: str, db: Session):
     """
     Core logic for importing tags from CSV content.
@@ -335,6 +334,26 @@ async def delete_tag(
         db.rollback()
         raise HTTPException(status_code=400, detail=safe_error_detail("Error deleting tag", e))
 
+@router.get("/tags/{tag_id}")
+async def get_tag(
+    tag_id: int,
+    current_user: User = Depends(require_admin_mode),
+    db: Session = Depends(get_db)
+):
+    """Get tag details including aliases"""
+    tag = db.query(Tag).filter(Tag.id == tag_id).first()
+    if not tag:
+        raise HTTPException(status_code=404, detail="error_tag_not_found")
+    
+    aliases = [a.alias_name for a in tag.aliases]
+    return {
+        "id": tag.id,
+        "name": tag.name,
+        "category": tag.category,
+        "post_count": tag.post_count,
+        "aliases": aliases
+    }
+
 @router.put("/tags/{tag_id}")
 async def update_tag(
     tag_id: int,
@@ -342,7 +361,7 @@ async def update_tag(
     current_user: User = Depends(require_admin_mode),
     db: Session = Depends(get_db)
 ):
-    """Rename a tag and/or change its category"""
+    """Rename a tag, change its category, and update its aliases"""
     from ...models import TagAlias
     from ...utils.cache import invalidate_tag_cache
 
@@ -372,10 +391,51 @@ async def update_tag(
             tag.name = new_name
 
         tag.category = new_category
+
+        if "aliases" in data and isinstance(data["aliases"], list):
+            # Normalize requested aliases
+            cleaned_aliases = []
+            seen = set()
+            for alias_raw in data["aliases"]:
+                alias = str(alias_raw).strip().lower().replace(" ", "_")
+                if not alias:
+                    continue
+                if alias == new_name:
+                    continue  # Alias cannot be tag's own name
+                if alias in seen:
+                    continue
+                seen.add(alias)
+                cleaned_aliases.append(alias)
+
+            # Check conflicts for newly added aliases
+            existing_alias_objs = db.query(TagAlias).filter(TagAlias.target_tag_id == tag.id).all()
+            existing_alias_names = {a.alias_name for a in existing_alias_objs}
+
+            for alias in cleaned_aliases:
+                if alias not in existing_alias_names:
+                    # Check if alias conflicts with ANY tag name
+                    if db.query(Tag).filter(Tag.name == alias).first():
+                        raise HTTPException(status_code=409, detail=f"Alias '{alias}' conflicts with an existing tag name")
+                    # Check if alias conflicts with ANOTHER tag's alias
+                    other_alias = db.query(TagAlias).filter(TagAlias.alias_name == alias, TagAlias.target_tag_id != tag.id).first()
+                    if other_alias:
+                        raise HTTPException(status_code=409, detail=f"Alias '{alias}' conflicts with an existing alias")
+
+            # Remove aliases no longer present
+            for a_obj in existing_alias_objs:
+                if a_obj.alias_name not in seen:
+                    db.delete(a_obj)
+
+            # Add new aliases
+            for alias in cleaned_aliases:
+                if alias not in existing_alias_names:
+                    db.add(TagAlias(alias_name=alias, target_tag_id=tag.id))
+
         db.commit()
         invalidate_tag_cache()
 
-        return {"old_name": old_name, "tag_name": tag.name, "category": tag.category}
+        updated_aliases = [a.alias_name for a in db.query(TagAlias).filter(TagAlias.target_tag_id == tag.id).all()]
+        return {"old_name": old_name, "tag_name": tag.name, "category": tag.category, "aliases": updated_aliases}
 
     except HTTPException:
         raise
