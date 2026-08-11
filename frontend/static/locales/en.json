@@ -656,6 +656,8 @@
         "title": "Login to {app_name}"
     },
     "media": {
+        "back_to_album": "Back to Album",
+        "back_to_album_named": "Back to {name}",
         "actions": {
             "delete_media": "Delete Media",
             "relations": "Relations",

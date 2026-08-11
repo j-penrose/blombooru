@@ -656,6 +656,8 @@
         "title": "Вход в {app_name}"
     },
     "media": {
+        "back_to_album": "",
+        "back_to_album_named": "",
         "actions": {
             "delete_media": "Удалить пост",
             "relations": "Связанные",

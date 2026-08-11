@@ -30,6 +30,7 @@ class MediaViewer extends MediaViewerBase {
         await this.loadWDTaggerSettings();
         this.initFullscreenViewer();
         this.initTooltipHelper();
+        this.setupBackToAlbum();
         this.loadMedia();
         this.setupAIMetadataToggle();
         this.setupEventListeners();
@@ -744,6 +745,36 @@ class MediaViewer extends MediaViewerBase {
 
     // ==================== Album Methods ====================
 
+    async setupBackToAlbum() {
+        if (!this.albumId) return;
+
+        const section = this.el('back-to-album-section');
+        const btn = this.el('back-to-album-btn');
+        const textEl = this.el('back-to-album-text');
+        if (!section || !btn) return;
+
+        const params = new URLSearchParams(window.location.search);
+        const queryString = params.toString();
+        btn.href = `/album/${this.albumId}${queryString ? '?' + queryString : ''}`;
+        section.style.display = 'block';
+
+        try {
+            const res = await fetch(`/api/albums/${this.albumId}`);
+            if (res.ok) {
+                const album = await res.json();
+                if (album && album.name && textEl) {
+                    const escapeDiv = document.createElement('div');
+                    escapeDiv.textContent = album.name;
+                    const boldName = `<span class="font-bold">${escapeDiv.innerHTML}</span>`;
+                    const translated = window.i18n.t('media.back_to_album_named', { name: boldName });
+                    textEl.innerHTML = (translated && translated !== 'media.back_to_album_named')
+                        ? translated
+                        : `${window.i18n.t('media.back_to_album')} (${boldName})`;
+                }
+            }
+        } catch (e) {
+        }
+    }
 
     async addToAlbums() {
         try {
@@ -1297,7 +1328,7 @@ class MediaViewer extends MediaViewerBase {
                 if (isChild) return { text: window.i18n.t('media.relations.child_badge'), className: 'bg-[var(--child-outline)] tag-text' };
                 return null;
             },
-            onCancel: () => {},
+            onCancel: () => { },
         });
 
         // Override the footer update to add relation-specific button logic

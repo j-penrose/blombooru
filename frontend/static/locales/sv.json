@@ -656,6 +656,8 @@
         "title": "Logga in på {app_name}"
     },
     "media": {
+        "back_to_album": "Tillbaka till album",
+        "back_to_album_named": "Tillbaka till {name}",
         "actions": {
             "delete_media": "Radera Media",
             "relations": "Relationer",
