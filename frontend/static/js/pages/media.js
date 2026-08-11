@@ -83,7 +83,7 @@ class MediaViewer extends MediaViewerBase {
                 this.showShareLink(this.currentMedia.share_uuid, this.currentMedia.share_ai_metadata);
             }
 
-            this.renderHierarchy(this.currentMedia.hierarchy);
+            await this.renderHierarchy(this.currentMedia.hierarchy);
             await this.loadRelatedMedia();
 
             // Show description for all users when it is set and not in admin mode
@@ -432,7 +432,7 @@ class MediaViewer extends MediaViewerBase {
         });
     }
 
-    createRelatedMediaItem(media, queryString) {
+    createRelatedMediaItem(media, queryString, inAlbum = null) {
         const item = document.createElement('div');
         item.className = `gallery-item ${media.file_type}`;
         if (media.parent_id) item.classList.add('child-item');
@@ -441,7 +441,8 @@ class MediaViewer extends MediaViewerBase {
         item.dataset.rating = media.rating;
 
         const link = document.createElement('a');
-        const basePath = this.albumId ? `/album/${this.albumId}/media/${media.id}` : `/media/${media.id}`;
+        const useAlbumPath = this.albumId && (inAlbum === true || inAlbum === null);
+        const basePath = useAlbumPath ? `/album/${this.albumId}/media/${media.id}` : `/media/${media.id}`;
         link.href = `${basePath}${queryString ? '?' + queryString : ''}`;
 
         const img = document.createElement('img');
@@ -1054,7 +1055,7 @@ class MediaViewer extends MediaViewerBase {
 
 
     // ==================== Hierarchy Methods ====================
-    renderHierarchy(items) {
+    async renderHierarchy(items) {
         const hierarchyMediaEl = this.el('hierarchy-media');
         const hierarchySection = this.el('hierarchy-media-section');
         const titleEl = this.el('hierarchy-media-title');
@@ -1080,9 +1081,27 @@ class MediaViewer extends MediaViewerBase {
         const queryString = params.toString();
         hierarchySection.style.display = 'block';
 
+        const itemAlbumStatus = {};
+        if (this.albumId) {
+            const targetAlbumId = parseInt(this.albumId, 10);
+            await Promise.all(items.map(async (media) => {
+                try {
+                    const res = await fetch(`/api/media/${media.id}/albums`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        const inAlbum = (data.albums || []).some(a => a.id === targetAlbumId);
+                        itemAlbumStatus[media.id] = inAlbum;
+                    }
+                } catch (e) {
+                    console.error(`Error checking album membership for media ${media.id}:`, e);
+                }
+            }));
+        }
+
         hierarchyMediaEl.innerHTML = '';
         items.forEach(media => {
-            const item = this.createRelatedMediaItem(media, queryString);
+            const inAlbum = this.albumId ? (itemAlbumStatus[media.id] ?? false) : false;
+            const item = this.createRelatedMediaItem(media, queryString, inAlbum);
             item.style.flex = '0 0 auto';
             item.style.width = '120px';
             hierarchyMediaEl.appendChild(item);
