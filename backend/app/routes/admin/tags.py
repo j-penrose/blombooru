@@ -1,15 +1,16 @@
+import asyncio
 import csv
 import io
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from ...auth import get_current_admin_user, require_admin_mode
 from ...config import settings
 from ...utils.request_helpers import safe_error_detail
 from ...database import get_db
-from ...models import Tag, TagAlias, User
+from ...models import Media, Tag, TagAlias, User
 from ...utils.logger import logger
 
 router = APIRouter()
@@ -503,3 +504,85 @@ async def bulk_create_tags(
         "skipped": skipped,
         "errors": errors
     }
+
+def cleanup_aliased_tags_logic(db: Session):
+    """
+    Deletes any Tag record in blombooru_tags whose name exists as an alias_name in blombooru_tag_aliases.
+    This prevents a tag from existing as both a tag and an alias simultaneously.
+    """
+    alias_names = [a[0] for a in db.query(TagAlias.alias_name).all()]
+    if alias_names:
+        tags_to_delete = db.query(Tag).filter(Tag.name.in_(alias_names)).all()
+        if tags_to_delete:
+            count = len(tags_to_delete)
+            for t in tags_to_delete:
+                db.delete(t)
+            db.commit()
+            return count
+    return 0
+
+@router.post("/cleanup-aliased-tags")
+async def cleanup_aliased_tags(
+    current_user: User = Depends(require_admin_mode),
+    db: Session = Depends(get_db)
+):
+    """Delete all Tag records whose names match an alias name in TagAlias."""
+    count = cleanup_aliased_tags_logic(db)
+    return {"deleted_count": count}
+
+@router.post("/simulate-apply-aliases")
+async def simulate_apply_aliases(
+    current_user: User = Depends(require_admin_mode),
+):
+    """Simulate applying all tag aliases to all media in the database."""
+    from ...database import SessionLocal
+
+    loop = asyncio.get_running_loop()
+
+    def do_simulate():
+        local_db = SessionLocal()
+        try:
+            aliases = (
+                local_db.query(TagAlias)
+                .options(joinedload(TagAlias.target_tag))
+                .all()
+            )
+            if not aliases:
+                return []
+
+            # alias tag name -> target tag name
+            alias_map = {a.alias_name: a.target_tag.name for a in aliases if a.target_tag}
+            if not alias_map:
+                return []
+
+            # Only fetch media that actually own at least one alias-named tag,
+            # instead of loading the entire media table.
+            media_items = (
+                local_db.query(Media)
+                .options(joinedload(Media.tags))
+                .filter(Media.tags.any(Tag.name.in_(alias_map.keys())))
+                .all()
+            )
+
+            affected_media = []
+            for media in media_items:
+                original_tags = {t.name for t in media.tags}
+                removed_tags = original_tags & alias_map.keys()
+                added_tags = {
+                    alias_map[name] for name in removed_tags
+                } - original_tags
+
+                final_tags = (original_tags - removed_tags) | added_tags
+                if final_tags != original_tags:
+                    affected_media.append({
+                        "media_id": media.id,
+                        "added_tags": list(added_tags),
+                        "removed_tags": list(removed_tags),
+                    })
+
+            return affected_media
+        finally:
+            local_db.close()
+
+    affected_media = await loop.run_in_executor(None, do_simulate)
+    return {"affected_media": affected_media}

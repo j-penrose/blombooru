@@ -123,3 +123,34 @@ GET /api/admin/check-alias?name=fox_char
 ```
 
 **Response:** `{ "exists": true }`
+
+### Simulate applying tag aliases to all media
+
+Requires `require_admin_mode`. **Read-only.** Scans all media to identify tags that match defined aliases and returns the affected media along with proposed tag additions and removals. Does not modify any data.
+
+```
+POST /api/admin/simulate-apply-aliases
+```
+
+**Response:**
+```json
+{
+  "affected_media": [
+    {
+      "media_id": 1,
+      "added_tags": ["fox"],
+      "removed_tags": ["kitsune"]
+    }
+  ]
+}
+```
+
+### Cleanup aliased tags
+
+Requires `require_admin_mode`. Deletes any `Tag` database records whose names match defined alias names in `TagAlias`, ensuring a tag cannot exist as both a tag and an alias simultaneously.
+
+```
+POST /api/admin/cleanup-aliased-tags
+```
+
+**Response:** `{ "deleted_count": 3 }`
