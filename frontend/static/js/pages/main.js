@@ -100,10 +100,12 @@ class Blombooru {
         this.setupEventListeners();
         this.updateUI();
 
-        // Load settings from cookie
-        const savedRating = this.getCookie('rating_filter');
+        // Load settings from localStorage or cookie
+        const savedRating = localStorage.getItem('selectedRating') || this.getCookie('rating_filter');
         if (savedRating) {
             this.setRatingFilter(savedRating);
+            localStorage.setItem('selectedRating', savedRating);
+            this.setCookie('rating_filter', savedRating, 365);
         }
 
         // Check albums visibility
@@ -158,6 +160,7 @@ class Blombooru {
         ratingInputs.forEach(input => {
             input.addEventListener('change', (e) => {
                 this.setRatingFilter(e.target.value);
+                localStorage.setItem('selectedRating', e.target.value);
                 this.setCookie('rating_filter', e.target.value, 365);
             });
         });

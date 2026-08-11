@@ -43,7 +43,13 @@ class BaseGallery {
         };
 
         // Current state
-        this.currentRating = localStorage.getItem('selectedRating') || this.options.defaultRating;
+        const cookieRating = (function(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        })('rating_filter');
+        this.currentRating = localStorage.getItem('selectedRating') || cookieRating || this.options.defaultRating;
 
         const sidebarMode = document.body.dataset.sidebarMode || 'rating';
         if (sidebarMode === 'custom') {
@@ -106,6 +112,7 @@ class BaseGallery {
                 this.currentRating = e.target.value;
                 this.updateRatingFilterLabels(this.currentRating);
                 localStorage.setItem('selectedRating', this.currentRating);
+                document.cookie = "rating_filter=" + this.currentRating + "; path=/; max-age=31536000";
                 this.onRatingChange();
             });
         });
@@ -150,12 +157,20 @@ class BaseGallery {
             });
         });
 
-        // Set initial state
-        const savedRadio = document.querySelector(`.custom-filter-input[value="${this.currentCustomFilter}"]`);
+        // Set initial state - validate whether button for currentCustomFilter exists
+        let savedRadio = null;
+        if (this.currentCustomFilter) {
+            savedRadio = document.querySelector(`.custom-filter-input[value="${CSS.escape ? CSS.escape(this.currentCustomFilter) : this.currentCustomFilter}"]`);
+        }
         if (savedRadio) {
             savedRadio.checked = true;
             savedRadio.dataset.wasChecked = 'true';
             this.updateCustomFilterLabels(this.currentCustomFilter);
+        } else if (this.currentCustomFilter) {
+            // Stored custom filter button no longer exists, clear it
+            this.currentCustomFilter = '';
+            localStorage.setItem('selectedCustomFilter', '');
+            this.updateCustomFilterLabels('');
         }
     }
 
@@ -1236,7 +1251,8 @@ class BaseGallery {
     createGalleryItem(media, options = {}) {
         const {
             checkboxClass = 'checkbox',
-            preserveQueryParams = true
+            preserveQueryParams = true,
+            linkUrl = null
         } = options;
 
         const item = document.createElement('div');
@@ -1335,12 +1351,13 @@ class BaseGallery {
 
         // Link
         const link = document.createElement('a');
+        const basePath = linkUrl || `/media/${media.id}`;
         if (preserveQueryParams) {
             const params = new URLSearchParams(window.location.search);
             const queryString = params.toString();
-            link.href = `/media/${media.id}${queryString ? '?' + queryString : ''}`;
+            link.href = `${basePath}${queryString ? '?' + queryString : ''}`;
         } else {
-            link.href = `/media/${media.id}`;
+            link.href = basePath;
         }
         link.appendChild(img);
 
