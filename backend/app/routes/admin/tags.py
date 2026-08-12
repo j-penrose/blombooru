@@ -3,6 +3,7 @@ import csv
 import io
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from pydantic import BaseModel
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
@@ -586,3 +587,73 @@ async def simulate_apply_aliases(
 
     affected_media = await loop.run_in_executor(None, do_simulate)
     return {"affected_media": affected_media}
+
+class MergeTagRequest(BaseModel):
+    target_tag_name: str
+
+@router.post("/tags/{tag_id}/merge-into")
+async def merge_tag(
+    tag_id: int,
+    request_data: MergeTagRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin_mode)
+):
+    """
+    Merge a tag into another tag.
+    1. Reassign all existing aliases of source tag to target tag.
+    2. Make source tag name an alias of target tag.
+    3. Replace source tag with target tag on all media.
+    4. Delete source tag.
+    """
+    source_tag = db.query(Tag).filter(Tag.id == tag_id).first()
+    if not source_tag:
+        raise HTTPException(status_code=404, detail="Source tag not found")
+        
+    target_name = request_data.target_tag_name.lower().strip()
+    if not target_name:
+        raise HTTPException(status_code=400, detail="Target tag name cannot be empty")
+        
+    if source_tag.name == target_name:
+        raise HTTPException(status_code=400, detail="Cannot merge tag into itself")
+        
+    target_tag = db.query(Tag).filter(Tag.name == target_name).first()
+    if not target_tag:
+        target_tag = Tag(name=target_name, category=source_tag.category)
+        db.add(target_tag)
+        db.flush()
+        
+    # Reassign existing aliases of source tag to target tag
+    db.query(TagAlias).filter(TagAlias.target_tag_id == source_tag.id).update({
+        TagAlias.target_tag_id: target_tag.id
+    }, synchronize_session=False)
+    
+    # Remove any existing alias that matches source_tag.name if it exists
+    existing_alias = db.query(TagAlias).filter(TagAlias.alias_name == source_tag.name).first()
+    if existing_alias:
+        db.delete(existing_alias)
+        db.flush()
+        
+    # Add source tag name as an alias for target tag
+    db.add(TagAlias(alias_name=source_tag.name, target_tag_id=target_tag.id))
+    
+    # Update media items
+    media_with_source = db.query(Media).filter(Media.tags.any(id=source_tag.id)).all()
+    for media in media_with_source:
+        if target_tag not in media.tags:
+            media.tags.append(target_tag)
+            
+    # Delete source tag
+    source_name = source_tag.name
+    db.delete(source_tag)
+    
+    try:
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=safe_error_detail("Failed to merge tag", e))
+        
+    return {
+        "message": f"Successfully merged '{source_name}' into '{target_name}'",
+        "source_tag_name": source_name,
+        "target_tag_name": target_name
+    }
