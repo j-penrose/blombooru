@@ -30,6 +30,7 @@ from ..utils.media_helpers import (create_stripped_media_cache,
                                    serve_media_file)
 from ..utils.media_processor import calculate_file_hash, process_media_file
 from ..utils.media_sort import apply_media_sort
+from ..utils.search_parser import apply_search_criteria, parse_search_query
 from ..utils.thumbnail_generator import generate_thumbnail
 
 router = APIRouter(prefix="/api/media", tags=["media"])
@@ -553,6 +554,109 @@ async def get_media_batch(
     except Exception as e:
         logger.error(f"Error in get_media_batch: {e}")
         raise HTTPException(status_code=500, detail=safe_error_detail("Failed to retrieve media batch", e))
+
+@router.get("/{media_id}/adjacent")
+async def get_adjacent_media(
+    media_id: int,
+    mode: Optional[str] = "search",
+    album_id: Optional[int] = None,
+    q: Optional[str] = None,
+    rating: Optional[str] = None,
+    sort: Optional[str] = None,
+    order: Optional[str] = None,
+    seed: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    """Get previous and next media IDs relative to media_id within the given context."""
+    try:
+        if mode == "album" and album_id is not None:
+            media_query = db.query(Media.id).join(
+                blombooru_album_media,
+                Media.id == blombooru_album_media.c.media_id
+            ).filter(
+                blombooru_album_media.c.album_id == album_id
+            )
+
+            if q:
+                parsed = parse_search_query(q)
+                if rating and rating != "explicit":
+                    rating_value = "safe" if rating == "safe" else "safe,questionable"
+                    if 'rating' not in parsed['meta']:
+                        parsed['meta']['rating'] = []
+                    parsed['meta']['rating'].append({'value': rating_value, 'negated': False})
+                media_query = apply_search_criteria(media_query, parsed, db)
+            else:
+                if rating and rating != "explicit":
+                    allowed_ratings = {
+                        "safe": [RatingEnum.safe],
+                        "questionable": [RatingEnum.safe, RatingEnum.questionable]
+                    }
+                    media_query = media_query.filter(Media.rating.in_(allowed_ratings.get(rating, [])))
+
+            sort_by = sort if sort else settings.get_default_sort()
+            sort_order = order if order else settings.get_default_order()
+
+            media_query = apply_media_sort(
+                media_query,
+                sort_by,
+                sort_order,
+                db,
+                seed,
+                column_overrides={
+                    'uploaded_at': Media.id,
+                    'last_modified': Media.id,
+                    'name': Media.filename,
+                },
+            )
+        else:
+            media_query = db.query(Media.id)
+
+            parsed = parse_search_query(q or "")
+            if rating and rating != "explicit":
+                rating_value = "safe" if rating == "safe" else "safe,questionable"
+                if 'rating' not in parsed['meta']:
+                    parsed['meta']['rating'] = []
+                parsed['meta']['rating'].append({'value': rating_value, 'negated': False})
+
+            media_query = apply_search_criteria(media_query, parsed, db)
+
+            if 'order' not in parsed['meta'] and 'sort' not in parsed['meta']:
+                sort_by = sort if sort else settings.get_default_sort()
+                sort_order = order if order else settings.get_default_order()
+                media_query = media_query.order_by(None)
+                media_query = apply_media_sort(media_query, sort_by, sort_order, db, seed)
+
+        id_rows = media_query.all()
+        id_list = [r[0] for r in id_rows]
+
+        try:
+            idx = id_list.index(media_id)
+            prev_id = id_list[idx - 1] if idx > 0 else None
+            next_id = id_list[idx + 1] if idx < len(id_list) - 1 else None
+        except ValueError:
+            prev_id = None
+            next_id = None
+
+        prev_hash = None
+        next_hash = None
+        if prev_id:
+            m_prev = db.query(Media.hash).filter(Media.id == prev_id).first()
+            if m_prev:
+                prev_hash = m_prev.hash
+        if next_id:
+            m_next = db.query(Media.hash).filter(Media.id == next_id).first()
+            if m_next:
+                next_hash = m_next.hash
+
+        return {
+            "prev_id": prev_id,
+            "prev_hash": prev_hash,
+            "next_id": next_id,
+            "next_hash": next_hash
+        }
+    except Exception as e:
+        logger.error(f"Error in get_adjacent_media: {e}")
+        return {"prev_id": None, "prev_hash": None, "next_id": None, "next_hash": None}
 
 @router.get("/{media_id}")
 async def get_media(media_id: int, db: Session = Depends(get_db)):
