@@ -543,7 +543,7 @@ class BulkTagModalBase {
                     if (idx !== null && this.itemsData && this.itemsData[idx]) {
                         const item = this.itemsData[idx];
                         if (!item.prefilledTags) return null;
-                        
+
                         const prefilledSet = new Set(item.prefilledTags.map(t => t.toLowerCase()));
                         const inputTags = this.tagInputHelper.getPlainTextFromDiv(inputElement).split(/\s+/).filter(t => t.length > 0);
                         const highlightTags = new Set();
@@ -611,7 +611,7 @@ class BulkTagModalBase {
                             <!-- Action buttons - Default Row, JS handles Col switch -->
                             <div class="${prefix}-actions flex gap-1.5 flex-shrink-0 transition-all">
                                 <button type="button" 
-                                        class="${prefix}-refresh w-11 h-11 sm:w-9 sm:h-9 surface hover:surface-light text-secondary hover:text-white flex items-center justify-center transition-colors"
+                                        class="${prefix}-refresh w-11 h-11 sm:w-9 sm:h-9 surface hover:surface-light text-secondary hover:text flex items-center justify-center transition-colors"
                                         data-index="${index}"
                                         title="${window.i18n.t('bulk_modal.buttons.refresh_tags')}">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 sm:w-4 sm:h-4">
