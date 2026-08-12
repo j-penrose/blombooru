@@ -621,14 +621,23 @@ class AdminContent {
             const data = await response.json();
 
             if (data.tags.length === 0) {
-                resultsDiv.innerHTML = '<p class="bg border text-xs text-secondary p-3">' + window.i18n.t('gallery.no_tags_found') + '</p>';
+                resultsDiv.innerHTML = '<p class="bg text-xs text-secondary p-3">' + window.i18n.t('gallery.no_tags_found') + '</p>';
                 return;
             }
 
-            resultsDiv.innerHTML = data.tags.map((tag, i, arr) => `
-                <div class="bg p-3 ${arr.length === 1 ? 'border' : (i === arr.length - 1 ? '' : 'border-b')} flex justify-between items-center">
-                    <div class="flex items-center gap-2">
-                        <button class="manage-tag-btn flex items-center justify-center w-7 h-7 bg-primary hover:bg-primary border-primary hover:border-primary transition-colors"
+            resultsDiv.innerHTML = data.tags.map((tag, i, arr) => {
+                let creationDateStr = '';
+                if (tag.created_at) {
+                    const d = new Date(tag.created_at);
+                    if (!isNaN(d.getTime())) {
+                        creationDateStr = `${new Intl.DateTimeFormat(undefined, { dateStyle: "short" }).format(d)} ${new Intl.DateTimeFormat(undefined, { timeStyle: "short", hour12: false }).format(d)}`;
+                    }
+                }
+
+                return `
+                <div class="bg p-3 ${i === arr.length - 1 ? '' : 'border-b'} flex flex-wrap items-center gap-2">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <button class="manage-tag-btn flex-shrink-0 flex items-center justify-center w-7 h-7 bg-primary hover:bg-primary border-primary hover:border-primary transition-colors"
                             data-tag-id="${tag.id}"
                             data-tag-name="${this.app.escapeHtml(tag.name)}"
                             data-tag-category="${tag.category}"
@@ -639,12 +648,16 @@ class AdminContent {
                                 <rect x="3" y="17" width="18" height="2"/>
                             </svg>
                         </button>
-                        <a href="/?q=${encodeURIComponent(tag.name)}" class="tag ${tag.category} tag-text">${tag.name}</a>
-                        <span class="text-xs text-secondary">(${tag.post_count})</span>
+                        <a href="/?q=${encodeURIComponent(tag.name)}" class="tag ${tag.category} tag-text overflow-hidden whitespace-nowrap text-ellipsis">${tag.name}</a>
                     </div>
-                    <span class="text-xs text-secondary uppercase">${tag.category}</span>
+                    <div class="flex justify-between items-center gap-2 flex-1">
+                        <span class="text-xs text-secondary">(${tag.post_count})</span>
+                        ${creationDateStr ? `<span class="text-xs text-secondary text-center">${creationDateStr}</span>` : ''}
+                        <span class="text-xs text-secondary uppercase flex-1 text-right">${tag.category}</span>
+                    </div>
                 </div>
-                `).join('');
+                `;
+            }).join('');
 
             resultsDiv.querySelectorAll('.manage-tag-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
