@@ -901,14 +901,30 @@ class AdminContent {
 
             closeModal();
 
+            const tagParams = {
+                source_tag: this.app.escapeHtml(tagName),
+                target_tag: this.app.escapeHtml(targetTag)
+            };
+
+            const subtitle = window.i18n.t('admin.tags_management.confirm_merge_subtitle', tagParams);
+            const applyAction = window.i18n.t('admin.tags_management.confirm_merge_apply', tagParams);
+            const deleteAction = window.i18n.t('admin.tags_management.confirm_merge_delete', tagParams);
+            const aliasAction = window.i18n.t('admin.tags_management.confirm_merge_alias', tagParams);
+
+            const messageHTML = `
+                <div class="text-base font-semibold text mb-2">${subtitle}</div>
+                <ul class="text-left text-sm space-y-2 text list-disc px-6">
+                    <li>${applyAction}</li>
+                    <li>${deleteAction}</li>
+                    <li>${aliasAction}</li>
+                </ul>
+            `;
+
             const confirmModal = new ModalHelper({
                 id: 'confirm-merge-tag-modal',
                 type: 'warning',
                 title: window.i18n.t('admin.tags_management.confirm_merge_title'),
-                message: window.i18n.t('admin.tags_management.confirm_merge_message', {
-                    source_tag: tagName,
-                    target_tag: targetTag
-                }),
+                message: messageHTML,
                 confirmText: window.i18n.t('admin.tags_management.merge_tag'),
                 cancelText: window.i18n.t('common.cancel'),
                 confirmId: 'confirm-merge-yes',
