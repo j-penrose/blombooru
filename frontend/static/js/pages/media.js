@@ -417,6 +417,7 @@ class MediaViewer extends MediaViewerBase {
         const relatedMediaSection = this.el('related-media-section') || relatedMediaEl?.parentElement;
         const relatedMediaLoading = this.el('related-media-loading');
         const params = new URLSearchParams(window.location.search);
+        params.delete('q');
         const queryString = params.toString();
 
         if (relatedMediaSection) relatedMediaSection.style.display = 'block';
@@ -1206,6 +1207,7 @@ class MediaViewer extends MediaViewerBase {
         }
 
         const params = new URLSearchParams(window.location.search);
+        params.delete('q');
         const queryString = params.toString();
         hierarchySection.style.display = 'block';
 
