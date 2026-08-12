@@ -31,6 +31,7 @@ class MediaViewer extends MediaViewerBase {
         this.initFullscreenViewer();
         this.initTooltipHelper();
         this.setupBackToAlbum();
+        this.setupMediaNavigation();
         this.loadMedia();
         this.setupAIMetadataToggle();
         this.setupEventListeners();
@@ -774,6 +775,133 @@ class MediaViewer extends MediaViewerBase {
                 }
             }
         } catch (e) {
+        }
+    }
+
+    async setupMediaNavigation() {
+        const navBar = document.getElementById('media-nav-bar');
+        const prevBtn = document.getElementById('nav-prev-btn');
+        const nextBtn = document.getElementById('nav-next-btn');
+        const prevThumb = document.getElementById('nav-prev-thumb');
+        const nextThumb = document.getElementById('nav-next-thumb');
+        const prevIdText = document.getElementById('nav-prev-id-text');
+        const nextIdText = document.getElementById('nav-next-id-text');
+
+        if (!prevBtn && !nextBtn) return;
+
+        const urlParams = new URLSearchParams(window.location.search);
+
+        let mode = 'search';
+        let albumId = null;
+        const albumMatch = window.location.pathname.match(/\/album\/(\d+)\/media\//);
+        if (albumMatch || this.albumId) {
+            mode = 'album';
+            albumId = albumMatch ? parseInt(albumMatch[1], 10) : parseInt(this.albumId, 10);
+        }
+
+        const queryParams = new URLSearchParams();
+        queryParams.set('mode', mode);
+        if (albumId) queryParams.set('album_id', albumId);
+
+        let q = urlParams.get('q') || '';
+        const sidebarMode = document.body.dataset.sidebarMode || window.SIDEBAR_FILTER_MODE || 'rating';
+        if (sidebarMode === 'custom') {
+            const customFilter = localStorage.getItem('selectedCustomFilter') || '';
+            if (customFilter) {
+                if (!q) {
+                    q = customFilter;
+                } else if (!q.includes(customFilter)) {
+                    q = `${q} ${customFilter}`;
+                }
+            }
+        }
+        if (q) queryParams.set('q', q);
+
+        const rating = urlParams.get('rating') || localStorage.getItem('selectedRating');
+        if (rating) queryParams.set('rating', rating);
+
+        const sort = urlParams.get('sort');
+        if (sort) queryParams.set('sort', sort);
+
+        const order = urlParams.get('order');
+        if (order) queryParams.set('order', order);
+
+        const seed = urlParams.get('seed');
+        if (seed) queryParams.set('seed', seed);
+
+        try {
+            const res = await fetch(`/api/media/${this.mediaId}/adjacent?${queryParams.toString()}`);
+            if (!res.ok) return;
+
+            const data = await res.json();
+            const { prev_id, prev_hash, next_id, next_hash } = data;
+
+            if (!prev_id && !next_id) {
+                if (navBar) navBar.style.display = 'none';
+                return;
+            }
+
+            if (navBar) navBar.style.display = 'flex';
+
+            const buildNavUrl = (targetId) => {
+                const navParams = new URLSearchParams(window.location.search);
+                const queryStr = navParams.toString();
+                const basePath = mode === 'album' && albumId ? `/album/${albumId}/media/${targetId}` : `/media/${targetId}`;
+                return `${basePath}${queryStr ? '?' + queryStr : ''}`;
+            };
+
+            if (prevBtn) {
+                if (prev_id) {
+                    prevBtn.href = buildNavUrl(prev_id);
+                    prevBtn.title = `Previous (#${prev_id})`;
+                    prevBtn.style.visibility = 'visible';
+                    if (prevIdText) prevIdText.textContent = prev_id;
+                    if (prevThumb) {
+                        prevThumb.src = `/api/media/${prev_id}/thumbnail${prev_hash ? '?v=' + prev_hash : ''}`;
+                    }
+                } else {
+                    prevBtn.style.visibility = 'hidden';
+                }
+            }
+
+            if (nextBtn) {
+                if (next_id) {
+                    nextBtn.href = buildNavUrl(next_id);
+                    nextBtn.title = `Next (#${next_id})`;
+                    nextBtn.style.visibility = 'visible';
+                    if (nextIdText) nextIdText.textContent = next_id;
+                    if (nextThumb) {
+                        nextThumb.src = `/api/media/${next_id}/thumbnail${next_hash ? '?v=' + next_hash : ''}`;
+                    }
+                } else {
+                    nextBtn.style.visibility = 'hidden';
+                }
+            }
+
+            document.addEventListener('keydown', (e) => {
+                const activeEl = document.activeElement;
+                const isTyping = activeEl && (
+                    activeEl.tagName === 'INPUT' ||
+                    activeEl.tagName === 'TEXTAREA' ||
+                    activeEl.isContentEditable ||
+                    activeEl.closest('.modal')
+                );
+                if (isTyping) return;
+
+                const fullscreenOverlay = document.getElementById('fullscreen-overlay');
+                if (fullscreenOverlay && fullscreenOverlay.classList.contains('active')) return;
+
+                if (e.key === 'ArrowLeft' && prev_id) {
+                    e.preventDefault();
+                    window.location.href = buildNavUrl(prev_id);
+                } else if (e.key === 'ArrowRight' && next_id) {
+                    e.preventDefault();
+                    window.location.href = buildNavUrl(next_id);
+                }
+            });
+
+        } catch (e) {
+            console.error('Error fetching adjacent media:', e);
         }
     }
 

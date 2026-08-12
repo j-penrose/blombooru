@@ -400,6 +400,7 @@ async def media_page(request: Request, media_id: int, db: Session = Depends(get_
         "app_name": settings.APP_NAME,
         "media_id": media_id,
         "media": media_item,
+        "sidebar_filter_mode": settings.SIDEBAR_FILTER_MODE,
         "external_share_url": settings.EXTERNAL_SHARE_URL
     })
 
@@ -416,6 +417,7 @@ async def album_media_page(request: Request, album_id: int, media_id: int, db: S
         "media_id": media_id,
         "album_id": album_id,
         "media": media_item,
+        "sidebar_filter_mode": settings.SIDEBAR_FILTER_MODE,
         "external_share_url": settings.EXTERNAL_SHARE_URL
     })
 
