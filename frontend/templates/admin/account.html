@@ -44,3 +44,36 @@
         </div>
     </div>
 </div>
+
+<!-- Keyboard Shortcuts Section -->
+<div class="surface p-2 sm:p-6 border mt-4" id="keybindings-section">
+    <h2 class="text-base font-bold mb-1 pb-3 border-b">{{ t('admin.keybindings.title') }}</h2>
+    <p class="text-xs text-secondary mt-3 mb-4">{{ t('admin.keybindings.description') }}</p>
+
+    <div class="bg p-2 sm:p-4 border mb-4">
+        <div id="keybindings-context-media_viewer" class="mb-4">
+            <h3 class="text-xs font-bold text uppercase tracking-wide border-b mb-2 pb-2">
+                {{ t('admin.keybindings.context_media_viewer') }}
+            </h3>
+            <div class="keybindings-rows space-y-2"></div>
+        </div>
+
+        <div id="keybindings-context-tag_autocomplete">
+            <h3 class="text-xs font-bold text uppercase tracking-wide border-b mb-2 pb-2">
+                {{ t('admin.keybindings.context_tag_autocomplete') }}
+            </h3>
+            <div class="keybindings-rows space-y-2"></div>
+        </div>
+
+        <div id="keybindings-status" style="display:none;"></div>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-3">
+        <button id="keybindings-save-btn" class="btn-primary text-xs px-4 py-2 flex items-center gap-2">
+            {{ t('admin.keybindings.save_btn') }}
+        </button>
+        <button id="keybindings-reset-all-btn" class="btn-danger text-xs px-4 py-2 flex items-center gap-2">
+            {{ t('admin.keybindings.reset_all') }}
+        </button>
+    </div>
+</div>

@@ -43,6 +43,9 @@
     <script id="translations-data" type="application/json">
         {{ get_translations_json() | safe }}
     </script>
+    <script id="keybindings-data" type="application/json">
+        {{ get_keybindings_json() | safe }}
+    </script>
     {% if not current_theme %}
     <script>
         // Load theme on page load
@@ -324,6 +327,7 @@
         </main>
 
         <script src="/static/js/components/modal-helper.js?v={{ cache_buster }}"></script>
+        <script src="/static/js/components/keybinding-manager.js?v={{ cache_buster }}"></script>
         <script src="/static/js/pages/main.js?v={{ cache_buster }}"></script>
         <script src="/static/js/components/tag-autocomplete.js?v={{ cache_buster }}"></script>
 

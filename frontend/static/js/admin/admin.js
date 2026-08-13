@@ -8,6 +8,7 @@ class AdminPanel {
         this.system = new AdminSystem(this);
         this.content = new AdminContent(this);
         this.account = new AdminAccount(this);
+        this.keybindings = new AdminKeybindings(this);
 
         this.themeSelect = null;
         this.languageSelect = null;
@@ -37,6 +38,7 @@ class AdminPanel {
 
         this.setupStats();
         this.setupTabs();
+        this.keybindings.load();
     }
 
     escapeHtml(text) {
