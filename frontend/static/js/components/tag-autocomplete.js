@@ -526,27 +526,30 @@ class TagAutocomplete {
         const selected = this.suggestionsEl.querySelector('.tag-suggestion.selected');
         const selectedIndex = selected ? parseInt(selected.dataset.index) : -1;
 
+        const kb = window.keybindings;
+        if (kb.matches(e, 'tag_suggestion_next')) {
+            e.preventDefault();
+            if (suggestions.length > 0) {
+                if (selected) selected.classList.remove('selected');
+                const nextIndex = selectedIndex < suggestions.length - 1 ? selectedIndex + 1 : 0;
+                suggestions[nextIndex].classList.add('selected');
+                suggestions[nextIndex].scrollIntoView({ block: 'nearest' });
+            }
+            return;
+        }
+
+        if (kb.matches(e, 'tag_suggestion_prev')) {
+            e.preventDefault();
+            if (suggestions.length > 0) {
+                if (selected) selected.classList.remove('selected');
+                const prevIndex = selectedIndex > 0 ? selectedIndex - 1 : suggestions.length - 1;
+                suggestions[prevIndex].classList.add('selected');
+                suggestions[prevIndex].scrollIntoView({ block: 'nearest' });
+            }
+            return;
+        }
+
         switch (e.key) {
-            case 'ArrowDown':
-                e.preventDefault();
-                if (suggestions.length > 0) {
-                    if (selected) selected.classList.remove('selected');
-                    const nextIndex = selectedIndex < suggestions.length - 1 ? selectedIndex + 1 : 0;
-                    suggestions[nextIndex].classList.add('selected');
-                    suggestions[nextIndex].scrollIntoView({ block: 'nearest' });
-                }
-                break;
-
-            case 'ArrowUp':
-                e.preventDefault();
-                if (suggestions.length > 0) {
-                    if (selected) selected.classList.remove('selected');
-                    const prevIndex = selectedIndex > 0 ? selectedIndex - 1 : suggestions.length - 1;
-                    suggestions[prevIndex].classList.add('selected');
-                    suggestions[prevIndex].scrollIntoView({ block: 'nearest' });
-                }
-                break;
-
             case 'Tab':
                 e.preventDefault();
                 if (suggestions.length > 0) {

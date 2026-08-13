@@ -892,10 +892,10 @@ class MediaViewer extends MediaViewerBase {
                 const fullscreenOverlay = document.getElementById('fullscreen-overlay');
                 if (fullscreenOverlay && fullscreenOverlay.classList.contains('active')) return;
 
-                if (e.key === 'ArrowLeft' && prev_id) {
+                if (window.keybindings.matches(e, 'media_nav_prev') && prev_id) {
                     e.preventDefault();
                     window.location.href = buildNavUrl(prev_id);
-                } else if (e.key === 'ArrowRight' && next_id) {
+                } else if (window.keybindings.matches(e, 'media_nav_next') && next_id) {
                     e.preventDefault();
                     window.location.href = buildNavUrl(next_id);
                 }
