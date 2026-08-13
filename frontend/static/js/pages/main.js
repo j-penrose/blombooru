@@ -436,11 +436,129 @@ class Blombooru {
                 message: this.getSearchSyntaxContent(),
                 showIcon: false,
                 confirmText: window.i18n.t('common.got_it'),
-                cancelText: '',
-                confirmId: 'search-guide-confirm'
+                cancelText: window.i18n.t('common.keybindings'),
+                confirmId: 'search-guide-confirm',
+                cancelId: 'search-guide-keybindings'
             });
+
+            const keybindingsBtn = document.getElementById('search-guide-keybindings');
+            if (keybindingsBtn) {
+                keybindingsBtn.onclick = (e) => {
+                    e.preventDefault();
+                    this.searchGuideModal.hide();
+                    this.showKeybindingsGuide();
+                };
+            }
         }
         this.searchGuideModal.show();
+    }
+
+    showKeybindingsGuide() {
+        const bindings = (window.keybindings && window.keybindings.bindings) || {};
+        const content = this.getKeybindingsContent(bindings);
+
+        if (!this.keybindingsModal) {
+            this.keybindingsModal = new ModalHelper({
+                id: 'keybindings-guide-modal',
+                type: 'info',
+                title: window.i18n.t('admin.keybindings.title'),
+                message: content,
+                showIcon: false,
+                confirmText: window.i18n.t('common.got_it'),
+                cancelText: '',
+                confirmId: 'keybindings-guide-confirm',
+                onConfirm: () => {
+                    this.showSearchSyntaxGuide();
+                }
+            });
+        } else {
+            this.keybindingsModal.updateContent({
+                message: content
+            });
+        }
+        this.keybindingsModal.show();
+
+        if (window.keybindings && typeof window.keybindings.refresh === 'function') {
+            window.keybindings.refresh().catch(() => {});
+        }
+    }
+
+    getKeybindingsContent(bindings = {}) {
+        const groups = [
+            {
+                context: 'gallery_nav',
+                titleKey: 'admin.keybindings.context_gallery_nav',
+                actions: [
+                    { id: 'gallery_nav_up', labelKey: 'admin.keybindings.actions.gallery_nav_up', default: { code: 'ArrowUp', key: 'ArrowUp' } },
+                    { id: 'gallery_nav_down', labelKey: 'admin.keybindings.actions.gallery_nav_down', default: { code: 'ArrowDown', key: 'ArrowDown' } },
+                    { id: 'gallery_nav_left', labelKey: 'admin.keybindings.actions.gallery_nav_left', default: { code: 'ArrowLeft', key: 'ArrowLeft' } },
+                    { id: 'gallery_nav_right', labelKey: 'admin.keybindings.actions.gallery_nav_right', default: { code: 'ArrowRight', key: 'ArrowRight' } }
+                ]
+            },
+            {
+                context: 'media_viewer',
+                titleKey: 'admin.keybindings.context_media_viewer',
+                actions: [
+                    { id: 'media_nav_prev', labelKey: 'admin.keybindings.actions.media_nav_prev', default: { code: 'ArrowLeft', key: 'ArrowLeft' } },
+                    { id: 'media_nav_next', labelKey: 'admin.keybindings.actions.media_nav_next', default: { code: 'ArrowRight', key: 'ArrowRight' } },
+                    { id: 'media_fullscreen', labelKey: 'admin.keybindings.actions.media_fullscreen', default: { code: 'KeyF', key: 'f' } }
+                ]
+            },
+            {
+                context: 'fullscreen_viewer',
+                titleKey: 'admin.keybindings.context_fullscreen_viewer',
+                actions: [
+                    { id: 'fullscreen_zoom_in', labelKey: 'admin.keybindings.actions.fullscreen_zoom_in', default: { code: 'KeyG', key: 'g' } },
+                    { id: 'fullscreen_zoom_out', labelKey: 'admin.keybindings.actions.fullscreen_zoom_out', default: { code: 'KeyH', key: 'h' } },
+                    { id: 'fullscreen_move_up', labelKey: 'admin.keybindings.actions.fullscreen_move_up', default: { code: 'ArrowUp', key: 'ArrowUp' } },
+                    { id: 'fullscreen_move_down', labelKey: 'admin.keybindings.actions.fullscreen_move_down', default: { code: 'ArrowDown', key: 'ArrowDown' } },
+                    { id: 'fullscreen_move_left', labelKey: 'admin.keybindings.actions.fullscreen_move_left', default: { code: 'ArrowLeft', key: 'ArrowLeft' } },
+                    { id: 'fullscreen_move_right', labelKey: 'admin.keybindings.actions.fullscreen_move_right', default: { code: 'ArrowRight', key: 'ArrowRight' } }
+                ]
+            },
+            {
+                context: 'tag_autocomplete',
+                titleKey: 'admin.keybindings.context_tag_autocomplete',
+                actions: [
+                    { id: 'tag_suggestion_prev', labelKey: 'admin.keybindings.actions.tag_suggestion_prev', default: { code: 'ArrowUp', key: 'ArrowUp' } },
+                    { id: 'tag_suggestion_next', labelKey: 'admin.keybindings.actions.tag_suggestion_next', default: { code: 'ArrowDown', key: 'ArrowDown' } }
+                ]
+            }
+        ];
+
+        return `
+            <div class="text-left space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                ${groups.map(group => `
+                    <div class="bg p-2 border-2 border-info">
+                        <h3 class="font-bold text-lg mb-2 text-info">
+                            ${this.escapeHtml(window.i18n.t(group.titleKey))}
+                        </h3>
+                        <div class="space-y-1.5">
+                            ${group.actions.map(action => {
+                                const binding = bindings[action.id] || action.default;
+                                const chipText = binding ? (binding.key || binding.code || '?') : '?';
+                                const isSingleChar = chipText.length === 1;
+                                const label = window.i18n.t(action.labelKey);
+                                return `
+                                    <div class="keybinding-row flex items-center justify-between gap-3 px-2 py-1.5 border surface">
+                                        <span class="text-xs font-bold text">${this.escapeHtml(label)}</span>
+                                        <div class="flex items-center gap-2">
+                                            <kbd class="keybinding-chip bg px-1.5 py-0.5 text-xs border font-mono ${isSingleChar ? 'uppercase' : ''}">${this.escapeHtml(chipText)}</kbd>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = String(text ?? '');
+        return div.innerHTML;
     }
 
     getSearchSyntaxContent() {
