@@ -28,6 +28,30 @@
             "title": "Управление аккаунтом администратора",
             "username_changed": "Имя пользователя изменено"
         },
+        "keybindings": {
+            "title": "",
+            "description": "",
+            "context_media_viewer": "",
+            "context_tag_autocomplete": "",
+            "actions": {
+                "media_nav_prev": "",
+                "media_nav_next": "",
+                "tag_suggestion_prev": "",
+                "tag_suggestion_next": ""
+            },
+            "edit": "",
+            "press_key_prompt": "",
+            "reset": "",
+            "reset_all": "",
+            "save_btn": "",
+            "modified": "",
+            "saved": "",
+            "conflict_error": "",
+            "modifier_error": "",
+            "disallowed_error": "",
+            "reset_all_confirm_title": "",
+            "reset_all_confirm_message": ""
+        },
         "actions": {
             "checking": "Проверка...",
             "scanning": "Сканирование...",

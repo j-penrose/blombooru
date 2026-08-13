@@ -28,6 +28,30 @@
             "title": "Admin Account Management",
             "username_changed": "Username changed successfully"
         },
+        "keybindings": {
+            "title": "Keyboard Shortcuts",
+            "description": "Customise the keyboard shortcuts used for navigation. Modifier keys (Ctrl, Shift, Alt, Meta) and a few other reserved keys are not allowed.",
+            "context_media_viewer": "Media Viewer",
+            "context_tag_autocomplete": "Tag Autocomplete",
+            "actions": {
+                "media_nav_prev": "Previous media",
+                "media_nav_next": "Next media",
+                "tag_suggestion_prev": "Previous suggestion",
+                "tag_suggestion_next": "Next suggestion"
+            },
+            "edit": "Edit shortcut",
+            "press_key_prompt": "Press a key...",
+            "reset": "Reset shortcut to default",
+            "reset_all": "Reset All to Defaults",
+            "save_btn": "Save Keybindings",
+            "modified": "Modified",
+            "saved": "Keybindings saved successfully.",
+            "conflict_error": "Already used by: {action}",
+            "modifier_error": "Modifier keys (Ctrl, Shift, Alt, Meta) are not allowed.",
+            "disallowed_error": "This key is not allowed as a shortcut.",
+            "reset_all_confirm_title": "Reset All Shortcuts",
+            "reset_all_confirm_message": "Are you sure you want to reset all keyboard shortcuts to their default settings?"
+        },
         "actions": {
             "checking": "Checking...",
             "scanning": "Scanning...",

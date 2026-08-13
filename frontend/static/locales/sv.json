@@ -28,6 +28,30 @@
             "title": "Hantering av administratörskonto",
             "username_changed": "Användarnamnet har ändrats"
         },
+        "keybindings": {
+            "title": "Kortkommandon",
+            "description": "Anpassa kortkommandon för navigering. Modifieringstangenter (Ctrl, Shift, Alt, Meta) och ett fåtal andra reserverade tangenter är inte tillåtna.",
+            "context_media_viewer": "Medievisare",
+            "context_tag_autocomplete": "Taggautokomplettering",
+            "actions": {
+                "media_nav_prev": "Föregående media",
+                "media_nav_next": "Nästa media",
+                "tag_suggestion_prev": "Föregående förslag",
+                "tag_suggestion_next": "Nästa förslag"
+            },
+            "edit": "Redigera kortkommando",
+            "press_key_prompt": "Tryck på en tangent...",
+            "reset": "Återställ kortkommando till standard",
+            "reset_all": "Återställ Alla till Standard",
+            "save_btn": "Spara Kortkommandon",
+            "modified": "Ändrad",
+            "saved": "Kortkommandon har sparats.",
+            "conflict_error": "Redan använt av: {action}",
+            "modifier_error": "Modifieringstangenter (Ctrl, Shift, Alt, Meta) är inte tillåtna.",
+            "disallowed_error": "Denna tangent är inte tillåten som ett kortkommando.",
+            "reset_all_confirm_title": "Återställ Alla Kortkommandon",
+            "reset_all_confirm_message": "Är du säker på att du vill återställa alla kortkommandon till sina standardinställningar?"
+        },
         "actions": {
             "checking": "Kontrollerar...",
             "scanning": "Skannar...",
