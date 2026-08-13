@@ -215,3 +215,13 @@ class ApiKeyListResponse(BaseModel):
     is_active: bool
     
     model_config = ConfigDict(from_attributes=True)
+
+class KeybindingSpec(BaseModel):
+    code: str = Field(..., min_length=1, description="KeyboardEvent.code (layout-independent)")
+    key: str = Field("", description="KeyboardEvent.key at capture time (display only)")
+
+class KeybindingsUpdate(BaseModel):
+    bindings: dict[str, KeybindingSpec] # Only include the actions you want to change
+
+class KeybindingsResetRequest(BaseModel):
+    action_id: Optional[str] = None # Omit to reset all

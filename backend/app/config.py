@@ -107,6 +107,7 @@ class Settings:
                 "position_y": 50,
                 "opacity": 25
             },
+            "keybindings": {},
             "secret_key": os.urandom(32).hex()
         }
     
@@ -311,6 +312,12 @@ class Settings:
         }
         saved = self.file_settings.get("custom_background") or self.settings.get("custom_background", {})
         return {**defaults, **saved}
+
+    @property
+    def KEYBINDINGS(self) -> dict:
+        from .keybindings import merge_with_defaults
+        saved = self.file_settings.get("keybindings") or self.settings.get("keybindings", {})
+        return merge_with_defaults(saved)
     
     @property
     def SHARED_TAGS_ENABLED(self) -> bool:

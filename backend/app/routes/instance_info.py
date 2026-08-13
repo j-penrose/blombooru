@@ -31,4 +31,5 @@ async def get_instance_info():
             "name": lang.name if lang else lang_id,
             "native_name": lang.native_name if lang else lang_id,
         },
+        "keybindings": settings.KEYBINDINGS,
     }

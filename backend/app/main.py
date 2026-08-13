@@ -266,6 +266,7 @@ templates.env.globals['t'] = lambda key, **kwargs: translation_helper.get(key, s
 templates.env.globals['get_translations_json'] = lambda: json.dumps(
     translation_helper.get_translations(settings.CURRENT_LANGUAGE)
 )
+templates.env.globals['get_keybindings_json'] = lambda: json.dumps(settings.KEYBINDINGS)
 templates.env.globals['current_language'] = lambda: settings.CURRENT_LANGUAGE
 templates.env.globals['available_languages'] = lambda: [lang.to_dict() for lang in language_registry.get_all_languages()]
 templates.env.globals['custom_background'] = lambda: settings.CUSTOM_BACKGROUND
