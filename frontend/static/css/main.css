@@ -355,7 +355,25 @@ span.checked:hover {
     border-color: var(--primary-color);
 }
 
-.gallery-item:hover a img {
+.gallery-item:hover a img,
+.gallery-item a:focus img,
+.gallery-item a:focus-visible img,
+.gallery-item:focus-within a img {
+    border-color: var(--primary-color);
+}
+
+.gallery-item a:focus,
+.gallery-item a:focus-visible {
+    outline: none;
+}
+
+#albums-grid a:focus,
+#albums-grid a:focus-visible,
+#sub-albums-grid a:focus,
+#sub-albums-grid a:focus-visible,
+.album-card:focus,
+.album-card:focus-visible {
+    outline: none;
     border-color: var(--primary-color);
 }
 

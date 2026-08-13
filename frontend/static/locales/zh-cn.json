@@ -31,10 +31,15 @@
         "keybindings": {
             "title": "",
             "description": "",
+            "context_gallery_nav": "",
             "context_media_viewer": "",
             "context_fullscreen_viewer": "",
             "context_tag_autocomplete": "",
             "actions": {
+                "gallery_nav_up": "",
+                "gallery_nav_down": "",
+                "gallery_nav_left": "",
+                "gallery_nav_right": "",
                 "media_nav_prev": "",
                 "media_nav_next": "",
                 "media_fullscreen": "",

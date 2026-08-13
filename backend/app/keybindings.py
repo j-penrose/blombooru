@@ -48,6 +48,26 @@ KEYBINDING_ACTIONS: dict[str, dict] = {
         "label_key": "admin.keybindings.actions.fullscreen_move_right",
         "default": {"code": "ArrowRight", "key": "ArrowRight"},
     },
+    "gallery_nav_up": {
+        "context": "gallery_nav",
+        "label_key": "admin.keybindings.actions.gallery_nav_up",
+        "default": {"code": "ArrowUp", "key": "ArrowUp"},
+    },
+    "gallery_nav_down": {
+        "context": "gallery_nav",
+        "label_key": "admin.keybindings.actions.gallery_nav_down",
+        "default": {"code": "ArrowDown", "key": "ArrowDown"},
+    },
+    "gallery_nav_left": {
+        "context": "gallery_nav",
+        "label_key": "admin.keybindings.actions.gallery_nav_left",
+        "default": {"code": "ArrowLeft", "key": "ArrowLeft"},
+    },
+    "gallery_nav_right": {
+        "context": "gallery_nav",
+        "label_key": "admin.keybindings.actions.gallery_nav_right",
+        "default": {"code": "ArrowRight", "key": "ArrowRight"},
+    },
     "tag_suggestion_prev": {
         "context": "tag_autocomplete",
         "label_key": "admin.keybindings.actions.tag_suggestion_prev",

@@ -250,7 +250,7 @@ class AlbumViewer extends BaseGallery {
         }
 
         return `
-            <a href="/album/${album.id}" class="block surface border hover:border-primary transition-colors">
+            <a href="/album/${album.id}" class="album-card block surface border hover:border-primary focus:border-primary focus:outline-none transition-colors">
                 ${thumbnailHTML}
                 <div class="p-2 border-t">
                     <div class="text-xs font-bold truncate mb-1">${album.name}</div>
