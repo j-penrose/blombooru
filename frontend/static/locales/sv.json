@@ -31,11 +31,19 @@
         "keybindings": {
             "title": "Kortkommandon",
             "description": "Anpassa kortkommandon för navigering. Modifieringstangenter (Ctrl, Shift, Alt, Meta) och ett fåtal andra reserverade tangenter är inte tillåtna.",
-            "context_media_viewer": "Medievisare",
+            "context_media_viewer": "Mediesidan",
+            "context_fullscreen_viewer": "Helskärmsvisaren",
             "context_tag_autocomplete": "Taggautokomplettering",
             "actions": {
                 "media_nav_prev": "Föregående media",
                 "media_nav_next": "Nästa media",
+                "media_fullscreen": "Växla helskärm",
+                "fullscreen_zoom_in": "Zooma in",
+                "fullscreen_zoom_out": "Zooma ut",
+                "fullscreen_move_up": "Gå uppåt",
+                "fullscreen_move_down": "Gå nedåt",
+                "fullscreen_move_left": "Gå till vänster",
+                "fullscreen_move_right": "Gå till höger",
                 "tag_suggestion_prev": "Föregående förslag",
                 "tag_suggestion_next": "Nästa förslag"
             },

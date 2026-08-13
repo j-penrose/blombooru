@@ -509,6 +509,11 @@ span.checked:hover {
     margin: 0 auto;
 }
 
+video:focus,
+video:focus-visible {
+    outline: 2px solid var(--primary-color);
+}
+
 .info-row {
     display: flex;
     justify-content: space-between;

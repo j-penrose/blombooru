@@ -32,10 +32,18 @@
             "title": "",
             "description": "",
             "context_media_viewer": "",
+            "context_fullscreen_viewer": "",
             "context_tag_autocomplete": "",
             "actions": {
                 "media_nav_prev": "",
                 "media_nav_next": "",
+                "media_fullscreen": "",
+                "fullscreen_zoom_in": "",
+                "fullscreen_zoom_out": "",
+                "fullscreen_move_up": "",
+                "fullscreen_move_down": "",
+                "fullscreen_move_left": "",
+                "fullscreen_move_right": "",
                 "tag_suggestion_prev": "",
                 "tag_suggestion_next": ""
             },

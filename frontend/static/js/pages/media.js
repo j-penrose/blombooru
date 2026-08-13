@@ -35,6 +35,7 @@ class MediaViewer extends MediaViewerBase {
         this.loadMedia();
         this.setupAIMetadataToggle();
         this.setupEventListeners();
+        this.setupKeybindings();
     }
 
     async loadWDTaggerSettings() {
@@ -879,31 +880,175 @@ class MediaViewer extends MediaViewerBase {
                 }
             }
 
-            document.addEventListener('keydown', (e) => {
-                const activeEl = document.activeElement;
-                const isTyping = activeEl && (
-                    activeEl.tagName === 'INPUT' ||
-                    activeEl.tagName === 'TEXTAREA' ||
-                    activeEl.isContentEditable ||
-                    activeEl.closest('.modal')
-                );
-                if (isTyping) return;
-
-                const fullscreenOverlay = document.getElementById('fullscreen-overlay');
-                if (fullscreenOverlay && fullscreenOverlay.classList.contains('active')) return;
-
-                if (window.keybindings.matches(e, 'media_nav_prev') && prev_id) {
-                    e.preventDefault();
-                    window.location.href = buildNavUrl(prev_id);
-                } else if (window.keybindings.matches(e, 'media_nav_next') && next_id) {
-                    e.preventDefault();
-                    window.location.href = buildNavUrl(next_id);
-                }
-            });
+            this.prevNavUrl = prev_id ? buildNavUrl(prev_id) : null;
+            this.nextNavUrl = next_id ? buildNavUrl(next_id) : null;
 
         } catch (e) {
             console.error('Error fetching adjacent media:', e);
         }
+    }
+
+    setupKeybindings() {
+        document.addEventListener('keydown', (e) => {
+            const activeEl = document.activeElement;
+            const isTyping = activeEl && (
+                activeEl.tagName === 'INPUT' ||
+                activeEl.tagName === 'TEXTAREA' ||
+                activeEl.isContentEditable ||
+                activeEl.closest('.modal')
+            );
+            if (isTyping) return;
+
+            if (window.keybindings && window.keybindings.matches(e, 'media_fullscreen')) {
+                e.preventDefault();
+                this.toggleFullscreen();
+                return;
+            }
+
+            const containerVideo = this.el('media-container')?.querySelector('video');
+            const overlayVideo = document.getElementById('fullscreen-video');
+            const activeVideo = (overlayVideo && overlayVideo.style.display !== 'none') ? overlayVideo : containerVideo;
+
+            if (activeVideo) {
+                if (document.activeElement !== activeVideo) {
+                    try { activeVideo.focus(); } catch (_) {}
+                }
+
+                if (e.code === 'Space' || e.key === ' ') {
+                    e.preventDefault();
+                    if (activeVideo.paused) {
+                        activeVideo.play().catch(() => {});
+                    } else {
+                        activeVideo.pause();
+                    }
+                    return;
+                }
+
+                const isNativeFullscreen = !!(
+                    document.fullscreenElement ||
+                    document.webkitFullscreenElement ||
+                    document.mozFullScreenElement ||
+                    document.msFullscreenElement ||
+                    (activeVideo && activeVideo.webkitDisplayingFullscreen)
+                );
+
+                const isPlaying = !activeVideo.paused && !activeVideo.ended && activeVideo.readyState > 2;
+
+                if (isNativeFullscreen || isPlaying) return;
+            }
+
+            const fullscreenOverlay = document.getElementById('fullscreen-overlay');
+            if (fullscreenOverlay && fullscreenOverlay.classList.contains('active')) return;
+
+            if (window.keybindings && window.keybindings.matches(e, 'media_nav_prev') && this.prevNavUrl) {
+                e.preventDefault();
+                window.location.href = this.prevNavUrl;
+            } else if (window.keybindings && window.keybindings.matches(e, 'media_nav_next') && this.nextNavUrl) {
+                e.preventDefault();
+                window.location.href = this.nextNavUrl;
+            }
+        });
+
+        const handleFSChange = () => {
+            const fsEl = document.fullscreenElement ||
+                document.webkitFullscreenElement ||
+                document.mozFullScreenElement ||
+                document.msFullscreenElement;
+
+            if (fsEl) {
+                const vid = fsEl.tagName === 'VIDEO' ? fsEl : fsEl.querySelector('video');
+                if (vid) {
+                    try { vid.focus(); } catch (_) {}
+                }
+            }
+        };
+
+        ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(evt => {
+            document.addEventListener(evt, handleFSChange);
+        });
+    }
+
+    toggleFullscreen() {
+        const nativeFullscreenEl = document.fullscreenElement ||
+            document.webkitFullscreenElement ||
+            document.mozFullScreenElement ||
+            document.msFullscreenElement;
+
+        const overlay = document.getElementById('fullscreen-overlay');
+        const isOverlayActive = overlay && overlay.classList.contains('active');
+
+        if (nativeFullscreenEl) {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.mozCancelFullScreen) {
+                document.mozCancelFullScreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+            }
+            return;
+        }
+
+        const containerVideo = this.el('media-container')?.querySelector('video');
+        const overlayVideo = document.getElementById('fullscreen-video');
+        const activeVideo = (overlayVideo && overlayVideo.style.display !== 'none') ? overlayVideo : containerVideo;
+
+        if (activeVideo && activeVideo.webkitDisplayingFullscreen) {
+            if (activeVideo.webkitExitFullscreen) {
+                activeVideo.webkitExitFullscreen();
+            }
+            return;
+        }
+
+        if (isOverlayActive) {
+            if (this.fullscreenViewer) {
+                this.fullscreenViewer.close();
+            }
+            return;
+        }
+
+        if (!this.currentMedia) return;
+
+        if (this.currentMedia.file_type === 'video') {
+            const videoEl = containerVideo || overlayVideo;
+            if (videoEl) {
+                const focusVideo = () => {
+                    try {
+                        videoEl.focus();
+                    } catch (_) {}
+                };
+
+                if (videoEl.requestFullscreen) {
+                    videoEl.requestFullscreen().then(focusVideo).catch(() => {
+                        this.openFullscreenViewer();
+                    });
+                    focusVideo();
+                } else if (videoEl.webkitRequestFullscreen) {
+                    videoEl.webkitRequestFullscreen();
+                    focusVideo();
+                } else if (videoEl.webkitEnterFullscreen) {
+                    videoEl.webkitEnterFullscreen();
+                    focusVideo();
+                } else if (videoEl.msRequestFullscreen) {
+                    videoEl.msRequestFullscreen();
+                    focusVideo();
+                } else {
+                    this.openFullscreenViewer();
+                }
+            } else {
+                this.openFullscreenViewer();
+            }
+        } else {
+            this.openFullscreenViewer();
+        }
+    }
+
+    openFullscreenViewer() {
+        if (!this.currentMedia || !this.fullscreenViewer) return;
+        const isVideo = this.currentMedia.file_type === 'video';
+        const fileUrl = `/api/media/${this.currentMedia.id}/file${this.currentMedia.hash ? '?v=' + this.currentMedia.hash : ''}`;
+        this.fullscreenViewer.open(fileUrl, isVideo);
     }
 
     async addToAlbums() {

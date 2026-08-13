@@ -13,6 +13,41 @@ KEYBINDING_ACTIONS: dict[str, dict] = {
         "label_key": "admin.keybindings.actions.media_nav_next",
         "default": {"code": "ArrowRight", "key": "ArrowRight"},
     },
+    "media_fullscreen": {
+        "context": "media_viewer",
+        "label_key": "admin.keybindings.actions.media_fullscreen",
+        "default": {"code": "KeyF", "key": "f"},
+    },
+    "fullscreen_zoom_in": {
+        "context": "fullscreen_viewer",
+        "label_key": "admin.keybindings.actions.fullscreen_zoom_in",
+        "default": {"code": "KeyG", "key": "g"},
+    },
+    "fullscreen_zoom_out": {
+        "context": "fullscreen_viewer",
+        "label_key": "admin.keybindings.actions.fullscreen_zoom_out",
+        "default": {"code": "KeyH", "key": "h"},
+    },
+    "fullscreen_move_up": {
+        "context": "fullscreen_viewer",
+        "label_key": "admin.keybindings.actions.fullscreen_move_up",
+        "default": {"code": "ArrowUp", "key": "ArrowUp"},
+    },
+    "fullscreen_move_down": {
+        "context": "fullscreen_viewer",
+        "label_key": "admin.keybindings.actions.fullscreen_move_down",
+        "default": {"code": "ArrowDown", "key": "ArrowDown"},
+    },
+    "fullscreen_move_left": {
+        "context": "fullscreen_viewer",
+        "label_key": "admin.keybindings.actions.fullscreen_move_left",
+        "default": {"code": "ArrowLeft", "key": "ArrowLeft"},
+    },
+    "fullscreen_move_right": {
+        "context": "fullscreen_viewer",
+        "label_key": "admin.keybindings.actions.fullscreen_move_right",
+        "default": {"code": "ArrowRight", "key": "ArrowRight"},
+    },
     "tag_suggestion_prev": {
         "context": "tag_autocomplete",
         "label_key": "admin.keybindings.actions.tag_suggestion_prev",

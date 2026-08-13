@@ -31,11 +31,19 @@
         "keybindings": {
             "title": "Keyboard Shortcuts",
             "description": "Customise the keyboard shortcuts used for navigation. Modifier keys (Ctrl, Shift, Alt, Meta) and a few other reserved keys are not allowed.",
-            "context_media_viewer": "Media Viewer",
+            "context_media_viewer": "Media Page",
+            "context_fullscreen_viewer": "Fullscreen Viewer",
             "context_tag_autocomplete": "Tag Autocomplete",
             "actions": {
                 "media_nav_prev": "Previous media",
                 "media_nav_next": "Next media",
+                "media_fullscreen": "Toggle fullscreen",
+                "fullscreen_zoom_in": "Zoom in",
+                "fullscreen_zoom_out": "Zoom out",
+                "fullscreen_move_up": "Move up",
+                "fullscreen_move_down": "Move down",
+                "fullscreen_move_left": "Move left",
+                "fullscreen_move_right": "Move right",
                 "tag_suggestion_prev": "Previous suggestion",
                 "tag_suggestion_next": "Next suggestion"
             },

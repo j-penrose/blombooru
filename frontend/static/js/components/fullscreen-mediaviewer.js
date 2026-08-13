@@ -56,9 +56,39 @@ class FullscreenMediaViewer {
         });
 
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && this.overlay.classList.contains('active')) {
+            if (!this.overlay || !this.overlay.classList.contains('active')) return;
+
+            const isNativeFullscreen = !!(
+                document.fullscreenElement ||
+                document.webkitFullscreenElement ||
+                document.mozFullScreenElement ||
+                document.msFullscreenElement ||
+                (this.video && this.video.webkitDisplayingFullscreen)
+            );
+            if (isNativeFullscreen) return;
+
+            const isVideoActive = this.video && this.video.style.display !== 'none';
+            const isPlaying = isVideoActive && !this.video.paused && !this.video.ended && this.video.readyState > 2;
+            if (isPlaying) return;
+
+            const activeEl = document.activeElement;
+            const isTyping = activeEl && (
+                activeEl.tagName === 'INPUT' ||
+                activeEl.tagName === 'TEXTAREA' ||
+                activeEl.isContentEditable ||
+                activeEl.closest('.modal')
+            );
+            if (isTyping) return;
+
+            if (e.key === 'Escape') {
                 e.stopImmediatePropagation();
                 this.close();
+                return;
+            }
+
+            if (this.handleKeybinding(e)) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
             }
         });
 
@@ -344,6 +374,76 @@ class FullscreenMediaViewer {
             this.activeElement.classList.remove('zoomed');
             this.overlay.style.cursor = 'zoom-out';
         }
+    }
+
+    zoomIn() {
+        if (!this.overlay || !this.overlay.classList.contains('active')) return;
+        this.zoom(1.1, window.innerWidth / 2, window.innerHeight / 2);
+    }
+
+    zoomOut() {
+        if (!this.overlay || !this.overlay.classList.contains('active')) return;
+        this.zoom(0.9, window.innerWidth / 2, window.innerHeight / 2);
+    }
+
+    moveUp(step = 60) {
+        if (!this.overlay || !this.overlay.classList.contains('active')) return;
+        this.pan(0, step);
+    }
+
+    moveDown(step = 60) {
+        if (!this.overlay || !this.overlay.classList.contains('active')) return;
+        this.pan(0, -step);
+    }
+
+    moveLeft(step = 60) {
+        if (!this.overlay || !this.overlay.classList.contains('active')) return;
+        this.pan(step, 0);
+    }
+
+    moveRight(step = 60) {
+        if (!this.overlay || !this.overlay.classList.contains('active')) return;
+        this.pan(-step, 0);
+    }
+
+    pan(deltaX, deltaY) {
+        if (this.scale <= 1) return;
+        this.translateX += deltaX;
+        this.translateY += deltaY;
+        this.constrainPosition();
+        this.updateTransform();
+    }
+
+    handleKeybinding(e) {
+        if (!this.overlay || !this.overlay.classList.contains('active')) return false;
+        if (!window.keybindings) return false;
+
+        if (window.keybindings.matches(e, 'fullscreen_zoom_in') || (!e.ctrlKey && !e.altKey && !e.metaKey && (e.code === 'NumpadAdd' || e.key === '+'))) {
+            this.zoomIn();
+            return true;
+        }
+        if (window.keybindings.matches(e, 'fullscreen_zoom_out') || (!e.ctrlKey && !e.altKey && !e.metaKey && (e.code === 'NumpadSubtract' || e.key === '-'))) {
+            this.zoomOut();
+            return true;
+        }
+        if (window.keybindings.matches(e, 'fullscreen_move_up')) {
+            this.moveUp();
+            return true;
+        }
+        if (window.keybindings.matches(e, 'fullscreen_move_down')) {
+            this.moveDown();
+            return true;
+        }
+        if (window.keybindings.matches(e, 'fullscreen_move_left')) {
+            this.moveLeft();
+            return true;
+        }
+        if (window.keybindings.matches(e, 'fullscreen_move_right')) {
+            this.moveRight();
+            return true;
+        }
+
+        return false;
     }
 }
 
