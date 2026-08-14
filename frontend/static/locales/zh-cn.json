@@ -118,6 +118,14 @@
             "import_warning": "内容匹配（哈希值相同）的现有文件将被跳过。",
             "title": "备份与恢复"
         },
+        "backend": {
+            "save_settings": "",
+            "title": ""
+        },
+        "theming": {
+            "save_background": "",
+            "title": ""
+        },
         "caching": {
             "db_index": "数据库索引",
             "enable_redis": "启用 Redis 缓存",
@@ -279,6 +287,7 @@
             "media_type_tags_images": "",
             "media_type_tags_gifs": "",
             "media_type_tags_videos": "",
+            "save_media_type_tags": "",
             "custom_background": {
                 "title": "",
                 "enable": "",
@@ -975,6 +984,9 @@
             "refresh_and_retry": "请刷新页面并重试。",
             "redis_connection_failed": "Redis 连接失败：{error}",
             "redis_connection_successful": "Redis 连接成功",
+            "backend_saved": "",
+            "theming_saved": "",
+            "media_type_tags_saved": "",
             "settings_updated": "设置更新成功",
             "tag_deleted": "标签 '{tag_name}' 已成功删除",
             "tag_merged": "",

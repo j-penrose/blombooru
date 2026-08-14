@@ -54,16 +54,6 @@ class AdminSystem {
             addCustomButtonBtn.addEventListener('click', () => this.addCustomButton());
         }
 
-        // Media type tag inputs
-        const mediaTypeTagIds = ['media-type-tags-image', 'media-type-tags-gif', 'media-type-tags-video'];
-        mediaTypeTagIds.forEach(id => {
-            const el = document.getElementById(id);
-            if (!el) return;
-            this.app.tagInputHelper.setupTagInput(el, id, { onValidate: () => { } });
-            if (typeof TagAutocomplete !== 'undefined') {
-                new TagAutocomplete(el, { multipleValues: true, allowCreate: true });
-            }
-        });
 
         // AI Tagger Blacklisted tags input
         const blacklistedTagsEl = document.getElementById('wd-blacklisted-tags');
@@ -769,14 +759,6 @@ class AdminSystem {
         const popularTagsLimit = popularTagsLimitRaw ? Math.max(1, Math.min(100, parseInt(popularTagsLimitRaw) || 20)) : 20;
         const requireAuth = document.getElementById('require-auth')?.checked || false;
 
-        const redisSettings = {
-            enabled: document.getElementById('redis-enabled')?.checked || false,
-            host: document.getElementById('redis-host')?.value || 'redis',
-            port: parseInt(document.getElementById('redis-port')?.value || '6379'),
-            db: parseInt(document.getElementById('redis-db')?.value || '0'),
-            password: document.getElementById('redis-password')?.value || ''
-        };
-
         const sidebarMode = this.sidebarFilterModeSelect ? this.sidebarFilterModeSelect.getValue() : 'rating';
 
         // Filter out empty buttons (must have both title and tags)
@@ -795,14 +777,6 @@ class AdminSystem {
             return;
         }
 
-        // Collect media_type_tags
-        const getMediaTypeTags = (id) => {
-            const el = document.getElementById(id);
-            if (!el) return [];
-            const text = this.app.tagInputHelper.getPlainTextFromDiv(el);
-            return text.split(/\s+/).filter(t => t.length > 0);
-        };
-
         const settings = {
             app_name: appName,
             theme: theme,
@@ -814,34 +788,8 @@ class AdminSystem {
             popular_tags_limit: popularTagsLimit,
             external_share_url: externalShareUrl || null,
             require_auth: requireAuth,
-            redis: redisSettings,
-            shared_tags: {
-                enabled: document.getElementById('shared-tags-enabled')?.checked || false,
-                host: document.getElementById('shared-tags-host')?.value || 'shared-tag-db',
-                port: parseInt(document.getElementById('shared-tags-port')?.value || '5432'),
-                name: document.getElementById('shared-tags-name')?.value || 'shared_tags',
-                user: document.getElementById('shared-tags-user')?.value || 'postgres',
-                password: document.getElementById('shared-tags-password')?.value || ''
-            },
             sidebar_filter_mode: sidebarMode,
-            sidebar_custom_buttons: validButtons,
-            media_type_tags: {
-                image: getMediaTypeTags('media-type-tags-image'),
-                gif: getMediaTypeTags('media-type-tags-gif'),
-                video: getMediaTypeTags('media-type-tags-video')
-            },
-            custom_background: {
-                enabled: document.getElementById('custom-bg-enabled')?.checked || false,
-                media_id: this._customBgMediaId || null,
-                blur: parseInt(document.getElementById('custom-bg-blur')?.value || '0'),
-                brightness: parseInt(document.getElementById('custom-bg-brightness')?.value || '100'),
-                saturation: parseInt(document.getElementById('custom-bg-saturation')?.value || '100'),
-                contrast: parseInt(document.getElementById('custom-bg-contrast')?.value || '100'),
-                size: this.customBgSizeSelect ? this.customBgSizeSelect.getValue() : 'cover',
-                position_x: parseInt(document.getElementById('custom-bg-position-x')?.value || '50'),
-                position_y: parseInt(document.getElementById('custom-bg-position-y')?.value || '50'),
-                opacity: parseInt(document.getElementById('custom-bg-opacity')?.value || '30')
-            }
+            sidebar_custom_buttons: validButtons
         };
 
         try {
@@ -850,11 +798,70 @@ class AdminSystem {
                 body: JSON.stringify(settings)
             });
 
-            // Show/hide sync button based on whether shared tags are enabled
-            const syncBtn = document.getElementById('sync-shared-tags-btn');
-            if (syncBtn) syncBtn.style.display = settings.shared_tags.enabled ? 'inline-block' : 'none';
-
             app.showNotification(window.i18n.t('notifications.admin.settings_updated'), 'success');
+        } catch (error) {
+            app.showNotification(error.message, 'error', window.i18n.t('notifications.admin.error_saving_settings'));
+        }
+    }
+
+    async saveCustomBackground() {
+        const bgSettings = {
+            enabled: document.getElementById('custom-bg-enabled')?.checked || false,
+            media_id: this._customBgMediaId || null,
+            blur: parseInt(document.getElementById('custom-bg-blur')?.value || '0'),
+            brightness: parseInt(document.getElementById('custom-bg-brightness')?.value || '100'),
+            saturation: parseInt(document.getElementById('custom-bg-saturation')?.value || '100'),
+            contrast: parseInt(document.getElementById('custom-bg-contrast')?.value || '100'),
+            zoom: parseInt(document.getElementById('custom-bg-zoom')?.value || '100'),
+            size: this.customBgSizeSelect ? this.customBgSizeSelect.getValue() : 'cover',
+            position_x: parseInt(document.getElementById('custom-bg-position-x')?.value || '50'),
+            position_y: parseInt(document.getElementById('custom-bg-position-y')?.value || '50'),
+            opacity: parseInt(document.getElementById('custom-bg-opacity')?.value || '30')
+        };
+
+        try {
+            await app.apiCall('/api/admin/settings', {
+                method: 'PATCH',
+                body: JSON.stringify({ custom_background: bgSettings })
+            });
+
+            app.showNotification(window.i18n.t('notifications.admin.theming_saved') || window.i18n.t('notifications.admin.settings_updated'), 'success');
+        } catch (error) {
+            app.showNotification(error.message, 'error', window.i18n.t('notifications.admin.error_saving_settings'));
+        }
+    }
+
+    async saveBackendSettings() {
+        const redisSettings = {
+            enabled: document.getElementById('redis-enabled')?.checked || false,
+            host: document.getElementById('redis-host')?.value || 'redis',
+            port: parseInt(document.getElementById('redis-port')?.value || '6379'),
+            db: parseInt(document.getElementById('redis-db')?.value || '0'),
+            password: document.getElementById('redis-password')?.value || ''
+        };
+
+        const sharedTagsSettings = {
+            enabled: document.getElementById('shared-tags-enabled')?.checked || false,
+            host: document.getElementById('shared-tags-host')?.value || 'shared-tag-db',
+            port: parseInt(document.getElementById('shared-tags-port')?.value || '5432'),
+            name: document.getElementById('shared-tags-name')?.value || 'shared_tags',
+            user: document.getElementById('shared-tags-user')?.value || 'postgres',
+            password: document.getElementById('shared-tags-password')?.value || ''
+        };
+
+        try {
+            await app.apiCall('/api/admin/settings', {
+                method: 'PATCH',
+                body: JSON.stringify({
+                    redis: redisSettings,
+                    shared_tags: sharedTagsSettings
+                })
+            });
+
+            const syncBtn = document.getElementById('sync-shared-tags-btn');
+            if (syncBtn) syncBtn.style.display = sharedTagsSettings.enabled ? 'inline-block' : 'none';
+
+            app.showNotification(window.i18n.t('notifications.admin.backend_saved') || window.i18n.t('notifications.admin.settings_updated'), 'success');
         } catch (error) {
             app.showNotification(error.message, 'error', window.i18n.t('notifications.admin.error_saving_settings'));
         }

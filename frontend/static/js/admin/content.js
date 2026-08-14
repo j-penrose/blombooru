@@ -496,6 +496,55 @@ class AdminContent {
         // Clear tags
         const clearBtn = document.getElementById('clear-tags-btn');
         clearBtn?.addEventListener('click', () => this.clearAllTags());
+
+        // Setup Media Type Tags
+        this.setupMediaTypeTags();
+    }
+
+    setupMediaTypeTags() {
+        const mediaTypeTagIds = ['media-type-tags-image', 'media-type-tags-gif', 'media-type-tags-video'];
+        mediaTypeTagIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            this.app.tagInputHelper.setupTagInput(el, id, { onValidate: () => { } });
+            if (typeof TagAutocomplete !== 'undefined') {
+                new TagAutocomplete(el, { multipleValues: true, allowCreate: true });
+            }
+        });
+
+        const mediaTypeTagsForm = document.getElementById('media-type-tags-form');
+        if (mediaTypeTagsForm) {
+            mediaTypeTagsForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.saveMediaTypeTags();
+            });
+        }
+    }
+
+    async saveMediaTypeTags() {
+        const getMediaTypeTags = (id) => {
+            const el = document.getElementById(id);
+            if (!el) return [];
+            const text = this.app.tagInputHelper.getPlainTextFromDiv(el);
+            return text.split(/\s+/).filter(t => t.length > 0);
+        };
+
+        const mediaTypeTags = {
+            image: getMediaTypeTags('media-type-tags-image'),
+            gif: getMediaTypeTags('media-type-tags-gif'),
+            video: getMediaTypeTags('media-type-tags-video')
+        };
+
+        try {
+            await app.apiCall('/api/admin/settings', {
+                method: 'PATCH',
+                body: JSON.stringify({ media_type_tags: mediaTypeTags })
+            });
+
+            app.showNotification(window.i18n.t('notifications.admin.media_type_tags_saved') || window.i18n.t('notifications.admin.settings_updated'), 'success');
+        } catch (error) {
+            app.showNotification(error.message, 'error', window.i18n.t('notifications.admin.error_saving_settings'));
+        }
     }
 
     async loadTagStats() {

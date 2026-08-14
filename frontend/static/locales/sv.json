@@ -118,6 +118,14 @@
             "import_warning": "Existerande filer med matchande innehåll (hashar) kommer att hoppas över.",
             "title": "Säkerhetskopia & återställning"
         },
+        "backend": {
+            "save_settings": "Spara Backend-inställningar",
+            "title": "Backend"
+        },
+        "theming": {
+            "save_background": "Spara Bakgrundsinställningar",
+            "title": "Teman"
+        },
         "caching": {
             "db_index": "DB-index",
             "enable_redis": "Aktivera Redis-caching",
@@ -279,6 +287,7 @@
             "media_type_tags_images": "Bildtaggar",
             "media_type_tags_gifs": "GIF-taggar",
             "media_type_tags_videos": "Videotaggar",
+            "save_media_type_tags": "Spara Automatiska Taggar",
             "custom_background": {
                 "title": "Anpassad Bakgrund",
                 "enable": "Aktivera Anpassad Bakgrund",
@@ -975,6 +984,9 @@
             "refresh_and_retry": "Uppdatera sidan och försök igen.",
             "redis_connection_failed": "Redis-anslutning misslyckades: {error}",
             "redis_connection_successful": "Redis-anslutning lyckades",
+            "backend_saved": "Backend-inställningar har sparats",
+            "theming_saved": "Bakgrundsinställningar har sparats",
+            "media_type_tags_saved": "Automatiska taggar har sparats",
             "settings_updated": "Inställningar uppdaterade",
             "tag_deleted": "Tagg '{tag_name}' raderad",
             "tag_merged": "Tagg '{source_tag}' slogs ihop med '{target_tag}'",

@@ -118,6 +118,14 @@
             "import_warning": "Existing files with matching content (hashes) will be skipped.",
             "title": "Backup & Restore"
         },
+        "backend": {
+            "save_settings": "Save Backend Settings",
+            "title": "Backend"
+        },
+        "theming": {
+            "save_background": "Save Background Settings",
+            "title": "Theming"
+        },
         "caching": {
             "db_index": "DB Index",
             "enable_redis": "Enable Redis Caching",
@@ -279,6 +287,7 @@
             "media_type_tags_images": "Image Tags",
             "media_type_tags_gifs": "GIF Tags",
             "media_type_tags_videos": "Video Tags",
+            "save_media_type_tags": "Save Automatic Tags",
             "custom_background": {
                 "title": "Custom Background",
                 "enable": "Enable Custom Background",
@@ -975,6 +984,9 @@
             "refresh_and_retry": "Please refresh the page and try again.",
             "redis_connection_failed": "Redis connection failed: {error}",
             "redis_connection_successful": "Redis connection successful",
+            "backend_saved": "Backend settings saved successfully",
+            "theming_saved": "Background settings saved successfully",
+            "media_type_tags_saved": "Automatic tags saved successfully",
             "settings_updated": "Settings updated successfully",
             "tag_deleted": "Tag '{tag_name}' deleted successfully",
             "tag_merged": "Tag '{source_tag}' successfully merged into '{target_tag}'",

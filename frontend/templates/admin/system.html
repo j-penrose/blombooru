@@ -255,492 +255,324 @@
                 </div>
             </div>
 
-            <div class="space-y-4 mb-4">
-                <!-- Caching -->
-                <div>
-                    <label class="block text-xs font-bold mb-2">{{ t('admin.caching.title') }}</label>
-                    <div class="bg p-4 border h-full">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" id="redis-enabled" name="redis_enabled"
-                                class="w-4 h-4 accent-primary">
-                            <span class="text-xs font-bold">{{ t('admin.caching.enable_redis') }}</span>
-                        </label>
+            <div class="border-t mt-4 pt-4">
+                <button type="submit" class="btn-primary">
+                    {{ t('admin.settings.save_settings') }}
+                </button>
+            </div>
+        </form>
+    </div>
 
-                        <div id="redis-settings-container" class="mt-4" style="display: none;">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                                <div>
-                                    <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
-                                        {{ t('common.host') }}
-                                    </label>
-                                    <input type="text" id="redis-host"
-                                        class="w-full bg px-3 py-2 border text-xs focus:outline-none hover:border-primary transition-colors focus:border-primary"
-                                        placeholder="redis">
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
-                                        {{ t('common.port') }}
-                                    </label>
-                                    <input type="number" id="redis-port"
-                                        class="w-full bg px-3 py-2 border text-xs focus:outline-none hover:border-primary transition-colors focus:border-primary"
-                                        placeholder="6379">
-                                </div>
-                            </div>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                                <div>
-                                    <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
-                                        {{ t('admin.caching.db_index') }}
-                                    </label>
-                                    <input type="number" id="redis-db"
-                                        class="w-full bg px-3 py-2 border text-xs focus:outline-none hover:border-primary transition-colors focus:border-primary"
-                                        placeholder="0">
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
-                                        {{ t('common.password') }}
-                                    </label>
-                                    <input type="password" id="redis-password"
-                                        class="w-full bg px-3 py-2 border text-xs focus:outline-none hover:border-primary transition-colors focus:border-primary"
-                                        placeholder="{{ t('common.password_placeholder') }}">
-                                </div>
-                            </div>
-                            <button type="button" id="test-redis-btn" class="btn-primary w-full">
-                                {{ t('common.test_connection') }}
+    <!-- Theming Section -->
+    <div id="theming-section" class="surface p-2 sm:p-6 border mb-4">
+        <h2 class="text-base font-bold mb-4 pb-3 border-b">{{ t('admin.theming.title') }}</h2>
+
+        <!-- Custom Background Form -->
+        <form id="custom-bg-form" class="mb-6">
+            <label class="block text-xs font-bold mb-2">
+                {{ t('admin.settings.custom_background.title') }}
+            </label>
+            <div class="bg p-4 border">
+                <div>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="custom-bg-enabled" class="accent-primary w-4 h-4">
+                        <span class="text-xs font-bold">
+                            {{ t('admin.settings.custom_background.enable') }}
+                        </span>
+                    </label>
+                    <p class="text-xs text-secondary opacity-70 ml-6">
+                        {{ t('admin.settings.custom_background.description') }}
+                    </p>
+                </div>
+
+                <div id="custom-bg-options" class="space-y-4 mt-4" style="display: none;">
+                    <!-- Media preview and selection -->
+                    <div class="flex items-center gap-4">
+                        <div id="custom-bg-preview"
+                            class="w-16 h-16 border bg flex items-center justify-center overflow-hidden flex-shrink-0">
+                            <span id="custom-bg-preview-text" class="text-xs text-secondary text-center px-1">
+                                {{ t('admin.settings.custom_background.no_media_selected') }}
+                            </span>
+                            <img id="custom-bg-preview-img" class="w-full h-full object-cover" style="display: none;"
+                                alt="">
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <button type="button" id="custom-bg-select-btn" class="btn-primary px-3 py-1.5 text-xs">
+                                {{ t('admin.settings.custom_background.select_media') }}
                             </button>
-                            <div id="redis-test-result" class="mt-2 text-xs" style="display: none;"></div>
+                            <button type="button" id="custom-bg-remove-btn" class="btn-danger px-3 py-1.5 text-xs"
+                                style="display: none;">
+                                {{ t('admin.settings.custom_background.remove_media') }}
+                            </button>
                         </div>
                     </div>
-                </div>
 
-                <!-- Shared Tags -->
-                <div>
-                    <label class="block text-xs font-bold mb-2">{{ t('admin.shared_tags.title') }}</label>
-                    <div class="bg p-4 border h-full">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" id="shared-tags-enabled" name="shared_tags_enabled"
-                                class="w-4 h-4 accent-primary">
-                            <span class="text-xs font-bold">{{ t('admin.shared_tags.enable') }}</span>
+                    <!-- Fit mode -->
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
+                            {{ t('admin.settings.custom_background.fit_mode') }}
                         </label>
-                        <p class="text-xs text-secondary opacity-70 ml-6">
-                            {{ t('admin.shared_tags.description') }}
-                        </p>
-
-                        <div id="shared-tags-settings-container" class="mt-4" style="display: none;">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                                <div>
-                                    <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
-                                        {{ t('common.host') }}
-                                    </label>
-                                    <input type="text" id="shared-tags-host"
-                                        class="w-full bg px-3 py-2 border text-xs focus:outline-none hover:border-primary transition-colors focus:border-primary"
-                                        placeholder="shared-tag-db">
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
-                                        {{ t('common.port') }}
-                                    </label>
-                                    <input type="number" id="shared-tags-port"
-                                        class="w-full bg px-3 py-2 border text-xs focus:outline-none hover:border-primary transition-colors focus:border-primary"
-                                        placeholder="5432">
-                                </div>
-                            </div>
-                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-                                <div>
-                                    <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
-                                        {{ t('common.database') }}
-                                    </label>
-                                    <input type="text" id="shared-tags-name"
-                                        class="w-full bg px-3 py-2 border text-xs focus:outline-none hover:border-primary transition-colors focus:border-primary"
-                                        placeholder="shared_tags">
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
-                                        {{ t('common.username') }}
-                                    </label>
-                                    <input type="text" id="shared-tags-user"
-                                        class="w-full bg px-3 py-2 border text-xs focus:outline-none hover:border-primary transition-colors focus:border-primary"
-                                        placeholder="postgres">
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
-                                        {{ t('common.password') }}
-                                    </label>
-                                    <input type="password" id="shared-tags-password"
-                                        class="w-full bg px-3 py-2 border text-xs focus:outline-none hover:border-primary transition-colors focus:border-primary"
-                                        placeholder="{{ t('common.password_placeholder') }}">
-                                </div>
-                            </div>
-                            <div class="flex gap-2 mb-2">
-                                <button type="button" id="test-shared-tags-btn" class="btn-primary flex-1">
-                                    {{ t('common.test_connection') }}
-                                </button>
-                                <button type="button" id="sync-shared-tags-btn" class="btn-dark flex-1"
-                                    style="display: none;">
-                                    {{ t('admin.shared_tags.sync_now') }}
-                                </button>
-                            </div>
-                            <div id="shared-tags-test-result" class="mt-2 text-xs" style="display: none;">
-                            </div>
-                            <div id="shared-tags-status" class="mt-3 p-3 surface border text-xs" style="display: none;">
-                                <div class="flex items-center justify-between">
-                                    <span id="shared-tags-connection-status"></span>
-                                    <span id="shared-tags-counts"></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Automatic Tags by Media Type -->
-                <div>
-                    <label class="block text-xs font-bold mb-2">
-                        {{ t('admin.settings.media_type_tags') }}
-                    </label>
-                    <div class="bg p-4 border">
-                        <p class="text-xs text-secondary opacity-70 mb-4">
-                            {{ t('admin.settings.media_type_tags_hint') }}
-                        </p>
-                        <div class="space-y-3">
-                            <div>
-                                <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
-                                    {{ t('admin.settings.media_type_tags_images') }}
-                                </label>
-                                <div style="position: relative;">
-                                    <div id="media-type-tags-image" contenteditable="true"
-                                        data-placeholder="photo scenery"
-                                        class="w-full bg px-3 py-2 border text-xs focus:outline-none hover:border-primary transition-colors focus:border-primary tag-input"
-                                        style="min-height: 1.5rem; white-space: pre-wrap; overflow-wrap: break-word;">
-                                    </div>
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
-                                    {{ t('admin.settings.media_type_tags_gifs') }}
-                                </label>
-                                <div style="position: relative;">
-                                    <div id="media-type-tags-gif" contenteditable="true" data-placeholder="animated"
-                                        class="w-full bg px-3 py-2 border text-xs focus:outline-none hover:border-primary transition-colors focus:border-primary tag-input"
-                                        style="min-height: 1.5rem; white-space: pre-wrap; overflow-wrap: break-word;">
-                                    </div>
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
-                                    {{ t('admin.settings.media_type_tags_videos') }}
-                                </label>
-                                <div style="position: relative;">
-                                    <div id="media-type-tags-video" contenteditable="true"
-                                        data-placeholder="video animated"
-                                        class="w-full bg px-3 py-2 border text-xs focus:outline-none hover:border-primary transition-colors focus:border-primary tag-input"
-                                        style="min-height: 1.5rem; white-space: pre-wrap; overflow-wrap: break-word;">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Custom Background -->
-                <div>
-                    <label class="block text-xs font-bold mb-2">
-                        {{ t('admin.settings.custom_background.title') }}
-                    </label>
-                    <div class="bg p-4 border">
-                        <div>
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" id="custom-bg-enabled" class="accent-primary w-4 h-4">
-                                <span class="text-xs font-bold">
-                                    {{ t('admin.settings.custom_background.enable') }}
+                        <div id="custom-bg-size" class="custom-select w-full sm:w-1/2" data-value="cover">
+                            <button
+                                class="custom-select-trigger w-full flex items-center justify-between gap-3 px-3 py-2 bg border text-xs cursor-pointer focus:outline-none hover:border-primary transition-colors focus:border-primary"
+                                type="button">
+                                <span class="custom-select-value text">
+                                    {{ t('admin.settings.custom_background.fit_cover') }}
                                 </span>
+                                <svg class="custom-select-arrow flex-shrink-0 transition-transform duration-200 text-secondary"
+                                    width="12" height="12" viewBox="0 0 12 12">
+                                    <path fill="currentColor" d="M6 9L1 4h10z" />
+                                </svg>
+                            </button>
+                            <div
+                                class="custom-select-dropdown bg border border-primary max-h-60 overflow-y-auto shadow-lg">
+                                <div class="custom-select-option px-3 py-2 cursor-pointer hover:surface text-xs"
+                                    data-value="cover">
+                                    {{ t('admin.settings.custom_background.fit_cover') }}
+                                </div>
+                                <div class="custom-select-option px-3 py-2 cursor-pointer hover:surface text-xs"
+                                    data-value="contain">
+                                    {{ t('admin.settings.custom_background.fit_contain') }}
+                                </div>
+                                <div class="custom-select-option px-3 py-2 cursor-pointer hover:surface text-xs"
+                                    data-value="tile">
+                                    {{ t('admin.settings.custom_background.fit_tile') }}
+                                </div>
+                                <div class="custom-select-option px-3 py-2 cursor-pointer hover:surface text-xs"
+                                    data-value="auto">
+                                    {{ t('admin.settings.custom_background.fit_auto') }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filter sliders -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
+                                {{ t('admin.settings.custom_background.opacity') }}
                             </label>
-                            <p class="text-xs text-secondary opacity-70 ml-6">
-                                {{ t('admin.settings.custom_background.description') }}
-                            </p>
-                        </div>
-
-                        <div id="custom-bg-options" class="space-y-4 mt-4" style="display: none;">
-                            <!-- Media preview and selection -->
-                            <div class="flex items-center gap-4">
-                                <div id="custom-bg-preview"
-                                    class="w-16 h-16 border bg flex items-center justify-center overflow-hidden flex-shrink-0">
-                                    <span id="custom-bg-preview-text" class="text-xs text-secondary text-center px-1">
-                                        {{ t('admin.settings.custom_background.no_media_selected') }}
-                                    </span>
-                                    <img id="custom-bg-preview-img" class="w-full h-full object-cover"
-                                        style="display: none;" alt="">
-                                </div>
-                                <div class="flex flex-wrap gap-2">
-                                    <button type="button" id="custom-bg-select-btn"
-                                        class="btn-primary px-3 py-1.5 text-xs">
-                                        {{ t('admin.settings.custom_background.select_media') }}
-                                    </button>
-                                    <button type="button" id="custom-bg-remove-btn"
-                                        class="btn-danger px-3 py-1.5 text-xs" style="display: none;">
-                                        {{ t('admin.settings.custom_background.remove_media') }}
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Fit mode -->
-                            <div>
-                                <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
-                                    {{ t('admin.settings.custom_background.fit_mode') }}
-                                </label>
-                                <div id="custom-bg-size" class="custom-select w-full sm:w-1/2" data-value="cover">
-                                    <button
-                                        class="custom-select-trigger w-full flex items-center justify-between gap-3 px-3 py-2 bg border text-xs cursor-pointer focus:outline-none hover:border-primary transition-colors focus:border-primary"
-                                        type="button">
-                                        <span class="custom-select-value text">
-                                            {{ t('admin.settings.custom_background.fit_cover') }}
-                                        </span>
-                                        <svg class="custom-select-arrow flex-shrink-0 transition-transform duration-200 text-secondary"
-                                            width="12" height="12" viewBox="0 0 12 12">
-                                            <path fill="currentColor" d="M6 9L1 4h10z" />
-                                        </svg>
-                                    </button>
-                                    <div
-                                        class="custom-select-dropdown bg border border-primary max-h-60 overflow-y-auto shadow-lg">
-                                        <div class="custom-select-option px-3 py-2 cursor-pointer hover:surface text-xs"
-                                            data-value="cover">
-                                            {{ t('admin.settings.custom_background.fit_cover') }}
-                                        </div>
-                                        <div class="custom-select-option px-3 py-2 cursor-pointer hover:surface text-xs"
-                                            data-value="contain">
-                                            {{ t('admin.settings.custom_background.fit_contain') }}
-                                        </div>
-                                        <div class="custom-select-option px-3 py-2 cursor-pointer hover:surface text-xs"
-                                            data-value="tile">
-                                            {{ t('admin.settings.custom_background.fit_tile') }}
-                                        </div>
-                                        <div class="custom-select-option px-3 py-2 cursor-pointer hover:surface text-xs"
-                                            data-value="auto">
-                                            {{ t('admin.settings.custom_background.fit_auto') }}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Filter sliders -->
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
-                                        {{ t('admin.settings.custom_background.opacity') }}
-                                    </label>
-                                    <div class="flex items-center gap-2">
-                                        <input type="range" id="custom-bg-opacity" min="0" max="100" value="30" step="1"
-                                            class="flex-1 accent-primary">
-                                        <div
-                                            class="flex items-center bg border text-xs hover:border-primary transition-colors focus-within:border-primary w-14">
-                                            <input type="text" inputmode="numeric" pattern="[0-9]*"
-                                                id="custom-bg-opacity-val" value="30"
-                                                class="w-full min-w-0 bg-transparent py-1 text-right focus:outline-none border-none">
-                                            <span class="text-xs text-secondary pr-2 ml-1 select-none">%</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
-                                        {{ t('admin.settings.custom_background.blur') }}
-                                    </label>
-                                    <div class="flex items-center gap-2">
-                                        <input type="range" id="custom-bg-blur" min="0" max="50" value="0" step="1"
-                                            class="flex-1 accent-primary">
-                                        <div
-                                            class="flex items-center bg border text-xs hover:border-primary transition-colors focus-within:border-primary w-14">
-                                            <input type="text" inputmode="numeric" pattern="[0-9]*"
-                                                id="custom-bg-blur-val" value="0"
-                                                class="w-full min-w-0 bg-transparent py-1 text-right focus:outline-none border-none">
-                                            <span class="text-xs text-secondary pr-2 ml-1 select-none">px</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
-                                        {{ t('admin.settings.custom_background.brightness') }}
-                                    </label>
-                                    <div class="flex items-center gap-2">
-                                        <input type="range" id="custom-bg-brightness" min="0" max="200" value="100"
-                                            step="1" class="flex-1 accent-primary">
-                                        <div
-                                            class="flex items-center bg border text-xs hover:border-primary transition-colors focus-within:border-primary w-14">
-                                            <input type="text" inputmode="numeric" pattern="[0-9]*"
-                                                id="custom-bg-brightness-val" value="100"
-                                                class="w-full min-w-0 bg-transparent py-1 text-right focus:outline-none border-none">
-                                            <span class="text-xs text-secondary pr-2 ml-1 select-none">%</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
-                                        {{ t('admin.settings.custom_background.saturation') }}
-                                    </label>
-                                    <div class="flex items-center gap-2">
-                                        <input type="range" id="custom-bg-saturation" min="0" max="200" value="100"
-                                            step="1" class="flex-1 accent-primary">
-                                        <div
-                                            class="flex items-center bg border text-xs hover:border-primary transition-colors focus-within:border-primary w-14">
-                                            <input type="text" inputmode="numeric" pattern="[0-9]*"
-                                                id="custom-bg-saturation-val" value="100"
-                                                class="w-full min-w-0 bg-transparent py-1 text-right focus:outline-none border-none">
-                                            <span class="text-xs text-secondary pr-2 ml-1 select-none">%</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
-                                        {{ t('admin.settings.custom_background.contrast') }}
-                                    </label>
-                                    <div class="flex items-center gap-2">
-                                        <input type="range" id="custom-bg-contrast" min="0" max="200" value="100"
-                                            step="1" class="flex-1 accent-primary">
-                                        <div
-                                            class="flex items-center bg border text-xs hover:border-primary transition-colors focus-within:border-primary w-14">
-                                            <input type="text" inputmode="numeric" pattern="[0-9]*"
-                                                id="custom-bg-contrast-val" value="100"
-                                                class="w-full min-w-0 bg-transparent py-1 text-right focus:outline-none border-none">
-                                            <span class="text-xs text-secondary pr-2 ml-1 select-none">%</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
-                                        {{ t('admin.settings.custom_background.zoom') }}
-                                    </label>
-                                    <div class="flex items-center gap-2">
-                                        <input type="range" id="custom-bg-zoom" min="10" max="500" value="100" step="1"
-                                            class="flex-1 accent-primary">
-                                        <div
-                                            class="flex items-center bg border text-xs hover:border-primary transition-colors focus-within:border-primary w-14">
-                                            <input type="text" inputmode="numeric" pattern="[0-9]*"
-                                                id="custom-bg-zoom-val" value="100"
-                                                class="w-full min-w-0 bg-transparent py-1 text-right focus:outline-none border-none">
-                                            <span class="text-xs text-secondary pr-2 ml-1 select-none">%</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Position sliders -->
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
-                                        {{ t('admin.settings.custom_background.position_x') }}
-                                    </label>
-                                    <div class="flex items-center gap-2">
-                                        <input type="range" id="custom-bg-position-x" min="0" max="100" value="50"
-                                            step="1" class="flex-1 accent-primary">
-                                        <div
-                                            class="flex items-center bg border text-xs hover:border-primary transition-colors focus-within:border-primary w-14">
-                                            <input type="text" inputmode="numeric" pattern="[0-9]*"
-                                                id="custom-bg-position-x-val" value="50"
-                                                class="w-full min-w-0 bg-transparent py-1 text-right focus:outline-none border-none">
-                                            <span class="text-xs text-secondary pr-2 ml-1 select-none">%</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
-                                        {{ t('admin.settings.custom_background.position_y') }}
-                                    </label>
-                                    <div class="flex items-center gap-2">
-                                        <input type="range" id="custom-bg-position-y" min="0" max="100" value="50"
-                                            step="1" class="flex-1 accent-primary">
-                                        <div
-                                            class="flex items-center bg border text-xs hover:border-primary transition-colors focus-within:border-primary w-14">
-                                            <input type="text" inputmode="numeric" pattern="[0-9]*"
-                                                id="custom-bg-position-y-val" value="50"
-                                                class="w-full min-w-0 bg-transparent py-1 text-right focus:outline-none border-none">
-                                            <span class="text-xs text-secondary pr-2 ml-1 select-none">%</span>
-                                        </div>
-                                    </div>
+                            <div class="flex items-center gap-2">
+                                <input type="range" id="custom-bg-opacity" min="0" max="100" value="30" step="1"
+                                    class="flex-1 accent-primary">
+                                <div
+                                    class="flex items-center bg border text-xs hover:border-primary transition-colors focus-within:border-primary w-14">
+                                    <input type="text" inputmode="numeric" pattern="[0-9]*" id="custom-bg-opacity-val"
+                                        value="30"
+                                        class="w-full min-w-0 bg-transparent py-1 text-right focus:outline-none border-none">
+                                    <span class="text-xs text-secondary pr-2 ml-1 select-none">%</span>
                                 </div>
                             </div>
                         </div>
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
+                                {{ t('admin.settings.custom_background.blur') }}
+                            </label>
+                            <div class="flex items-center gap-2">
+                                <input type="range" id="custom-bg-blur" min="0" max="50" value="0" step="1"
+                                    class="flex-1 accent-primary">
+                                <div
+                                    class="flex items-center bg border text-xs hover:border-primary transition-colors focus-within:border-primary w-14">
+                                    <input type="text" inputmode="numeric" pattern="[0-9]*" id="custom-bg-blur-val"
+                                        value="0"
+                                        class="w-full min-w-0 bg-transparent py-1 text-right focus:outline-none border-none">
+                                    <span class="text-xs text-secondary pr-2 ml-1 select-none">px</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
+                                {{ t('admin.settings.custom_background.brightness') }}
+                            </label>
+                            <div class="flex items-center gap-2">
+                                <input type="range" id="custom-bg-brightness" min="0" max="200" value="100" step="1"
+                                    class="flex-1 accent-primary">
+                                <div
+                                    class="flex items-center bg border text-xs hover:border-primary transition-colors focus-within:border-primary w-14">
+                                    <input type="text" inputmode="numeric" pattern="[0-9]*"
+                                        id="custom-bg-brightness-val" value="100"
+                                        class="w-full min-w-0 bg-transparent py-1 text-right focus:outline-none border-none">
+                                    <span class="text-xs text-secondary pr-2 ml-1 select-none">%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
+                                {{ t('admin.settings.custom_background.saturation') }}
+                            </label>
+                            <div class="flex items-center gap-2">
+                                <input type="range" id="custom-bg-saturation" min="0" max="200" value="100" step="1"
+                                    class="flex-1 accent-primary">
+                                <div
+                                    class="flex items-center bg border text-xs hover:border-primary transition-colors focus-within:border-primary w-14">
+                                    <input type="text" inputmode="numeric" pattern="[0-9]*"
+                                        id="custom-bg-saturation-val" value="100"
+                                        class="w-full min-w-0 bg-transparent py-1 text-right focus:outline-none border-none">
+                                    <span class="text-xs text-secondary pr-2 ml-1 select-none">%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
+                                {{ t('admin.settings.custom_background.contrast') }}
+                            </label>
+                            <div class="flex items-center gap-2">
+                                <input type="range" id="custom-bg-contrast" min="0" max="200" value="100" step="1"
+                                    class="flex-1 accent-primary">
+                                <div
+                                    class="flex items-center bg border text-xs hover:border-primary transition-colors focus-within:border-primary w-14">
+                                    <input type="text" inputmode="numeric" pattern="[0-9]*" id="custom-bg-contrast-val"
+                                        value="100"
+                                        class="w-full min-w-0 bg-transparent py-1 text-right focus:outline-none border-none">
+                                    <span class="text-xs text-secondary pr-2 ml-1 select-none">%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
+                                {{ t('admin.settings.custom_background.zoom') }}
+                            </label>
+                            <div class="flex items-center gap-2">
+                                <input type="range" id="custom-bg-zoom" min="10" max="500" value="100" step="1"
+                                    class="flex-1 accent-primary">
+                                <div
+                                    class="flex items-center bg border text-xs hover:border-primary transition-colors focus-within:border-primary w-14">
+                                    <input type="text" inputmode="numeric" pattern="[0-9]*" id="custom-bg-zoom-val"
+                                        value="100"
+                                        class="w-full min-w-0 bg-transparent py-1 text-right focus:outline-none border-none">
+                                    <span class="text-xs text-secondary pr-2 ml-1 select-none">%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Position sliders -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
+                                {{ t('admin.settings.custom_background.position_x') }}
+                            </label>
+                            <div class="flex items-center gap-2">
+                                <input type="range" id="custom-bg-position-x" min="0" max="100" value="50" step="1"
+                                    class="flex-1 accent-primary">
+                                <div
+                                    class="flex items-center bg border text-xs hover:border-primary transition-colors focus-within:border-primary w-14">
+                                    <input type="text" inputmode="numeric" pattern="[0-9]*"
+                                        id="custom-bg-position-x-val" value="50"
+                                        class="w-full min-w-0 bg-transparent py-1 text-right focus:outline-none border-none">
+                                    <span class="text-xs text-secondary pr-2 ml-1 select-none">%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
+                                {{ t('admin.settings.custom_background.position_y') }}
+                            </label>
+                            <div class="flex items-center gap-2">
+                                <input type="range" id="custom-bg-position-y" min="0" max="100" value="50" step="1"
+                                    class="flex-1 accent-primary">
+                                <div
+                                    class="flex items-center bg border text-xs hover:border-primary transition-colors focus-within:border-primary w-14">
+                                    <input type="text" inputmode="numeric" pattern="[0-9]*"
+                                        id="custom-bg-position-y-val" value="50"
+                                        class="w-full min-w-0 bg-transparent py-1 text-right focus:outline-none border-none">
+                                    <span class="text-xs text-secondary pr-2 ml-1 select-none">%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="border-t pt-3">
+                        <button type="submit" class="btn-primary">
+                            {{ t('admin.theming.save_background') }}
+                        </button>
                     </div>
                 </div>
             </div>
+        </form>
 
-            <!-- Custom Themes -->
-            <div>
-                <label class="block text-xs font-bold mb-2">
-                    {{ t('admin.settings.custom_themes.title') }}
-                </label>
-                <div class="bg p-4 border">
-                    <p class="text-xs text-secondary opacity-70 mb-4">
-                        {{ t('admin.settings.custom_themes.description') }}
-                    </p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Left: form -->
-                        <div class="space-y-3">
-                            <div>
-                                <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
-                                    {{ t('admin.settings.custom_themes.theme_name') }}
-                                </label>
-                                <input type="text" id="custom-theme-name"
-                                    class="w-full bg px-3 py-2 border text-xs focus:outline-none hover:border-primary transition-colors focus:border-primary"
-                                    placeholder="{{ t('admin.settings.custom_themes.theme_name_placeholder') }}">
-                            </div>
+        <!-- Custom Themes -->
+        <div>
+            <label class="block text-xs font-bold mb-2">
+                {{ t('admin.settings.custom_themes.title') }}
+            </label>
+            <div class="bg p-4 border">
+                <p class="text-xs text-secondary opacity-70 mb-4">
+                    {{ t('admin.settings.custom_themes.description') }}
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Left: form -->
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
+                                {{ t('admin.settings.custom_themes.theme_name') }}
+                            </label>
+                            <input type="text" id="custom-theme-name"
+                                class="w-full bg px-3 py-2 border text-xs focus:outline-none hover:border-primary transition-colors focus:border-primary"
+                                placeholder="{{ t('admin.settings.custom_themes.theme_name_placeholder') }}">
+                        </div>
 
-                            <div>
-                                <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
-                                    {{ t('admin.settings.custom_themes.is_dark') }}
-                                </label>
-                                <div id="custom-theme-is-dark" class="custom-select" data-value="true">
-                                    <button
-                                        class="custom-select-trigger w-full flex items-center justify-between gap-3 px-3 py-2 bg border text-xs cursor-pointer focus:outline-none hover:border-primary transition-colors focus:border-primary"
-                                        type="button">
-                                        <span class="custom-select-value text">
-                                            {{ t('admin.settings.custom_themes.type_dark') }}
-                                        </span>
-                                        <svg class="custom-select-arrow flex-shrink-0 transition-transform duration-200 text-secondary"
-                                            width="12" height="12" viewBox="0 0 12 12">
-                                            <path fill="currentColor" d="M6 9L1 4h10z" />
-                                        </svg>
-                                    </button>
-                                    <div
-                                        class="custom-select-dropdown bg border border-primary max-h-60 overflow-y-auto shadow-lg">
-                                        <div class="custom-select-option px-3 py-2 cursor-pointer hover:surface text-xs selected"
-                                            data-value="true">
-                                            {{ t('admin.settings.custom_themes.type_dark') }}
-                                        </div>
-                                        <div class="custom-select-option px-3 py-2 cursor-pointer hover:surface text-xs"
-                                            data-value="false">
-                                            {{ t('admin.settings.custom_themes.type_light') }}
-                                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
+                                {{ t('admin.settings.custom_themes.is_dark') }}
+                            </label>
+                            <div id="custom-theme-is-dark" class="custom-select" data-value="true">
+                                <button
+                                    class="custom-select-trigger w-full flex items-center justify-between gap-3 px-3 py-2 bg border text-xs cursor-pointer focus:outline-none hover:border-primary transition-colors focus:border-primary"
+                                    type="button">
+                                    <span class="custom-select-value text">
+                                        {{ t('admin.settings.custom_themes.type_dark') }}
+                                    </span>
+                                    <svg class="custom-select-arrow flex-shrink-0 transition-transform duration-200 text-secondary"
+                                        width="12" height="12" viewBox="0 0 12 12">
+                                        <path fill="currentColor" d="M6 9L1 4h10z" />
+                                    </svg>
+                                </button>
+                                <div
+                                    class="custom-select-dropdown bg border border-primary max-h-60 overflow-y-auto shadow-lg">
+                                    <div class="custom-select-option px-3 py-2 cursor-pointer hover:surface text-xs selected"
+                                        data-value="true">
+                                        {{ t('admin.settings.custom_themes.type_dark') }}
+                                    </div>
+                                    <div class="custom-select-option px-3 py-2 cursor-pointer hover:surface text-xs"
+                                        data-value="false">
+                                        {{ t('admin.settings.custom_themes.type_light') }}
                                     </div>
                                 </div>
                             </div>
+                        </div>
 
-                            <div>
-                                <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
-                                    {{ t('admin.settings.custom_themes.backup_theme') }}
-                                </label>
-                                <div id="custom-theme-backup" class="custom-select" data-value="default_dark">
-                                    <button
-                                        class="custom-select-trigger w-full flex items-center justify-between gap-3 px-3 py-2 bg border text-xs cursor-pointer focus:outline-none hover:border-primary transition-colors focus:border-primary"
-                                        type="button">
-                                        <span class="custom-select-value text">Default Dark</span>
-                                        <svg class="custom-select-arrow flex-shrink-0 transition-transform duration-200 text-secondary"
-                                            width="12" height="12" viewBox="0 0 12 12">
-                                            <path fill="currentColor" d="M6 9L1 4h10z" />
-                                        </svg>
-                                    </button>
-                                    <div
-                                        class="custom-select-dropdown bg border border-primary max-h-60 overflow-y-auto shadow-lg">
-                                        <!-- Populated by JS -->
-                                    </div>
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
+                                {{ t('admin.settings.custom_themes.backup_theme') }}
+                            </label>
+                            <div id="custom-theme-backup" class="custom-select" data-value="default_dark">
+                                <button
+                                    class="custom-select-trigger w-full flex items-center justify-between gap-3 px-3 py-2 bg border text-xs cursor-pointer focus:outline-none hover:border-primary transition-colors focus:border-primary"
+                                    type="button">
+                                    <span class="custom-select-value text">Default Dark</span>
+                                    <svg class="custom-select-arrow flex-shrink-0 transition-transform duration-200 text-secondary"
+                                        width="12" height="12" viewBox="0 0 12 12">
+                                        <path fill="currentColor" d="M6 9L1 4h10z" />
+                                    </svg>
+                                </button>
+                                <div
+                                    class="custom-select-dropdown bg border border-primary max-h-60 overflow-y-auto shadow-lg">
+                                    <!-- Populated by JS -->
                                 </div>
-                                <p class="text-[10px] opacity-50 mt-1">
-                                    {{ t('admin.settings.custom_themes.backup_theme_hint') }}
-                                </p>
                             </div>
+                            <p class="text-[10px] opacity-50 mt-1">
+                                {{ t('admin.settings.custom_themes.backup_theme_hint') }}
+                            </p>
+                        </div>
 
-                            <div>
-                                <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
-                                    {{ t('admin.settings.custom_themes.css_content') }}
-                                </label>
-                                <textarea id="custom-theme-css" rows="12"
-                                    class="w-full bg px-3 py-2 border text-xs focus:outline-none hover:border-primary transition-colors focus:border-primary font-mono resize-y"
-                                    placeholder="{{ t('admin.settings.custom_themes.css_placeholder') }}">:root {
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
+                                {{ t('admin.settings.custom_themes.css_content') }}
+                            </label>
+                            <textarea id="custom-theme-css" rows="12"
+                                class="w-full bg px-3 py-2 border text-xs focus:outline-none hover:border-primary transition-colors focus:border-primary font-mono resize-y"
+                                placeholder="{{ t('admin.settings.custom_themes.css_placeholder') }}">:root {
   --primary-color: 
   --primary-hover: color-mix(in srgb, var(--primary-color) 70%, var(--background));
   --background: 
@@ -768,64 +600,57 @@
   --tag-general: 
   --tag-meta: 
 }</textarea>
-                            </div>
-
-                            <div class="flex flex-wrap gap-2">
-                                <button type="button" id="custom-theme-add-btn" class="btn-primary text-xs px-4 py-2">
-                                    {{ t('admin.settings.custom_themes.add_theme') }}
-                                </button>
-                                <button type="button" id="custom-theme-import-bundle-btn" class="btn text-xs px-4 py-2">
-                                    {{ t('admin.settings.custom_themes.import_bundle') }}
-                                </button>
-                                <button type="button" id="custom-theme-import-css-btn" class="btn text-xs px-4 py-2">
-                                    {{ t('admin.settings.custom_themes.import_css') }}
-                                </button>
-                                <button type="button" id="custom-theme-cancel-btn" class="btn text-xs px-4 py-2"
-                                    style="display:none">
-                                    {{ t('common.cancel') }}
-                                </button>
-                                <input type="file" id="custom-theme-file-bundle" accept=".blombooru-theme,.zip"
-                                    class="hidden">
-                                <input type="file" id="custom-theme-file-css" accept=".css,text/css" class="hidden">
-                            </div>
                         </div>
 
-                        <!-- Right: installed themes table -->
-                        <div>
-                            <h3 class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
-                                {{ t('admin.settings.custom_themes.installed_themes') }}
-                            </h3>
-                            <div class="overflow-x-auto max-h-80 overflow-y-auto border">
-                                <table id="custom-themes-table" class="bg w-full text-left border-collapse">
-                                    <thead class="border-b">
-                                        <tr class="text-secondary text-xs">
-                                            <th class="sticky top-0 z-10 bg py-2 px-3 font-medium">
-                                                {{ t('admin.settings.custom_themes.theme_name') }}
-                                            </th>
-                                            <th class="sticky top-0 z-10 bg py-2 px-3 font-medium">
-                                                {{ t('admin.settings.custom_themes.is_dark') }}
-                                            </th>
-                                            <th class="sticky top-0 z-10 bg py-2 px-3 font-medium text-right">
-                                                {{ t('admin.settings.booru_config.action') }}
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="custom-themes-tbody">
-                                        <!-- Populated by JS -->
-                                    </tbody>
-                                </table>
-                            </div>
+                        <div class="flex flex-wrap gap-2">
+                            <button type="button" id="custom-theme-add-btn" class="btn-primary text-xs px-4 py-2">
+                                {{ t('admin.settings.custom_themes.add_theme') }}
+                            </button>
+                            <button type="button" id="custom-theme-import-bundle-btn" class="btn text-xs px-4 py-2">
+                                {{ t('admin.settings.custom_themes.import_bundle') }}
+                            </button>
+                            <button type="button" id="custom-theme-import-css-btn" class="btn text-xs px-4 py-2">
+                                {{ t('admin.settings.custom_themes.import_css') }}
+                            </button>
+                            <button type="button" id="custom-theme-cancel-btn" class="btn text-xs px-4 py-2"
+                                style="display:none">
+                                {{ t('common.cancel') }}
+                            </button>
+                            <input type="file" id="custom-theme-file-bundle" accept=".blombooru-theme,.zip"
+                                class="hidden">
+                            <input type="file" id="custom-theme-file-css" accept=".css,text/css" class="hidden">
+                        </div>
+                    </div>
+
+                    <!-- Right: installed themes table -->
+                    <div>
+                        <h3 class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
+                            {{ t('admin.settings.custom_themes.installed_themes') }}
+                        </h3>
+                        <div class="overflow-x-auto max-h-80 overflow-y-auto border">
+                            <table id="custom-themes-table" class="bg w-full text-left border-collapse">
+                                <thead class="border-b">
+                                    <tr class="text-secondary text-xs">
+                                        <th class="sticky top-0 z-10 bg py-2 px-3 font-medium">
+                                            {{ t('admin.settings.custom_themes.theme_name') }}
+                                        </th>
+                                        <th class="sticky top-0 z-10 bg py-2 px-3 font-medium">
+                                            {{ t('admin.settings.custom_themes.is_dark') }}
+                                        </th>
+                                        <th class="sticky top-0 z-10 bg py-2 px-3 font-medium text-right">
+                                            {{ t('admin.settings.booru_config.action') }}
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody id="custom-themes-tbody">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <div class="border-t mt-4 pt-4">
-                <button type="submit" class="btn-primary">
-                    {{ t('admin.settings.save_settings') }}
-                </button>
-            </div>
-        </form>
+        </div>
     </div>
 
     <!-- Booru Configuration Section -->
@@ -949,119 +774,265 @@
         </div>
     </div>
 
-    <!-- Backup & Restore Section -->
-    <div class="surface p-2 sm:p-6 border mb-4">
-        <h2 class="text-base font-bold mb-4 pb-3 border-b">{{ t('admin.backup.title') }}</h2>
+    <!-- Backend Section -->
+    <div id="backend-section" class="surface p-2 sm:p-6 border mb-4">
+        <h2 class="text-base font-bold mb-4 pb-3 border-b">{{ t('admin.backend.title') }}</h2>
 
-        <div class="mb-4">
-            <h3 class="text-sm font-bold mb-3">{{ t('admin.backup.export_data') }}</h3>
-            <p class="text-xs text-secondary mb-3">
-                {{ t('admin.backup.export_warning_credentials') }}<br>
-                {{ t('admin.backup.export_api_keys_notice') }}
-            </p>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <a href="/api/admin/backup/tags" class="btn-dark w-full">
-                    {{ t('admin.backup.export_tags') }}
-                </a>
-                <a href="/api/admin/backup/media" class="btn-dark w-full">
-                    {{ t('admin.backup.export_media') }}
-                </a>
-                <a href="/api/admin/backup/full" class="btn-primary w-full">
-                    {{ t('admin.backup.full_backup') }}
-                </a>
-            </div>
-        </div>
+        <form id="backend-settings-form" class="space-y-4 mb-4">
+            <!-- Caching -->
+            <div>
+                <label class="block text-xs font-bold mb-2">{{ t('admin.caching.title') }}</label>
+                <div class="bg p-4 border h-full">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="redis-enabled" name="redis_enabled" class="w-4 h-4 accent-primary">
+                        <span class="text-xs font-bold">{{ t('admin.caching.enable_redis') }}</span>
+                    </label>
 
-        <div>
-            <h3 class="text-sm font-bold mb-3">{{ t('admin.backup.import_backup') }}</h3>
-            <div class="bg p-4 border block">
-                <p class="text-xs text-secondary mb-3">
-                    {{ t('admin.backup.import_hint') }}<br>
-                    {{ t('admin.backup.import_warning') }}<br>
-                    <strong>{{ t('common.warning') }}:</strong> {{ t('admin.backup.import_time_warning') }}
-                </p>
-
-                <div id="full-import-area" class="upload-area">
-                    <p class="text-xs">{{ t('admin.backup.drop_backup') }}</p>
-                    <input type="file" id="full-import-input" accept=".zip" class="hidden">
+                    <div id="redis-settings-container" class="mt-4" style="display: none;">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
+                                    {{ t('common.host') }}
+                                </label>
+                                <input type="text" id="redis-host"
+                                    class="w-full bg px-3 py-2 border text-xs focus:outline-none hover:border-primary transition-colors focus:border-primary"
+                                    placeholder="redis">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
+                                    {{ t('common.port') }}
+                                </label>
+                                <input type="number" id="redis-port"
+                                    class="w-full bg px-3 py-2 border text-xs focus:outline-none hover:border-primary transition-colors focus:border-primary"
+                                    placeholder="6379">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
+                                    {{ t('admin.caching.db_index') }}
+                                </label>
+                                <input type="number" id="redis-db"
+                                    class="w-full bg px-3 py-2 border text-xs focus:outline-none hover:border-primary transition-colors focus:border-primary"
+                                    placeholder="0">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
+                                    {{ t('common.password') }}
+                                </label>
+                                <input type="password" id="redis-password"
+                                    class="w-full bg px-3 py-2 border text-xs focus:outline-none hover:border-primary transition-colors focus:border-primary"
+                                    placeholder="{{ t('common.password_placeholder') }}">
+                            </div>
+                        </div>
+                        <button type="button" id="test-redis-btn" class="btn-primary w-full">
+                            {{ t('common.test_connection') }}
+                        </button>
+                        <div id="redis-test-result" class="mt-2 text-xs" style="display: none;"></div>
+                    </div>
                 </div>
+            </div>
 
-                <div id="full-import-status" style="display: none;" class="mt-3">
-                    <div class="text-xs">
-                        <div id="full-import-progress"></div>
+            <!-- Shared Tags -->
+            <div>
+                <label class="block text-xs font-bold mb-2">{{ t('admin.shared_tags.title') }}</label>
+                <div class="bg p-4 border h-full">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="shared-tags-enabled" name="shared_tags_enabled"
+                            class="w-4 h-4 accent-primary">
+                        <span class="text-xs font-bold">{{ t('admin.shared_tags.enable') }}</span>
+                    </label>
+                    <p class="text-xs text-secondary opacity-70 ml-6">
+                        {{ t('admin.shared_tags.description') }}
+                    </p>
+
+                    <div id="shared-tags-settings-container" class="mt-4" style="display: none;">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
+                                    {{ t('common.host') }}
+                                </label>
+                                <input type="text" id="shared-tags-host"
+                                    class="w-full bg px-3 py-2 border text-xs focus:outline-none hover:border-primary transition-colors focus:border-primary"
+                                    placeholder="shared-tag-db">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
+                                    {{ t('common.port') }}
+                                </label>
+                                <input type="number" id="shared-tags-port"
+                                    class="w-full bg px-3 py-2 border text-xs focus:outline-none hover:border-primary transition-colors focus:border-primary"
+                                    placeholder="5432">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
+                                    {{ t('common.database') }}
+                                </label>
+                                <input type="text" id="shared-tags-name"
+                                    class="w-full bg px-3 py-2 border text-xs focus:outline-none hover:border-primary transition-colors focus:border-primary"
+                                    placeholder="shared_tags">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
+                                    {{ t('common.username') }}
+                                </label>
+                                <input type="text" id="shared-tags-user"
+                                    class="w-full bg px-3 py-2 border text-xs focus:outline-none hover:border-primary transition-colors focus:border-primary"
+                                    placeholder="postgres">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">
+                                    {{ t('common.password') }}
+                                </label>
+                                <input type="password" id="shared-tags-password"
+                                    class="w-full bg px-3 py-2 border text-xs focus:outline-none hover:border-primary transition-colors focus:border-primary"
+                                    placeholder="{{ t('common.password_placeholder') }}">
+                            </div>
+                        </div>
+                        <div class="flex gap-2 mb-2">
+                            <button type="button" id="test-shared-tags-btn" class="btn-primary flex-1">
+                                {{ t('common.test_connection') }}
+                            </button>
+                            <button type="button" id="sync-shared-tags-btn" class="btn-dark flex-1"
+                                style="display: none;">
+                                {{ t('admin.shared_tags.sync_now') }}
+                            </button>
+                        </div>
+                        <div id="shared-tags-test-result" class="mt-2 text-xs" style="display: none;">
+                        </div>
+                        <div id="shared-tags-status" class="mt-3 p-3 surface border text-xs" style="display: none;">
+                            <div class="flex items-center justify-between">
+                                <span id="shared-tags-connection-status"></span>
+                                <span id="shared-tags-counts"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <button type="submit" class="btn-primary">
+                    {{ t('admin.backend.save_settings') }}
+                </button>
+            </div>
+        </form>
+
+        <!-- Backup & Restore -->
+        <div class="border-t mt-4 pt-4">
+            <h3 class="text-sm font-bold mb-3">{{ t('admin.backup.title') }}</h3>
+
+            <div class="mb-4">
+                <h4 class="text-xs font-bold mb-2">{{ t('admin.backup.export_data') }}</h4>
+                <p class="text-xs text-secondary mb-3">
+                    {{ t('admin.backup.export_warning_credentials') }}<br>
+                    {{ t('admin.backup.export_api_keys_notice') }}
+                </p>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <a href="/api/admin/backup/tags" class="btn-dark w-full">
+                        {{ t('admin.backup.export_tags') }}
+                    </a>
+                    <a href="/api/admin/backup/media" class="btn-dark w-full">
+                        {{ t('admin.backup.export_media') }}
+                    </a>
+                    <a href="/api/admin/backup/full" class="btn-primary w-full">
+                        {{ t('admin.backup.full_backup') }}
+                    </a>
+                </div>
+            </div>
+
+            <div>
+                <h4 class="text-xs font-bold mb-2">{{ t('admin.backup.import_backup') }}</h4>
+                <div class="bg p-4 border block">
+                    <p class="text-xs text-secondary mb-3">
+                        {{ t('admin.backup.import_hint') }}<br>
+                        {{ t('admin.backup.import_warning') }}<br>
+                        <strong>{{ t('common.warning') }}:</strong> {{ t('admin.backup.import_time_warning') }}
+                    </p>
+
+                    <div id="full-import-area" class="upload-area">
+                        <p class="text-xs">{{ t('admin.backup.drop_backup') }}</p>
+                        <input type="file" id="full-import-input" accept=".zip" class="hidden">
+                    </div>
+
+                    <div id="full-import-status" style="display: none;" class="mt-3">
+                        <div class="text-xs">
+                            <div id="full-import-progress"></div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- System Update Section -->
-    <div class="surface p-2 sm:p-6 border">
-        <h2 class="text-base font-bold mb-4 pb-3 border-b">
-            {{ t('common.system_update') }}
-        </h2>
-        <p class="text-xs text-secondary mb-3">
-            <strong>{{ t('common.warning') }}:</strong> {{ t('admin.update.backup_warning') }}
-        </p>
-
-        <div id="update-initial-state">
-            <p class="text-xs text-secondary mb-3">
-                {{ t('admin.update.contact_github') }}
-            </p>
-            <button id="btn-check-updates" class="btn-primary">
-                {{ t('admin.update.check_updates') }}
-            </button>
-        </div>
-
-        <div id="update-loading" class="bg p-2 border text-xs text-secondary hidden">
-            {{ t('admin.update.checking') }}
-        </div>
-
-        <div id="update-status" style="display: none;">
-            <div class="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                    <div class="text-xs text-secondary mb-1">{{ t('admin.update.current_version') }}</div>
-                    <div class="text-sm font-bold font-mono" id="current-version-display">...</div>
-                </div>
-                <div>
-                    <div class="text-xs text-secondary mb-1">{{ t('admin.update.latest_version') }}</div>
-                    <div class="text-sm font-bold font-mono" id="latest-version-display">...</div>
-                </div>
-            </div>
-
-            <div id="update-notices" class="mb-4 hidden"></div>
-
-            <div id="update-instructions" class="mb-4 hidden">
-                <div class="text-xs text-secondary mb-1">{{ t('admin.update.update_instructions') }}</div>
-                <pre class="bg bg-opacity-20 p-2 border font-mono text-[10px] whitespace-pre-wrap select-all"
-                    id="update-command-text"></pre>
-            </div>
-
-            <div id="config-files-notice" class="mb-4 hidden">
-                <div class="text-xs tag-text p-2 border border-warning bg-warning bg-opacity-10"
-                    id="config-files-message"></div>
-                <div id="config-files-links" class="mt-2 flex flex-wrap gap-2"></div>
-            </div>
-
-            <div class="flex gap-3">
-                <button id="btn-update-now" style="display: none;" class="btn-primary">
-                    {{ t('admin.update.update_now') }}
-                </button>
-                <a id="btn-view-release" href="#" target="_blank" style="display: none;" class="btn-dark">
-                    {{ t('admin.update.view_release') }}
-                </a>
-                <button id="btn-view-changelog" style="display: none;" class="btn-dark">
-                    {{ t('admin.update.view_changelog') }}
-                </button>
-            </div>
-        </div>
-
-        <div id="update-result" class="mt-4 hidden">
-            <h3 class="text-xs font-bold mb-2" id="update-result-title">
-                {{ t('admin.update.update_output') }}
+        <!-- System Update -->
+        <div class="border-t mt-4 pt-4">
+            <h3 class="text-sm font-bold mb-3">
+                {{ t('common.system_update') }}
             </h3>
-            <pre class="bg-black bg-opacity-20 p-2 border max-h-60 overflow-y-auto font-mono text-[10px] whitespace-pre-wrap"
-                id="update-result-log"></pre>
+            <p class="text-xs text-secondary mb-3">
+                <strong>{{ t('common.warning') }}:</strong> {{ t('admin.update.backup_warning') }}
+            </p>
+
+            <div id="update-initial-state">
+                <p class="text-xs text-secondary mb-3">
+                    {{ t('admin.update.contact_github') }}
+                </p>
+                <button id="btn-check-updates" class="btn-primary">
+                    {{ t('admin.update.check_updates') }}
+                </button>
+            </div>
+
+            <div id="update-loading" class="bg p-2 border text-xs text-secondary hidden">
+                {{ t('admin.update.checking') }}
+            </div>
+
+            <div id="update-status" style="display: none;">
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <div class="text-xs text-secondary mb-1">{{ t('admin.update.current_version') }}</div>
+                        <div class="text-sm font-bold font-mono" id="current-version-display">...</div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-secondary mb-1">{{ t('admin.update.latest_version') }}</div>
+                        <div class="text-sm font-bold font-mono" id="latest-version-display">...</div>
+                    </div>
+                </div>
+
+                <div id="update-notices" class="mb-4 hidden"></div>
+
+                <div id="update-instructions" class="mb-4 hidden">
+                    <div class="text-xs text-secondary mb-1">{{ t('admin.update.update_instructions') }}</div>
+                    <pre class="bg bg-opacity-20 p-2 border font-mono text-[10px] whitespace-pre-wrap select-all"
+                        id="update-command-text"></pre>
+                </div>
+
+                <div id="config-files-notice" class="mb-4 hidden">
+                    <div class="text-xs tag-text p-2 border border-warning bg-warning bg-opacity-10"
+                        id="config-files-message"></div>
+                    <div id="config-files-links" class="mt-2 flex flex-wrap gap-2"></div>
+                </div>
+
+                <div class="flex gap-3">
+                    <button id="btn-update-now" style="display: none;" class="btn-primary">
+                        {{ t('admin.update.update_now') }}
+                    </button>
+                    <a id="btn-view-release" href="#" target="_blank" style="display: none;" class="btn-dark">
+                        {{ t('admin.update.view_release') }}
+                    </a>
+                    <button id="btn-view-changelog" style="display: none;" class="btn-dark">
+                        {{ t('admin.update.view_changelog') }}
+                    </button>
+                </div>
+            </div>
+
+            <div id="update-result" class="mt-4 hidden">
+                <h3 class="text-xs font-bold mb-2" id="update-result-title">
+                    {{ t('admin.update.update_output') }}
+                </h3>
+                <pre class="bg-black bg-opacity-20 p-2 border max-h-60 overflow-y-auto font-mono text-[10px] whitespace-pre-wrap"
+                    id="update-result-log"></pre>
+            </div>
         </div>
     </div>
 </div>

@@ -87,6 +87,24 @@ class AdminPanel {
             });
         }
 
+        // Custom background form
+        const customBgForm = document.getElementById('custom-bg-form');
+        if (customBgForm) {
+            customBgForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.system.saveCustomBackground();
+            });
+        }
+
+        // Backend settings form
+        const backendSettingsForm = document.getElementById('backend-settings-form');
+        if (backendSettingsForm) {
+            backendSettingsForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.system.saveBackendSettings();
+            });
+        }
+
         // AI Tagger settings form
         const aiTaggerForm = document.getElementById('ai-tagger-settings-form');
         if (aiTaggerForm) {
