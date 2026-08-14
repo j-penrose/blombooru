@@ -19,7 +19,8 @@ from ..models import (Album, Media, Tag, User, blombooru_album_media,
                       blombooru_media_tags)
 from ..schemas import (AlbumListResponse, MediaCreate, MediaResponse,
                        MediaUpdate, RatingEnum, ShareSettingsUpdate)
-from ..utils.album_utils import (get_bulk_album_metrics, update_album_last_modified)
+from ..utils.album_utils import (get_bulk_album_metrics, get_flattened_media_ids,
+                                update_album_last_modified)
 from ..utils.cache import (cache_response, invalidate_album_cache,
                            invalidate_media_cache, invalidate_media_item_cache,
                            invalidate_tag_cache)
@@ -554,6 +555,45 @@ async def get_media_batch(
     except Exception as e:
         logger.error(f"Error in get_media_batch: {e}")
         raise HTTPException(status_code=500, detail=safe_error_detail("Failed to retrieve media batch", e))
+
+@router.get("/{media_id}/related")
+@cache_response(expire=600, key_prefix="related_media")
+async def get_related_media(
+    request: Request,
+    media_id: int,
+    limit: int = Query(12, ge=1, le=100),
+    album_id: Optional[int] = Query(None),
+    db: Session = Depends(get_db)
+):
+    """Get related media items using category-weighted TF-IDF similarity."""
+    from ..services.similarity import similarity_index
+
+    if not similarity_index.is_ready:
+        return {"items": [], "status": "building"}
+
+    album_media_ids = None
+    if album_id is not None:
+        album_media_ids = set(get_flattened_media_ids(db, album_id))
+
+    similar_pairs = similarity_index.get_similar_media(
+        media_id=media_id,
+        limit=limit,
+        album_media_ids=album_media_ids
+    )
+
+    if not similar_pairs:
+        return {"items": [], "status": "ready"}
+
+    similar_ids = [mid for mid, _ in similar_pairs]
+    media_records = db.query(Media).options(selectinload(Media.tags)).filter(Media.id.in_(similar_ids)).all()
+    media_dict = {m.id: m for m in media_records}
+
+    items = []
+    for mid in similar_ids:
+        if mid in media_dict:
+            items.append(MediaResponse.model_validate(media_dict[mid]))
+
+    return {"items": items, "status": "ready"}
 
 @router.get("/{media_id}/adjacent")
 async def get_adjacent_media(

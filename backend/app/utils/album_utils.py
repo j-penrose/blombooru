@@ -177,6 +177,32 @@ def get_parent_ids(album_id: int, db: Session) -> List[int]:
     
     return parent_ids
 
+def get_flattened_media_ids(db: Session, root_album_id: int) -> List[int]:
+    """
+    Recursively fetches media IDs for an album and all its descendants (children, grandchildren, etc.).
+    Returns a distinct list of media IDs.
+    """
+    from collections import deque
+    all_album_ids = {root_album_id}
+    queue = deque([root_album_id])
+    
+    while queue:
+        current_id = queue.popleft()
+        children = db.query(blombooru_album_hierarchy.c.child_album_id).filter(
+            blombooru_album_hierarchy.c.parent_album_id == current_id
+        ).all()
+        
+        for (cid,) in children:
+            if cid not in all_album_ids:
+                all_album_ids.add(cid)
+                queue.append(cid)
+
+    results = db.query(blombooru_album_media.c.media_id).filter(
+        blombooru_album_media.c.album_id.in_(all_album_ids)
+    ).distinct().all()
+    
+    return sorted(r[0] for r in results)
+
 def get_media_count(album_id: int, db: Session, visited: set = None) -> int:
     """Get total count of media in album and children (recursive)"""
     if visited is None:

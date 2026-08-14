@@ -540,19 +540,29 @@ async def get_related_tag_json(
     query_post_count = query_tag.post_count
     
     # Helper to format tag into Danbooru-compatible object
-    def format_tag_object(tag: Tag) -> dict:
-        c_val = tag.category.value if hasattr(tag.category, 'value') else str(tag.category)
+    def format_tag_object(tag) -> dict:
+        if hasattr(tag, 'category'):
+            c_val = tag.category.value if hasattr(tag.category, 'value') else str(tag.category)
+            name = tag.name
+            tag_id = tag.id
+            post_count = tag.post_count
+            created_at = tag.created_at.isoformat(timespec='milliseconds') if getattr(tag, 'created_at', None) else None
+        else:
+            c_val = str(tag.get('category', 'general'))
+            name = tag.get('name', '')
+            tag_id = tag.get('id', 0)
+            post_count = tag.get('post_count', 0)
+            created_at = None
         category_id = CATEGORY_MAP.get(c_val.lower(), 0)
-        created_at = tag.created_at.isoformat(timespec='milliseconds') if tag.created_at else None
         return {
-            "id": tag.id,
-            "name": tag.name,
-            "post_count": tag.post_count,
+            "id": tag_id,
+            "name": name,
+            "post_count": post_count,
             "category": category_id,
             "created_at": created_at,
             "updated_at": created_at,
             "is_deprecated": False,
-            "words": TAG_WORD_SPLIT_PATTERN.split(tag.name)
+            "words": TAG_WORD_SPLIT_PATTERN.split(name)
         }
     
     tag_object = format_tag_object(query_tag)
@@ -564,9 +574,30 @@ async def get_related_tag_json(
             "tag": tag_object,
             "related_tags": []
         }
+
+    # Try TF-IDF similarity index first
+    from ..services.similarity import similarity_index
+    if similarity_index.is_ready:
+        sim_results = similarity_index.get_related_tags(query_tag.id, limit=limit, category_filter=category)
+        if sim_results is not None:
+            related_tags = [
+                {
+                    "tag": format_tag_object(item),
+                    "cosine_similarity": item["cosine_similarity"],
+                    "jaccard_similarity": item["jaccard_similarity"],
+                    "overlap_coefficient": item["overlap_coefficient"],
+                    "frequency": item["frequency"]
+                }
+                for item in sim_results
+            ]
+            return {
+                "query": query,
+                "post_count": query_post_count,
+                "tag": tag_object,
+                "related_tags": related_tags
+            }
     
-    # Use table aliases for efficient self-join query
-    # This avoids an IN subquery which can be slower on large datasets
+    # Fallback to SQL self-join if index is building or tag not in index
     t1 = blombooru_media_tags.alias('t1')
     t2 = blombooru_media_tags.alias('t2')
     
