@@ -90,6 +90,7 @@ async def lifespan(app: FastAPI):
     """Application lifespan handler (startup and shutdown)"""
     cleanup_task = None
     dead_cache_task = None
+    similarity_task = None
     # Startup
     if settings.DEBUG:
         logger.warning("DEBUG MODE ENABLED - DO NOT USE IN PRODUCTION")
@@ -138,6 +139,29 @@ async def lifespan(app: FastAPI):
 
             dead_cache_task = asyncio.create_task(periodic_dead_cache_cleanup())
 
+            # Start similarity index background builder and periodic rebuild task
+            async def periodic_similarity_rebuild():
+                from .database import SessionLocal
+                from .services.similarity import similarity_index
+                try:
+                    await asyncio.to_thread(similarity_index.rebuild_from_session_factory, SessionLocal)
+                except asyncio.CancelledError:
+                    return
+                except Exception as e:
+                    logger.error(f"Initial similarity index build error: {e}")
+
+                while True:
+                    await asyncio.sleep(300)  # Every 5 minutes
+                    try:
+                        if similarity_index.dirty:
+                            await asyncio.to_thread(similarity_index.rebuild_from_session_factory, SessionLocal)
+                    except asyncio.CancelledError:
+                        break
+                    except Exception as e:
+                        logger.error(f"Periodic similarity index rebuild error: {e}")
+
+            similarity_task = asyncio.create_task(periodic_similarity_rebuild())
+
             logger.info("Blombooru started successfully")
         except Exception as e:
             logger.error(f"Error during startup: {e}")
@@ -151,6 +175,8 @@ async def lifespan(app: FastAPI):
         cleanup_task.cancel()
     if dead_cache_task:
         dead_cache_task.cancel()
+    if similarity_task:
+        similarity_task.cancel()
     try:
         from .routes.ai_tagger import shutdown_tagger_resources
         shutdown_tagger_resources()
