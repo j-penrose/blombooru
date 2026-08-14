@@ -69,17 +69,31 @@ def invalidate_cache(*prefixes: str):
     except Exception as e:
         logger.error(f"Error invalidating cache: {e}")
 
+def invalidate_related_cache():
+    """Invalidate all related-media caches"""
+    invalidate_cache("related_media")
+
 def invalidate_media_cache():
     """Invalidate all media-related caches"""
-    invalidate_cache("media_list", "media_detail", "search", "danbooru")
+    try:
+        from ..services.similarity import similarity_index
+        similarity_index.dirty = True
+    except Exception:
+        pass
+    invalidate_cache("media_list", "media_detail", "search", "danbooru", "related_media")
 
 def invalidate_tag_cache():
     """Invalidate all tag-related caches"""
-    invalidate_cache("tags", "tag_detail", "tags_list", "autocomplete", "danbooru", "media_list", "search")
+    try:
+        from ..services.similarity import similarity_index
+        similarity_index.dirty = True
+    except Exception:
+        pass
+    invalidate_cache("tags", "tag_detail", "tags_list", "autocomplete", "danbooru", "media_list", "search", "related_media")
 
 def invalidate_album_cache():
     """Invalidate all album-related caches"""
-    invalidate_cache("album_list", "album_contents", "danbooru")
+    invalidate_cache("album_list", "album_contents", "danbooru", "related_media")
 
 def invalidate_media_item_cache(media_id: int):
     """
