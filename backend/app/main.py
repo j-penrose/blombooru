@@ -185,7 +185,7 @@ class SecurityHeadersMiddleware:
 class SelectiveGZipMiddleware:
     """GZip middleware that skips binary media content types."""
 
-    _SKIP_PREFIXES = ("video/", "image/", "audio/", "application/octet-stream")
+    _SKIP_PREFIXES = ("video/", "image/", "audio/", "application/octet-stream", "application/zip")
 
     def __init__(self, app: ASGIApp, minimum_size: int = 1000) -> None:
         self.app = app
@@ -212,15 +212,15 @@ class SelectiveGZipMiddleware:
                     use_gzip = False
             await send(message)
 
-        # Media file endpoints always serve binary content.
+        # Skip gzip on known binary endpoints
         path = scope.get("path", "")
         if (
             path.startswith("/api/media/") and path.endswith("/file")
             or path.startswith("/api/media/") and path.endswith("/thumbnail")
             or path.startswith("/api/shared/") and path.endswith("/file")
             or path.startswith("/api/shared/") and path.endswith("/thumbnail")
+            or path.startswith("/api/admin/backup/")
         ):
-            # Skip gzip on known binary media endpoints
             await self.app(scope, receive, send)
         else:
             await self.gzip(scope, receive, send)
