@@ -340,16 +340,6 @@ class MediaViewer extends MediaViewerBase {
             return;
         }
 
-        const generalTags = this.currentMedia.tags.filter(t => t.category === 'general');
-
-        if (!generalTags.length) {
-            this.hideRelatedMedia();
-            return;
-        }
-
-        const currentMediaId = parseInt(this.mediaId);
-        const minTags = this.albumId ? 1 : Math.min(3, generalTags.length);
-
         const relatedMediaEl = this.el('related-media');
         const relatedMediaSection = this.el('related-media-section') || relatedMediaEl?.parentElement;
         const relatedMediaLoading = this.el('related-media-loading');
@@ -358,55 +348,30 @@ class MediaViewer extends MediaViewerBase {
         if (relatedMediaLoading) relatedMediaLoading.style.display = 'block';
         if (relatedMediaEl) relatedMediaEl.style.display = 'none';
 
-        const searchOnce = async (numTags) => {
-            const shuffled = [...generalTags];
-            for (let i = shuffled.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-            }
-
-            const actualNumTags = Math.min(numTags, shuffled.length);
-            let tagQuery = shuffled.slice(0, actualNumTags).map(t => t.name).join(' ');
+        try {
+            const currentMediaId = parseInt(this.mediaId);
+            let url = `/api/media/${currentMediaId}/related?limit=12`;
             if (this.albumId) {
-                tagQuery = `album:${this.albumId} ${tagQuery}`;
+                url += `&album_id=${encodeURIComponent(this.albumId)}`;
             }
 
-            const res = await fetch(`/api/search?q=${encodeURIComponent(tagQuery.trim())}&limit=12`, {
+            const res = await fetch(url, {
                 credentials: 'include'
             });
-            const data = await res.json();
-            return (data.items || []).filter(i => i.id !== currentMediaId);
-        };
 
-        try {
-            const maxStartingTags = Math.min(6, generalTags.length);
-
-            for (let numTags = maxStartingTags; numTags >= minTags; numTags--) {
-                let bestItems = [];
-
-                for (let i = 0; i < 3; i++) {
-                    const items = await searchOnce(numTags);
-                    if (items.length > bestItems.length) {
-                        bestItems = items;
-                    }
-                    if (bestItems.length >= 3) break;
-                }
-
-                if (bestItems.length >= 1) {
-                    this.renderRelatedMedia(bestItems);
-                    return;
-                }
-
-                for (let i = 0; i < 3; i++) {
-                    const items = await searchOnce(numTags);
-                    if (items.length > 0) {
-                        this.renderRelatedMedia(items);
-                        return;
-                    }
-                }
+            if (!res.ok) {
+                this.hideRelatedMedia();
+                return;
             }
 
-            this.hideRelatedMedia();
+            const data = await res.json();
+            const items = (data.items || []).filter(i => i.id !== currentMediaId);
+
+            if (items.length > 0) {
+                this.renderRelatedMedia(items);
+            } else {
+                this.hideRelatedMedia();
+            }
         } catch (e) {
             console.error('related error', e);
             this.hideRelatedMedia();
@@ -911,13 +876,13 @@ class MediaViewer extends MediaViewerBase {
 
             if (activeVideo) {
                 if (document.activeElement !== activeVideo) {
-                    try { activeVideo.focus(); } catch (_) {}
+                    try { activeVideo.focus(); } catch (_) { }
                 }
 
                 if (e.code === 'Space' || e.key === ' ') {
                     e.preventDefault();
                     if (activeVideo.paused) {
-                        activeVideo.play().catch(() => {});
+                        activeVideo.play().catch(() => { });
                     } else {
                         activeVideo.pause();
                     }
@@ -958,7 +923,7 @@ class MediaViewer extends MediaViewerBase {
             if (fsEl) {
                 const vid = fsEl.tagName === 'VIDEO' ? fsEl : fsEl.querySelector('video');
                 if (vid) {
-                    try { vid.focus(); } catch (_) {}
+                    try { vid.focus(); } catch (_) { }
                 }
             }
         };
@@ -1016,7 +981,7 @@ class MediaViewer extends MediaViewerBase {
                 const focusVideo = () => {
                     try {
                         videoEl.focus();
-                    } catch (_) {}
+                    } catch (_) { }
                 };
 
                 if (videoEl.requestFullscreen) {
@@ -1745,26 +1710,22 @@ class MediaViewer extends MediaViewerBase {
             }
         }
 
-        // Get more related items using tags
-        if (this.currentMedia.tags && this.currentMedia.tags.length > 0) {
-            const generalTags = this.currentMedia.tags.filter(t => t.category === 'general');
-            if (generalTags.length > 0) {
-                const tagQuery = generalTags.slice(0, 3).map(t => t.name).join(' ');
-                try {
-                    const res = await fetch(`/api/search?q=${encodeURIComponent(tagQuery)}&limit=30`, {
-                        credentials: 'include'
-                    });
-                    const data = await res.json();
-                    (data.items || []).forEach(item => {
-                        if (item.id !== currentId && !addedIds.has(item.id)) {
-                            items.push(item);
-                            addedIds.add(item.id);
-                        }
-                    });
-                } catch (e) {
-                    console.error('Error loading related items:', e);
-                }
+        // Get related items using TF-IDF similarity
+        try {
+            const res = await fetch(`/api/media/${currentId}/related?limit=20`, {
+                credentials: 'include'
+            });
+            if (res.ok) {
+                const data = await res.json();
+                (data.items || []).forEach(item => {
+                    if (item.id !== currentId && !addedIds.has(item.id)) {
+                        items.push(item);
+                        addedIds.add(item.id);
+                    }
+                });
             }
+        } catch (e) {
+            console.error('Error loading related items for related media section:', e);
         }
 
         return items;
