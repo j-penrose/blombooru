@@ -170,7 +170,8 @@ class AdminStats {
                         titleColor: this.getCSSVariable('--text'),
                         bodyColor: this.getCSSVariable('--text'),
                         borderColor: this.getCSSVariable('--border'),
-                        borderWidth: 1
+                        borderWidth: 1,
+                        cornerRadius: 0
                     }
                 }
             }
@@ -221,7 +222,8 @@ class AdminStats {
                         titleColor: this.getCSSVariable('--text'),
                         bodyColor: this.getCSSVariable('--text'),
                         borderColor: this.getCSSVariable('--border'),
-                        borderWidth: 1
+                        borderWidth: 1,
+                        cornerRadius: 0
                     }
                 }
             }
@@ -236,8 +238,15 @@ class AdminStats {
             this.charts.uploadTrends.destroy();
         }
 
-        const sortedData = data.sort((a, b) => new Date(a.date) - new Date(b.date));
-        const labels = sortedData.map(d => new Date(d.date).toLocaleDateString());
+        const parseDate = (dateStr) => {
+            if (typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+                return new Date(dateStr + 'T00:00:00');
+            }
+            return new Date(dateStr);
+        };
+
+        const sortedData = (data || []).slice().sort((a, b) => parseDate(a.date) - parseDate(b.date));
+        const labels = sortedData.map(d => parseDate(d.date).toLocaleDateString());
         const counts = sortedData.map(d => d.count);
 
         this.charts.uploadTrends = new Chart(ctx, {
@@ -296,7 +305,8 @@ class AdminStats {
                         titleColor: this.getCSSVariable('--text'),
                         bodyColor: this.getCSSVariable('--text'),
                         borderColor: this.getCSSVariable('--border'),
-                        borderWidth: 1
+                        borderWidth: 1,
+                        cornerRadius: 0
                     }
                 }
             }
@@ -365,6 +375,7 @@ class AdminStats {
                         bodyColor: this.getCSSVariable('--text'),
                         borderColor: this.getCSSVariable('--border'),
                         borderWidth: 1,
+                        cornerRadius: 0,
                         callbacks: {
                             title: function (context) {
                                 return data[context[0].dataIndex].name;
@@ -422,7 +433,8 @@ class AdminStats {
                         titleColor: this.getCSSVariable('--text'),
                         bodyColor: this.getCSSVariable('--text'),
                         borderColor: this.getCSSVariable('--border'),
-                        borderWidth: 1
+                        borderWidth: 1,
+                        cornerRadius: 0
                     }
                 }
             }
@@ -480,7 +492,8 @@ class AdminStats {
                         titleColor: this.getCSSVariable('--text'),
                         bodyColor: this.getCSSVariable('--text'),
                         borderColor: this.getCSSVariable('--border'),
-                        borderWidth: 1
+                        borderWidth: 1,
+                        cornerRadius: 0
                     }
                 }
             }
@@ -551,6 +564,7 @@ class AdminStats {
                         bodyColor: this.getCSSVariable('--text'),
                         borderColor: this.getCSSVariable('--border'),
                         borderWidth: 1,
+                        cornerRadius: 0,
                         callbacks: {
                             title: function (context) {
                                 return data[context[0].dataIndex].name;
@@ -571,5 +585,4 @@ class AdminStats {
     }
 }
 
-window.AdminStats = AdminStats;
 window.AdminStats = AdminStats;

@@ -144,19 +144,26 @@ async def get_comprehensive_stats(
         'explicit': db.query(Media).filter(Media.rating == 'explicit').count()
     }
     
-    thirty_days_ago = datetime.now() - timedelta(days=30)
+    today = datetime.now().date()
+    start_date = today - timedelta(days=29)
+    start_datetime = datetime.combine(start_date, datetime.min.time())
+    
     upload_trends = db.query(
         func.date(Media.uploaded_at).label('date'),
         func.count(Media.id).label('count')
     ).filter(
-        Media.uploaded_at >= thirty_days_ago
+        Media.uploaded_at >= start_datetime
     ).group_by(
         func.date(Media.uploaded_at)
     ).order_by('date').all()
     
+    counts_by_date = {str(trend.date): trend.count for trend in upload_trends}
     upload_trends_data = [
-        {'date': str(trend.date), 'count': trend.count}
-        for trend in upload_trends
+        {
+            'date': (start_date + timedelta(days=i)).isoformat(),
+            'count': counts_by_date.get((start_date + timedelta(days=i)).isoformat(), 0)
+        }
+        for i in range(30)
     ]
     
     total_tags = db.query(Tag).count()
