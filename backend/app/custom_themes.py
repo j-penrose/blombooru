@@ -175,14 +175,24 @@ class CustomThemeManager:
     All mutating operations update custom_themes.json and the CSS file atomically-ish.
     """
 
+    @property
+    def custom_themes_dir(self) -> Path:
+        p = settings.DATA_DIR / "custom_themes"
+        p.mkdir(parents=True, exist_ok=True)
+        return p
+
+    @property
+    def custom_themes_json(self) -> Path:
+        return settings.DATA_DIR / "custom_themes.json"
+
     def __init__(self) -> None:
-        CUSTOM_THEMES_DIR.mkdir(parents=True, exist_ok=True)
+        self.custom_themes_dir.mkdir(parents=True, exist_ok=True)
         self._meta: dict[str, dict] = self._load_meta()
 
     def _load_meta(self) -> dict[str, dict]:
-        if CUSTOM_THEMES_JSON.exists():
+        if self.custom_themes_json.exists():
             try:
-                with CUSTOM_THEMES_JSON.open("r", encoding="utf-8") as f:
+                with self.custom_themes_json.open("r", encoding="utf-8") as f:
                     data = json.load(f)
                     if isinstance(data, dict):
                         return data
@@ -191,7 +201,7 @@ class CustomThemeManager:
         return {}
 
     def _save_meta(self) -> None:
-        with CUSTOM_THEMES_JSON.open("w", encoding="utf-8") as f:
+        with self.custom_themes_json.open("w", encoding="utf-8") as f:
             json.dump(self._meta, f, indent=2)
 
     def load_from_disk(self) -> None:
@@ -199,7 +209,7 @@ class CustomThemeManager:
         from .themes import theme_registry, Theme
 
         for theme_id, meta in list(self._meta.items()):
-            css_path = CUSTOM_THEMES_DIR / f"{theme_id}.css"
+            css_path = self.custom_themes_dir / f"{theme_id}.css"
             if not css_path.exists():
                 logger.warning(
                     f"Custom theme CSS missing for {theme_id!r}, skipping"
@@ -248,7 +258,7 @@ class CustomThemeManager:
 
         backup_theme_id = _resolve_backup_theme_id(backup_theme_id)
 
-        css_file = CUSTOM_THEMES_DIR / f"{theme_id}.css"
+        css_file = self.custom_themes_dir / f"{theme_id}.css"
         css_file.write_text(clean_css, encoding="utf-8")
 
         meta = {
@@ -315,7 +325,7 @@ class CustomThemeManager:
             clean_css = sanitize_css(css_content)
             if not clean_css.strip():
                 raise ValueError(_t("no_valid_css"))
-            css_file = CUSTOM_THEMES_DIR / f"{theme_id}.css"
+            css_file = self.custom_themes_dir / f"{theme_id}.css"
             css_file.write_text(clean_css, encoding="utf-8")
             meta["primary_color"] = (
                 _extract_css_var(clean_css, "--primary-color") or meta.get("primary_color", "#3b82f6")
@@ -352,7 +362,7 @@ class CustomThemeManager:
         if theme_id not in self._meta:
             raise KeyError(f"Custom theme {theme_id!r} not found")
 
-        css_file = CUSTOM_THEMES_DIR / f"{theme_id}.css"
+        css_file = self.custom_themes_dir / f"{theme_id}.css"
         try:
             css_file.unlink(missing_ok=True)
         except Exception as e:
@@ -368,7 +378,7 @@ class CustomThemeManager:
         """Return raw CSS content for a custom theme. Raises KeyError if not found."""
         if theme_id not in self._meta:
             raise KeyError(f"Custom theme {theme_id!r} not found")
-        css_file = CUSTOM_THEMES_DIR / f"{theme_id}.css"
+        css_file = self.custom_themes_dir / f"{theme_id}.css"
         if not css_file.exists():
             raise FileNotFoundError(f"CSS file for {theme_id!r} is missing")
         return css_file.read_text(encoding="utf-8")
