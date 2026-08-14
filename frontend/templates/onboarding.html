@@ -111,9 +111,35 @@
                 <small class="text-secondary text-xs">{{ t('onboarding.password_hint') }}</small>
             </div>
 
-            <button type="submit" class="btn-primary w-full px-4 py-3 font-bold">
-                {{ t('onboarding.complete_setup') }}
-            </button>
+            <div class="mb-4">
+                <button type="submit" id="complete-btn" class="btn-primary w-full px-4 py-3 font-bold">
+                    {{ t('onboarding.complete_setup') }}
+                </button>
+            </div>
+
+            <!-- Collapsible Import Backup Dropdown Section -->
+            <div class="border bg">
+                <button type="button" id="toggle-backup-section"
+                    class="w-full p-3 flex justify-between items-center text-left text-xs font-bold hover:text-primary transition-colors cursor-pointer select-none">
+                    <span id="backup-dropdown-title">{{ t('admin.backup.import_backup') }}</span>
+                    <svg id="backup-dropdown-arrow" class="w-4 h-4 transition-transform text-secondary duration-200"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </button>
+                <div id="backup-restore-panel" style="display: none;" class="p-4 pt-2 border-t">
+                    <p class="text-xs text-secondary mb-3">{{ t('admin.backup.import_hint') }}</p>
+                    <div id="onboarding-backup-drop"
+                        class="upload-area cursor-pointer p-4 border border-dashed text-center surface">
+                        <p class="text-xs text-secondary" id="backup-file-label">{{ t('admin.backup.drop_backup') }}</p>
+                        <input type="file" id="onboarding-backup-file" accept=".zip" class="hidden">
+                    </div>
+                    <button type="button" id="import-backup-btn"
+                        class="btn-dark w-full mt-3 px-4 py-2.5 text-xs font-bold">
+                        {{ t('admin.backup.import_backup') }}
+                    </button>
+                </div>
+            </div>
         </form>
     </div>
 </div>
@@ -140,14 +166,70 @@
         document.getElementById('redis-settings').style.display = e.target.checked ? 'block' : 'none';
     });
 
-    document.getElementById('onboarding-form').addEventListener('submit', async (e) => {
+    const toggleBackupBtn = document.getElementById('toggle-backup-section');
+    const backupPanel = document.getElementById('backup-restore-panel');
+    const backupArrow = document.getElementById('backup-dropdown-arrow');
+    const backupFileInput = document.getElementById('onboarding-backup-file');
+    const backupDropArea = document.getElementById('onboarding-backup-drop');
+    const backupLabel = document.getElementById('backup-file-label');
+    const completeBtn = document.getElementById('complete-btn');
+    const importBackupBtn = document.getElementById('import-backup-btn');
+
+    let isBackupOpen = false;
+    function setBackupOpen(open) {
+        isBackupOpen = open;
+        backupPanel.style.display = open ? 'block' : 'none';
+        if (open) {
+            backupArrow.classList.add('rotate-180');
+        } else {
+            backupArrow.classList.remove('rotate-180');
+        }
+    }
+
+    toggleBackupBtn.addEventListener('click', () => {
+        setBackupOpen(!isBackupOpen);
+    });
+
+    backupDropArea.addEventListener('click', () => {
+        backupFileInput.click();
+    });
+
+    backupFileInput.addEventListener('change', () => {
+        if (backupFileInput.files && backupFileInput.files[0]) {
+            const file = backupFileInput.files[0];
+            const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
+            backupLabel.textContent = `${file.name} (${sizeMb} MB)`;
+            backupDropArea.classList.add('border-primary');
+        } else {
+            backupLabel.textContent = `{{ t('admin.backup.drop_backup') }}`;
+            backupDropArea.classList.remove('border-primary');
+        }
+    });
+
+    backupDropArea.addEventListener('dragover', (e) => {
         e.preventDefault();
+        backupDropArea.classList.add('border-primary');
+    });
 
-        const submitBtn = e.target.querySelector('button[type="submit"]');
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Setting up...';
+    backupDropArea.addEventListener('dragleave', () => {
+        if (!backupFileInput.files || !backupFileInput.files[0]) {
+            backupDropArea.classList.remove('border-primary');
+        }
+    });
 
-        const formData = {
+    backupDropArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+            backupFileInput.files = e.dataTransfer.files;
+            const file = e.dataTransfer.files[0];
+            const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
+            backupLabel.textContent = `${file.name} (${sizeMb} MB)`;
+            backupDropArea.classList.add('border-primary');
+        }
+    });
+
+    function getFormData() {
+        return {
             app_name: document.getElementById('app-name').value,
             database: {
                 host: document.getElementById('db-host').value,
@@ -166,37 +248,86 @@
             admin_username: document.getElementById('admin-username').value,
             admin_password: document.getElementById('admin-password').value
         };
+    }
 
-        console.log('Sending onboarding data...');
+    async function handleOnboardingSubmit(isBackupRestore) {
+        const form = document.getElementById('onboarding-form');
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        const backupFile = backupFileInput.files && backupFileInput.files[0];
+        if (isBackupRestore && !backupFile) {
+            if (!isBackupOpen) {
+                setBackupOpen(true);
+            }
+            backupFileInput.click();
+            return;
+        }
+
+        completeBtn.disabled = true;
+        importBackupBtn.disabled = true;
+
+        const formData = getFormData();
 
         try {
-            const response = await fetch('/api/admin/onboarding', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(formData)
-            });
+            let response;
+            if (backupFile) {
+                completeBtn.textContent = `{{ t('onboarding.restoring') }}`;
+                importBackupBtn.textContent = `{{ t('onboarding.restoring') }}`;
+                const uploadData = new FormData();
+                uploadData.append('data', JSON.stringify(formData));
+                uploadData.append('file', backupFile);
+
+                response = await fetch('/api/admin/onboarding/import', {
+                    method: 'POST',
+                    body: uploadData
+                });
+            } else {
+                completeBtn.textContent = `{{ t('onboarding.setting_up') }}`;
+                importBackupBtn.textContent = `{{ t('onboarding.setting_up') }}`;
+                response = await fetch('/api/admin/onboarding', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+            }
 
             const data = await response.json();
 
             if (response.ok) {
-                showSuccess('Setup complete! Redirecting...');
+                showSuccess(`{{ t('onboarding.setup_complete') }}`);
                 setTimeout(() => {
                     window.location.href = '/';
                 }, 1500);
             } else {
                 console.error('Error response:', data);
-                showError('Error: ' + (data.detail || JSON.stringify(data)));
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Complete Setup';
+                showError(`{{ t('common.error') }}: ` + (data.detail || JSON.stringify(data)));
+                completeBtn.disabled = false;
+                importBackupBtn.disabled = false;
+                completeBtn.textContent = `{{ t('onboarding.complete_setup') }}`;
+                importBackupBtn.textContent = `{{ t('admin.backup.import_backup') }}`;
             }
         } catch (error) {
             console.error('Request error:', error);
-            showError('Network error: ' + error.message);
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Complete Setup';
+            showError(`{{ t('common.network_error') }}: ` + error.message);
+            completeBtn.disabled = false;
+            importBackupBtn.disabled = false;
+            completeBtn.textContent = `{{ t('onboarding.complete_setup') }}`;
+            importBackupBtn.textContent = `{{ t('admin.backup.import_backup') }}`;
         }
+    }
+
+    document.getElementById('onboarding-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        handleOnboardingSubmit(false);
+    });
+
+    importBackupBtn.addEventListener('click', () => {
+        handleOnboardingSubmit(true);
     });
 </script>
 {% endblock %}

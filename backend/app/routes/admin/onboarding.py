@@ -1,15 +1,20 @@
+import json
 from datetime import timedelta
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from sqlalchemy import create_engine as sqlalchemy_create_engine
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError, OperationalError
+from sqlalchemy.orm import sessionmaker
 
+from ... import database
 from ...auth import create_access_token, get_password_hash
 from ...config import settings
-from ...utils.request_helpers import safe_error_detail
+from ...models import User
 from ...schemas import OnboardingData
+from ...utils.backup import import_full_backup
 from ...utils.logger import logger
+from ...utils.request_helpers import safe_error_detail
 
 router = APIRouter()
 
@@ -18,9 +23,8 @@ async def check_first_run():
     """Check if this is first run"""
     return {"first_run": settings.IS_FIRST_RUN}
 
-@router.post("/onboarding")
-async def complete_onboarding(data: OnboardingData):
-    """Complete first-time setup"""
+def _setup_onboarding(data: OnboardingData) -> None:
+    """Core setup routine: validates credentials, tests DB connection, creates tables, admin user, and saves config."""
     if not settings.IS_FIRST_RUN:
         raise HTTPException(status_code=400, detail="Onboarding already completed")
     
@@ -68,10 +72,6 @@ async def complete_onboarding(data: OnboardingData):
     temp_engine = None
     
     try:
-        from sqlalchemy.orm import sessionmaker
-
-        from ... import database
-        
         temp_db_url = f"postgresql://{data.database.user}:{data.database.password}@{data.database.host}:{data.database.port}/{data.database.name}"
         temp_engine = sqlalchemy_create_engine(temp_db_url, pool_pre_ping=True)
         new_session_local = sessionmaker(autocommit=False, autoflush=False, bind=temp_engine)
@@ -88,7 +88,6 @@ async def complete_onboarding(data: OnboardingData):
             except Exception as e:
                 raise HTTPException(status_code=500, detail=safe_error_detail("Failed to hash password", e))
             
-            from ...models import User
             admin = User(
                 username=data.admin_username,
                 password_hash=password_hash
@@ -170,4 +169,43 @@ async def complete_onboarding(data: OnboardingData):
         logger.error(f"Error initializing database: {e}")
         raise HTTPException(status_code=500, detail=safe_error_detail("Failed to initialize database", e))
     
+@router.post("/onboarding")
+async def complete_onboarding(data: OnboardingData):
+    """Complete first-time setup"""
+    _setup_onboarding(data)
     return {"message_key": "notifications.admin.onboarding_completed"}
+    
+@router.post("/onboarding/import")
+async def complete_onboarding_with_backup(
+    data: str = Form(...),
+    file: UploadFile = File(...)
+):
+    """Complete first-time setup and restore a full backup archive"""
+    if not settings.IS_FIRST_RUN:
+        raise HTTPException(status_code=400, detail="Onboarding already completed")
+
+    try:
+        parsed_data = json.loads(data)
+        onboarding_data = OnboardingData(**parsed_data)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid onboarding configuration data: {e}")
+
+    # 1. Initialize schema, admin user, and database engine
+    _setup_onboarding(onboarding_data)
+
+    # 2. Restore full backup archive
+    if not file.filename or not file.filename.lower().endswith(".zip"):
+        raise HTTPException(status_code=400, detail="Uploaded backup file must be a ZIP archive")
+
+    db = database.SessionLocal()
+    try:
+        stats = import_full_backup(file.file, db)
+        return {
+            "message_key": "notifications.admin.onboarding_completed",
+            "stats": stats
+        }
+    except Exception as e:
+        logger.error(f"Error during backup restore in onboarding: {e}")
+        raise HTTPException(status_code=500, detail=safe_error_detail("Failed to restore backup archive", e))
+    finally:
+        db.close()
