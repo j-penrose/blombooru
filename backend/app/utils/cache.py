@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import json
 from functools import wraps
@@ -76,8 +77,11 @@ def invalidate_related_cache():
 def invalidate_media_cache():
     """Invalidate all media-related caches"""
     try:
-        from ..services.similarity import similarity_index
-        similarity_index.dirty = True
+        from ..services.similarity import schedule_rebuild, similarity_index
+        loop = asyncio.get_running_loop()
+        loop.create_task(schedule_rebuild())
+    except RuntimeError:
+        pass
     except Exception:
         pass
     invalidate_cache("media_list", "media_detail", "search", "danbooru", "related_media")
@@ -85,8 +89,11 @@ def invalidate_media_cache():
 def invalidate_tag_cache():
     """Invalidate all tag-related caches"""
     try:
-        from ..services.similarity import similarity_index
-        similarity_index.dirty = True
+        from ..services.similarity import schedule_rebuild, similarity_index
+        loop = asyncio.get_running_loop()
+        loop.create_task(schedule_rebuild())
+    except RuntimeError:
+        pass
     except Exception:
         pass
     invalidate_cache("tags", "tag_detail", "tags_list", "autocomplete", "danbooru", "media_list", "search", "related_media")

@@ -1,3 +1,4 @@
+import asyncio
 import threading
 import time
 from typing import Dict, List, Optional, Set, Tuple
@@ -62,7 +63,7 @@ class SimilarityIndex:
         self._data: Optional[SimilarityData] = None
         self._lock = threading.Lock()
         self._is_building = False
-        self._dirty = False
+        self._rebuild_pending = False
 
     @property
     def is_ready(self) -> bool:
@@ -73,12 +74,28 @@ class SimilarityIndex:
         return self._is_building
 
     @property
-    def dirty(self) -> bool:
-        return self._dirty
+    def rebuild_pending(self) -> bool:
+        """True when a rebuild is queued (debounce sleep) or actively running."""
+        return self._rebuild_pending or self._is_building
 
-    @dirty.setter
-    def dirty(self, val: bool):
-        self._dirty = bool(val)
+    async def wait_for_build(self, timeout: float = 10.0) -> bool:
+        """
+        Suspend until any pending or in-progress rebuild finishes.
+
+        Returns True when the index is ready, False if the timeout expired
+        before the rebuild completed.
+        """
+        if not self.rebuild_pending:
+            return True
+        loop = asyncio.get_event_loop()
+        deadline = loop.time() + timeout
+        while self.rebuild_pending:
+            remaining = deadline - loop.time()
+            if remaining <= 0:
+                logger.warning("wait_for_build: timed out after %.1fs", timeout)
+                return False
+            await asyncio.sleep(min(0.1, remaining))
+        return True
 
     def rebuild_from_session_factory(self, session_factory):
         """Rebuild the index creating and closing its own DB session."""
@@ -100,7 +117,6 @@ class SimilarityIndex:
                 logger.debug("Similarity index build already in progress, skipping.")
                 return
             self._is_building = True
-            self._dirty = False
 
         start_time = time.perf_counter()
         try:
@@ -236,9 +252,6 @@ class SimilarityIndex:
             )
         except Exception as e:
             logger.error(f"Failed to build similarity index: {e}", exc_info=True)
-            with self._lock:
-                # Re-mark dirty so next check retries rebuild
-                self._dirty = True
         finally:
             with self._lock:
                 self._is_building = False
@@ -395,3 +408,29 @@ class SimilarityIndex:
 
 # Global singleton instance
 similarity_index = SimilarityIndex()
+_pending_rebuild_task: Optional[asyncio.Task] = None
+
+async def schedule_rebuild(delay_seconds: float = 2.0) -> None:
+    """Schedule a debounced similarity index rebuild."""
+    global _pending_rebuild_task
+
+    # Cancel any existing debounce timer that hasn't started the actual rebuild.
+    if _pending_rebuild_task is not None and not _pending_rebuild_task.done():
+        _pending_rebuild_task.cancel()
+
+    similarity_index._rebuild_pending = True
+
+    async def _delayed_rebuild() -> None:
+        try:
+            await asyncio.sleep(delay_seconds)
+        except asyncio.CancelledError:
+            return
+        try:
+            from ..database import SessionLocal
+            await asyncio.to_thread(
+                similarity_index.rebuild_from_session_factory, SessionLocal
+            )
+        finally:
+            similarity_index._rebuild_pending = False
+
+    _pending_rebuild_task = asyncio.create_task(_delayed_rebuild())
