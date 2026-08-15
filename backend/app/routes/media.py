@@ -568,6 +568,9 @@ async def get_related_media(
     """Get related media items using category-weighted TF-IDF similarity."""
     from ..services.similarity import similarity_index
 
+    if similarity_index.rebuild_pending:
+        await similarity_index.wait_for_build(timeout=10.0)
+
     if not similarity_index.is_ready:
         return {"items": [], "status": "building"}
 
