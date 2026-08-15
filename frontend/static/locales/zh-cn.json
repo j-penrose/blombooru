@@ -716,6 +716,7 @@
     },
     "login": {
         "enter_credentials": "输入您的凭据以访问 {app_name}",
+        "forgot_password": "",
         "invalid_credentials": "用户名或密码无效",
         "login_button": "登录",
         "login_failed": "登录失败",

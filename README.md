@@ -669,7 +669,7 @@ If the update includes changes to `requirements.txt` or `docker-compose.yml`, th
 > [!WARNING]
 > Resetting the password does not invalidate existing login sessions (tokens remain valid until they expire, up to 30 days). If you suspect the account was compromised, also consider rotating your `SECRET_KEY` (stored in `data/settings.json` or `.env`) and restarting your instance, which will immediately invalidate all active sessions.
 
-If you forget your admin password or need to change the admin username, you can use the `pass_reset.py` script located in the project root. It works with both Docker and bare-metal Python instances.
+If you've forgotten your admin password or need to change the admin username, you can use the `pass_reset.py` script.
 
 At least one of `--reset-password`, `--password`, or `--username` must be provided.
 

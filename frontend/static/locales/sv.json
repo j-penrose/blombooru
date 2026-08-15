@@ -716,6 +716,7 @@
     },
     "login": {
         "enter_credentials": "Ange dina uppgifter för att komma åt {app_name}",
+        "forgot_password": "Glömt lösenordet?",
         "invalid_credentials": "Ogiltigt användarnamn eller lösenord",
         "login_button": "Logga in",
         "login_failed": "Inloggning misslyckades",

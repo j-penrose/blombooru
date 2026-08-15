@@ -716,6 +716,7 @@
     },
     "login": {
         "enter_credentials": "Enter your credentials to access {app_name}",
+        "forgot_password": "Forgot password?",
         "invalid_credentials": "Invalid username or password",
         "login_button": "Login",
         "login_failed": "Login failed",

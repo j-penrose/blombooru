@@ -716,6 +716,7 @@
     },
     "login": {
         "enter_credentials": "Введите свои учетные данные для доступа к {app_name}",
+        "forgot_password": "",
         "invalid_credentials": "Неверное имя пользователя или пароль",
         "login_button": "Войти",
         "login_failed": "Ошибка входа",
