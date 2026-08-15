@@ -78,6 +78,7 @@ Blombooru is a private, single-user alternative to boorus like Danbooru and Gelb
   - [System Updater](#system-updater)
     - [How to Update](#how-to-update)
     - [Dependency Changes](#dependency-changes)
+  - [Account Recovery](#account-recovery)
   - [API \& Third-Party Apps](#api--third-party-apps)
     - [Connection Details](#connection-details)
     - [Supported Features](#supported-features)
@@ -662,6 +663,51 @@ If the update includes changes to `requirements.txt` or `docker-compose.yml`, th
 
 - **Docker:** Run `docker compose down && docker compose up --build -d` to rebuild the container
 - **Python:** Stop the server (Ctrl+C) and run `pip install -r requirements.txt` before running `python run.py` again.
+
+### Account Recovery
+
+> [!WARNING]
+> Resetting the password does not invalidate existing login sessions (tokens remain valid until they expire, up to 30 days). If you suspect the account was compromised, also consider rotating your `SECRET_KEY` (stored in `data/settings.json` or `.env`) and restarting your instance, which will immediately invalidate all active sessions.
+
+If you forget your admin password or need to change the admin username, you can use the `pass_reset.py` script located in the project root. It works with both Docker and bare-metal Python instances.
+
+At least one of `--reset-password`, `--password`, or `--username` must be provided.
+
+**Reset password interactively (recommended):**
+
+Prompts securely for password input and confirmation without exposing it in shell history or process tables:
+
+```bash
+docker compose exec -it web python pass_reset.py --reset-password
+```
+
+**Reset password non-interactively:**
+
+```bash
+docker compose exec web python pass_reset.py --password "mynewpassword"
+```
+
+**Reset username only:**
+
+```bash
+docker compose exec web python pass_reset.py --username "newadmin"
+```
+
+**Reset both at once:**
+
+```bash
+docker compose exec -it web python pass_reset.py --username "newadmin" --reset-password
+```
+
+The same validation rules as the web UI apply:
+
+| Field | Min Length | Max Length |
+|:------|:-----------|:-----------|
+| Password | 6 | 50 |
+| Username | 1 | 50 |
+
+> [!NOTE]
+> If you are running Blombooru with bare-metal Python, omit `docker compose exec web` (or `docker compose exec -it web`) from the commands above, and use the virtual environment to run the script instead.
 
 ### API & Third-Party Apps
 
