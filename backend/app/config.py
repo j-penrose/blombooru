@@ -108,7 +108,14 @@ class Settings:
                 "opacity": 25
             },
             "keybindings": {},
-            "secret_key": os.urandom(32).hex()
+            "secret_key": os.urandom(32).hex(),
+            "similarity_weights": {
+                "artist": 5.0,
+                "character": 4.0,
+                "general": 1.0,
+                "copyright": 0.5,
+                "meta": 0.05
+            }
         }
     
     def get_items_per_page(self) -> int:
@@ -365,5 +372,20 @@ class Settings:
             port=self.SHARED_TAG_DB_PORT,
             database=self.SHARED_TAG_DB_NAME
         )
+
+    @property
+    def SIMILARITY_WEIGHTS(self) -> dict:
+        """Get category weights used for TF-IDF similarity index."""
+        defaults = {
+            "artist": 5.0,
+            "character": 4.0,
+            "general": 1.0,
+            "copyright": 0.5,
+            "meta": 0.05,
+        }
+        saved = self.file_settings.get("similarity_weights") or self.settings.get("similarity_weights", {})
+        merged = {**defaults, **saved}
+        # Ensure all values are floats and positive, up to 99.99
+        return {k: max(0.0, min(99.99, round(float(v), 2))) for k, v in merged.items()}
 
 settings = Settings()

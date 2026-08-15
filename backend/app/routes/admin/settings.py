@@ -77,7 +77,18 @@ async def update_settings(
         if settings.SHARED_TAGS_ENABLED:
             init_shared_db()
         
-    invalidate_media_cache()
+    if "similarity_weights" in update_dict:
+        from ...services.similarity import similarity_index, schedule_rebuild
+        import asyncio
+        new_weights = {k: float(v) for k, v in update_dict["similarity_weights"].items()}
+        if similarity_index.update_weights(new_weights):
+            try:
+                loop = asyncio.get_running_loop()
+                loop.create_task(schedule_rebuild(delay_seconds=0.0))
+            except RuntimeError:
+                pass
+
+    invalidate_media_cache(rebuild_similarity=False)
         
     return {"message_key": "notifications.admin.settings_updated"}
 

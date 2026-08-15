@@ -484,6 +484,11 @@
             "view_changelog": "View Changelog",
             "view_full_changelog": "View full changelog on GitHub ({current}...{latest})",
             "view_release": "View Release on GitHub"
+        },
+        "similarity": {
+            "title": "Similarity Index Weights",
+            "description": "Adjust how much each tag category influences the Related Media recommendations. Higher values increase the category's impact on similarity scores.",
+            "reset": "Reset to default"
         }
     },
     "album_picker": {

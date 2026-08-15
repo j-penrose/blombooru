@@ -484,6 +484,11 @@
             "view_changelog": "查看更新日志",
             "view_full_changelog": "在 GitHub 上查看完整日志 ({current}...{latest})",
             "view_release": "在 GitHub 上查看发布版本"
+        },
+        "similarity": {
+            "title": "",
+            "description": "",
+            "reset": ""
         }
     },
     "album_picker": {

@@ -138,6 +138,13 @@ class CustomBackgroundSettings(BaseModel):
     position_y: Optional[int] = 50
     opacity: Optional[int] = 25
 
+class SimilarityWeights(BaseModel):
+    artist: Optional[float] = Field(5.0, ge=0.0, le=99.99)
+    character: Optional[float] = Field(4.0, ge=0.0, le=99.99)
+    general: Optional[float] = Field(1.0, ge=0.0, le=99.99)
+    copyright: Optional[float] = Field(0.5, ge=0.0, le=99.99)
+    meta: Optional[float] = Field(0.05, ge=0.0, le=99.99)
+
 class SettingsUpdate(BaseModel):
     app_name: Optional[str] = None
     items_per_page: Optional[int] = None
@@ -155,6 +162,7 @@ class SettingsUpdate(BaseModel):
     sidebar_custom_buttons: Optional[List[dict]] = None
     media_type_tags: Optional[dict] = None
     custom_background: Optional[CustomBackgroundSettings] = None
+    similarity_weights: Optional[SimilarityWeights] = None
 
 class ShareSettingsUpdate(BaseModel):
     share_ai_metadata: Optional[bool] = None

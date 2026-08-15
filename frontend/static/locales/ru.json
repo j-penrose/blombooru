@@ -484,6 +484,11 @@
             "view_changelog": "Просмотреть список изменений",
             "view_full_changelog": "Посмотреть полный список изменений на GitHub ({current}...{latest})",
             "view_release": "Посмотреть релиз на GitHub"
+        },
+        "similarity": {
+            "title": "",
+            "description": "",
+            "reset": ""
         }
     },
     "album_picker": {

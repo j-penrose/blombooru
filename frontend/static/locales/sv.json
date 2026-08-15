@@ -484,6 +484,11 @@
             "view_changelog": "Visa ändringslogg",
             "view_full_changelog": "Visa fullständig ändringslogg på GitHub ({current}...{latest})",
             "view_release": "Visa release på GitHub"
+        },
+        "similarity": {
+            "title": "Viktning av Likhetsindex",
+            "description": "Justera hur mycket varje taggkategori påverkar rekommendationerna för liknande media. Högre värden ökar kategoriens inverkan på likhetspoängen.",
+            "reset": "Återställ till standard"
         }
     },
     "album_picker": {

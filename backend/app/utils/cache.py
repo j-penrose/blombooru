@@ -74,28 +74,30 @@ def invalidate_related_cache():
     """Invalidate all related-media caches"""
     invalidate_cache("related_media")
 
-def invalidate_media_cache():
+def invalidate_media_cache(rebuild_similarity: bool = True):
     """Invalidate all media-related caches"""
-    try:
-        from ..services.similarity import schedule_rebuild, similarity_index
-        loop = asyncio.get_running_loop()
-        loop.create_task(schedule_rebuild())
-    except RuntimeError:
-        pass
-    except Exception:
-        pass
+    if rebuild_similarity:
+        try:
+            from ..services.similarity import schedule_rebuild, similarity_index
+            loop = asyncio.get_running_loop()
+            loop.create_task(schedule_rebuild())
+        except RuntimeError:
+            pass
+        except Exception:
+            pass
     invalidate_cache("media_list", "media_detail", "search", "danbooru", "related_media")
 
-def invalidate_tag_cache():
+def invalidate_tag_cache(rebuild_similarity: bool = True):
     """Invalidate all tag-related caches"""
-    try:
-        from ..services.similarity import schedule_rebuild, similarity_index
-        loop = asyncio.get_running_loop()
-        loop.create_task(schedule_rebuild())
-    except RuntimeError:
-        pass
-    except Exception:
-        pass
+    if rebuild_similarity:
+        try:
+            from ..services.similarity import schedule_rebuild, similarity_index
+            loop = asyncio.get_running_loop()
+            loop.create_task(schedule_rebuild())
+        except RuntimeError:
+            pass
+        except Exception:
+            pass
     invalidate_cache("tags", "tag_detail", "tags_list", "autocomplete", "danbooru", "media_list", "search", "related_media")
 
 def invalidate_album_cache():

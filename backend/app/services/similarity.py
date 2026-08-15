@@ -107,6 +107,16 @@ class SimilarityIndex:
         finally:
             db.close()
 
+    def update_weights(self, new_weights: Dict[str, float]) -> bool:
+        """Replace category weights with ``new_weights``."""
+        changed = any(
+            abs(new_weights.get(k, v) - v) > 1e-9
+            for k, v in self.category_weights.items()
+        ) or any(k not in self.category_weights for k in new_weights)
+        if changed:
+            self.category_weights = dict(new_weights)
+        return changed
+
     def rebuild(self, db: Session):
         """
         Build the TF-IDF matrices from database records.
@@ -407,7 +417,14 @@ class SimilarityIndex:
         return results
 
 # Global singleton instance
-similarity_index = SimilarityIndex()
+def _make_index() -> SimilarityIndex:
+    try:
+        from ..config import settings
+        return SimilarityIndex(category_weights=settings.SIMILARITY_WEIGHTS)
+    except Exception:
+        return SimilarityIndex()
+
+similarity_index = _make_index()
 _pending_rebuild_task: Optional[asyncio.Task] = None
 
 async def schedule_rebuild(delay_seconds: float = 2.0) -> None:

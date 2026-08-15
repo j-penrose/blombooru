@@ -912,6 +912,49 @@
                 </div>
             </div>
 
+            <!-- Similarity Index Weights -->
+            <div>
+                <label class="block text-xs font-bold mb-2">{{ t('admin.similarity.title') }}</label>
+                <div class="bg p-4 border">
+                    <p class="text-xs text-secondary opacity-70 mb-3">
+                        {{ t('admin.similarity.description') }}
+                    </p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                        {% set categories = [
+                        ('artist', 'common.tag_category_artist', '5'),
+                        ('character', 'common.tag_category_character', '4'),
+                        ('general', 'common.tag_category_general', '1'),
+                        ('copyright', 'common.tag_category_copyright', '0.5'),
+                        ('meta', 'common.tag_category_meta', '0.05'),
+                        ] %}
+                        {% for cat, label_key, default in categories %}
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70"
+                                for="sim-weight-{{ cat }}">
+                                {{ t(label_key) }}
+                            </label>
+                            <div class="flex gap-2">
+                                <input type="number" id="sim-weight-{{ cat }}" data-sim-default="{{ default }}" min="0"
+                                    max="99.99" step="0.05" placeholder="{{ default }}"
+                                    class="w-full flex-1 min-w-0 bg px-3 py-2 border text-xs focus:outline-none hover:border-primary transition-colors focus:border-primary"
+                                    value="{{ default }}">
+                                <button type="button"
+                                    onclick="document.getElementById('sim-weight-{{ cat }}').value = document.getElementById('sim-weight-{{ cat }}').dataset.simDefault"
+                                    title="{{ t('admin.similarity.reset') }}"
+                                    class="btn-dark p-2 text-xs text-secondary flex items-center justify-center hover:border-primary transition-colors shrink-0">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                                        <path d="M3 3v5h5"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
             <div class="mt-4">
                 <button type="submit" class="btn-primary">
                     {{ t('admin.backend.save_settings') }}

@@ -176,6 +176,49 @@ class AdminSystem {
         if (removeBtn) {
             removeBtn.addEventListener('click', () => this._setBgMediaId(null));
         }
+
+        // Similarity weights input constraints
+        const simCats = ['artist', 'character', 'general', 'copyright', 'meta'];
+        simCats.forEach(cat => {
+            const el = document.getElementById(`sim-weight-${cat}`);
+            if (!el) return;
+
+            el.addEventListener('keydown', (e) => {
+                if (['e', 'E', '+', '-'].includes(e.key)) {
+                    e.preventDefault();
+                }
+            });
+
+            el.addEventListener('input', () => {
+                let val = el.value;
+                if (val === '') return;
+                const parts = val.split('.');
+                if (parts[0].length > 2) {
+                    parts[0] = parts[0].slice(0, 2);
+                }
+                if (parts.length > 1 && parts[1].length > 2) {
+                    parts[1] = parts[1].slice(0, 2);
+                }
+                const newVal = parts.join('.');
+                if (newVal !== val) {
+                    el.value = newVal;
+                }
+                if (parseFloat(el.value) > 99.99) {
+                    el.value = '99.99';
+                }
+            });
+
+            el.addEventListener('blur', () => {
+                if (el.value === '') return;
+                const num = parseFloat(el.value);
+                if (isNaN(num)) {
+                    el.value = '';
+                } else {
+                    const clamped = Math.min(99.99, Math.max(0, num));
+                    el.value = parseFloat(clamped.toFixed(2)).toString();
+                }
+            });
+        });
     }
 
     _openBgMediaPicker() {
@@ -666,6 +709,17 @@ class AdminSystem {
                 }
             }
 
+            // Load similarity weights
+            const simCats = ['artist', 'character', 'general', 'copyright', 'meta'];
+            if (settings.similarity_weights) {
+                simCats.forEach(cat => {
+                    const el = document.getElementById(`sim-weight-${cat}`);
+                    if (el && settings.similarity_weights[cat] !== undefined) {
+                        el.value = settings.similarity_weights[cat];
+                    }
+                });
+            }
+
             // Load media_type_tags settings
             if (settings.media_type_tags) {
                 const types = ['image', 'gif', 'video'];
@@ -849,12 +903,26 @@ class AdminSystem {
             password: document.getElementById('shared-tags-password')?.value || ''
         };
 
+        const simCats = ['artist', 'character', 'general', 'copyright', 'meta'];
+        const similarityWeights = {};
+        simCats.forEach(cat => {
+            const el = document.getElementById(`sim-weight-${cat}`);
+            if (el) {
+                let val = parseFloat(el.value);
+                if (isNaN(val) || val < 0) {
+                    val = parseFloat(el.dataset.simDefault) || 0;
+                }
+                similarityWeights[cat] = Math.min(99.99, Math.max(0, Math.round(val * 100) / 100));
+            }
+        });
+
         try {
             await app.apiCall('/api/admin/settings', {
                 method: 'PATCH',
                 body: JSON.stringify({
                     redis: redisSettings,
-                    shared_tags: sharedTagsSettings
+                    shared_tags: sharedTagsSettings,
+                    similarity_weights: similarityWeights
                 })
             });
 
