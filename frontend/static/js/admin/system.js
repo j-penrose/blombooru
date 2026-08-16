@@ -40,14 +40,17 @@ class AdminSystem {
             this.customButtons = [];
             this.customButtonInstances = [];
 
-            // Show/hide custom buttons container based on mode
-            sidebarFilterModeElement.addEventListener('change', (e) => {
-                const container = document.getElementById('custom-buttons-container');
-                if (container) {
-                    container.style.display = e.detail.value === 'custom' ? 'block' : 'none';
-                }
+            sidebarFilterModeElement.addEventListener('change', () => {
+                this.updateSidebarFilterState();
             });
         }
+
+        const sidebarRatingFilterModeElement = document.getElementById('sidebar-rating-filter-mode');
+        if (sidebarRatingFilterModeElement) {
+            this.sidebarRatingFilterModeSelect = new CustomSelect(sidebarRatingFilterModeElement);
+        }
+
+        this.updateSidebarFilterState();
 
         const addCustomButtonBtn = document.getElementById('add-custom-button-btn');
         if (addCustomButtonBtn) {
@@ -343,6 +346,31 @@ class AdminSystem {
 
         const isRandom = this.defaultSortSelect?.getValue() === 'random';
         this.defaultOrderSelect.setDisabled(isRandom);
+    }
+
+    updateSidebarFilterState() {
+        if (!this.sidebarFilterModeSelect || !this.sidebarRatingFilterModeSelect) return;
+
+        const mode = this.sidebarFilterModeSelect.getValue();
+        const isRating = mode === 'rating';
+        const isCustom = mode === 'custom';
+
+        const customContainer = document.getElementById('custom-buttons-container');
+        if (customContainer) {
+            customContainer.style.display = isCustom ? 'block' : 'none';
+        }
+
+        const ratingContainer = document.getElementById('rating-filter-settings-container');
+        if (ratingContainer) {
+            ratingContainer.style.display = '';
+            if (isRating) {
+                ratingContainer.classList.remove('hidden', 'sm:block');
+            } else {
+                ratingContainer.classList.add('hidden', 'sm:block');
+            }
+        }
+
+        this.sidebarRatingFilterModeSelect.setDisabled(!isRating);
     }
 
     cleanupCustomButtons() {
@@ -666,9 +694,13 @@ class AdminSystem {
 
             if (settings.sidebar_filter_mode && this.sidebarFilterModeSelect) {
                 this.sidebarFilterModeSelect.setValue(settings.sidebar_filter_mode);
-                const container = document.getElementById('custom-buttons-container');
-                if (container) container.style.display = settings.sidebar_filter_mode === 'custom' ? 'block' : 'none';
             }
+
+            if (settings.sidebar_rating_filter_mode && this.sidebarRatingFilterModeSelect) {
+                this.sidebarRatingFilterModeSelect.setValue(settings.sidebar_rating_filter_mode);
+            }
+
+            this.updateSidebarFilterState();
 
             if (settings.sidebar_custom_buttons) {
                 this.customButtons = settings.sidebar_custom_buttons;
@@ -814,6 +846,7 @@ class AdminSystem {
         const requireAuth = document.getElementById('require-auth')?.checked || false;
 
         const sidebarMode = this.sidebarFilterModeSelect ? this.sidebarFilterModeSelect.getValue() : 'rating';
+        const sidebarRatingMode = this.sidebarRatingFilterModeSelect ? this.sidebarRatingFilterModeSelect.getValue() : 'inclusive';
 
         // Filter out empty buttons (must have both title and tags)
         let validButtons = [];
@@ -843,6 +876,7 @@ class AdminSystem {
             external_share_url: externalShareUrl || null,
             require_auth: requireAuth,
             sidebar_filter_mode: sidebarMode,
+            sidebar_rating_filter_mode: sidebarRatingMode,
             sidebar_custom_buttons: validButtons
         };
 
