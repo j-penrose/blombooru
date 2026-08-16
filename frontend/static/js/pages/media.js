@@ -820,7 +820,6 @@ class MediaViewer extends MediaViewerBase {
             if (prevBtn) {
                 if (prev_id) {
                     prevBtn.href = buildNavUrl(prev_id);
-                    prevBtn.title = `Previous (#${prev_id})`;
                     prevBtn.style.visibility = 'visible';
                     if (prevIdText) prevIdText.textContent = prev_id;
                     if (prevThumb) {
@@ -834,7 +833,6 @@ class MediaViewer extends MediaViewerBase {
             if (nextBtn) {
                 if (next_id) {
                     nextBtn.href = buildNavUrl(next_id);
-                    nextBtn.title = `Next (#${next_id})`;
                     nextBtn.style.visibility = 'visible';
                     if (nextIdText) nextIdText.textContent = next_id;
                     if (nextThumb) {
