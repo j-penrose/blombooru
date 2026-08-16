@@ -27,7 +27,7 @@ router = APIRouter(prefix="/api/albums", tags=["albums"])
 
 def get_effective_limit(limit: Optional[int]) -> int:
     """Get effective limit, falling back to settings if not provided or invalid."""
-    if limit is None or limit <= 0:
+    if limit is None or not isinstance(limit, int) or limit <= 0:
         return settings.get_items_per_page()
     return limit
 
@@ -42,6 +42,7 @@ async def get_albums(
     order: Optional[str] = Query(default="desc"),
     seed: Optional[str] = Query(default=None),
     rating: Optional[str] = None,
+    rating_mode: Optional[str] = None,
     root_only: bool = Query(default=False),
     db: Session = Depends(get_db)
 ):
@@ -55,6 +56,10 @@ async def get_albums(
         # Only show albums that are not children of any other album
         query = query.filter(~Album.id.in_(db.query(blombooru_album_hierarchy.c.child_album_id)))
     
+    if not isinstance(sort, str):
+        sort = "created_at"
+    if not isinstance(order, str):
+        order = "desc"
     sort_order = order.lower() if order else "desc"
     if sort_order not in ("asc", "desc"):
         sort_order = "desc"
@@ -71,12 +76,27 @@ async def get_albums(
         metrics = all_metrics.get(album.id, {'rating': RatingEnum.safe, 'count': 0})
         album_rating = metrics['rating']
         
-        # Apply rating filter (max rating logic)
-        if rating and rating != "explicit":
-            if rating == "safe" and album_rating != RatingEnum.safe:
-                continue
-            if rating == "questionable" and album_rating == RatingEnum.explicit:
-                continue
+        # Apply rating filter
+        if rating:
+            rating_lower = rating.lower()
+            if rating_mode == "exact":
+                target_enum = {
+                    "safe": RatingEnum.safe,
+                    "questionable": RatingEnum.questionable,
+                    "explicit": RatingEnum.explicit
+                }.get(rating_lower)
+                if album_rating != target_enum:
+                    continue
+            else:
+                if rating_lower == "explicit":
+                    pass
+                elif rating_lower == "questionable":
+                    if album_rating == RatingEnum.explicit:
+                        continue
+                else:
+                    # "safe" or any invalid rating fails closed to safe
+                    if album_rating != RatingEnum.safe:
+                        continue
         
         filtered_albums.append((album, album_rating, metrics['count']))
     
@@ -353,6 +373,7 @@ async def get_album_contents(
     page: int = Query(default=1, ge=1),
     limit: Optional[int] = Query(default=None),
     rating: Optional[str] = Query(default=None),
+    rating_mode: Optional[str] = Query(default=None),
     q: Optional[str] = Query(default=None),
     sort: str = Query(default="uploaded_at"),
     order: str = Query(default="desc"),
@@ -366,6 +387,13 @@ async def get_album_contents(
     
     # Get effective limit from settings if not provided
     limit = get_effective_limit(limit)
+    
+    if not isinstance(page, int) or page <= 0:
+        page = 1
+    if not isinstance(sort, str):
+        sort = "uploaded_at"
+    if not isinstance(order, str):
+        order = "desc"
     
     # Normalize order string
     sort_order = order.lower() if order else "desc"
@@ -384,40 +412,58 @@ async def get_album_contents(
     ).options(selectinload(Media.tags))
     
     # Apply tag filtering if query provided
-    if q:
+    if q and isinstance(q, str):
         parsed = parse_search_query(q)
         
-        # Merge rating filter into parsed query if provided
-        if rating and rating != "explicit":
-            rating_value = "safe" if rating == "safe" else "safe,questionable"
-            if 'rating' not in parsed['meta']:
-                parsed['meta']['rating'] = []
-            parsed['meta']['rating'].append({'value': rating_value, 'negated': False})
+        # Merge rating filter into parsed query if provided and not already in query
+        if rating and 'rating' not in parsed['meta']:
+            rating_lower = rating.lower()
+            if rating_mode == "exact":
+                parsed['meta']['rating'] = [{'value': rating_lower, 'negated': False}]
+            else:
+                if rating_lower == "explicit":
+                    pass
+                elif rating_lower == "questionable":
+                    parsed['meta']['rating'] = [{'value': "safe,questionable", 'negated': False}]
+                else:
+                    parsed['meta']['rating'] = [{'value': "safe", 'negated': False}]
         
         # Apply search criteria to media query
         media_query = apply_search_criteria(media_query, parsed, db)
     else:
         # Filter Rating (only if no tag query provided)
-        if rating and rating != "explicit":
-            allowed_ratings = {
-                "safe": [RatingEnum.safe],
-                "questionable": [RatingEnum.safe, RatingEnum.questionable]
-            }
-            media_query = media_query.filter(Media.rating.in_(allowed_ratings.get(rating, [])))
+        if rating:
+            rating_lower = rating.lower()
+            if rating_mode == "exact":
+                exact_rating = {
+                    "safe": RatingEnum.safe,
+                    "questionable": RatingEnum.questionable,
+                    "explicit": RatingEnum.explicit
+                }.get(rating_lower)
+                media_query = media_query.filter(Media.rating == exact_rating)
+            else:
+                if rating_lower == "explicit":
+                    pass
+                elif rating_lower == "questionable":
+                    media_query = media_query.filter(Media.rating.in_([RatingEnum.safe, RatingEnum.questionable]))
+                else:
+                    media_query = media_query.filter(Media.rating == RatingEnum.safe)
     
     # Sort Media
-    media_query = apply_media_sort(
-        media_query,
-        sort,
-        sort_order,
-        db,
-        seed,
-        column_overrides={
-            'uploaded_at': Media.id,
-            'last_modified': Media.id,
-            'name': Media.filename,
-        },
-    )
+    if not q or not isinstance(q, str) or ('order' not in parsed['meta'] and 'sort' not in parsed['meta']):
+        media_query = media_query.order_by(None)
+        media_query = apply_media_sort(
+            media_query,
+            sort,
+            sort_order,
+            db,
+            seed,
+            column_overrides={
+                'uploaded_at': Media.id,
+                'last_modified': Media.id,
+                'name': Media.filename,
+            },
+        )
 
     # Get total count BEFORE pagination
     total_media = media_query.count()
@@ -445,17 +491,27 @@ async def get_album_contents(
         all_metrics = get_bulk_album_metrics(child_ids, db)
         
         rating_priority = {RatingEnum.explicit: 3, RatingEnum.questionable: 2, RatingEnum.safe: 1}
-        # Safely get max_rating_val based on the rating filter
-        target_rating = RatingEnum(rating) if rating and rating in [r.value for r in RatingEnum] else RatingEnum.explicit
-        max_rating_val = rating_priority.get(target_rating, 3)
         
         for child in child_albums:
             metrics = all_metrics.get(child.id, {'rating': RatingEnum.safe, 'count': 0})
             child_rating = metrics['rating']
             
-            # Skip if rating is too high for current filter
-            if rating and rating_priority.get(child_rating, 1) > max_rating_val:
-                continue
+            # Skip if rating does not match current filter
+            if rating:
+                rating_lower = rating.lower()
+                if rating_mode == "exact":
+                    target_enum = {
+                        "safe": RatingEnum.safe,
+                        "questionable": RatingEnum.questionable,
+                        "explicit": RatingEnum.explicit
+                    }.get(rating_lower)
+                    if child_rating != target_enum:
+                        continue
+                else:
+                    target_rating = RatingEnum(rating_lower) if rating_lower in [r.value for r in RatingEnum] else RatingEnum.safe
+                    max_rating_val = rating_priority.get(target_rating, 1)
+                    if rating_priority.get(child_rating, 1) > max_rating_val:
+                        continue
                 
             thumbnails = get_random_thumbnails(child.id, db, count=4)
             media_count = metrics['count']

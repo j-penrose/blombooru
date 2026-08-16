@@ -486,24 +486,36 @@ async def get_media_list(
     page: int = 1,
     limit: int = Query(None),
     rating: Optional[str] = None,
+    rating_mode: Optional[str] = None,
     sort: Optional[str] = None,
     order: Optional[str] = None,
     seed: Optional[str] = Query(default=None),
     db: Session = Depends(get_db)
 ):
     """Get paginated media list"""
-    if limit is None:
+    if limit is None or not isinstance(limit, int):
         limit = settings.get_items_per_page()
     
     try:
         query = db.query(Media).options(selectinload(Media.tags))
         
-        if rating and rating != "explicit":
-            allowed_ratings = {
-                "safe": [RatingEnum.safe],
-                "questionable": [RatingEnum.safe, RatingEnum.questionable]
-            }
-            query = query.filter(Media.rating.in_(allowed_ratings.get(rating, [])))
+        if rating:
+            rating_lower = rating.lower()
+            if rating_mode == "exact":
+                exact_rating = {
+                    "safe": RatingEnum.safe,
+                    "questionable": RatingEnum.questionable,
+                    "explicit": RatingEnum.explicit
+                }.get(rating_lower)
+                query = query.filter(Media.rating == exact_rating)
+            else:
+                if rating_lower == "explicit":
+                    pass
+                elif rating_lower == "questionable":
+                    query = query.filter(Media.rating.in_([RatingEnum.safe, RatingEnum.questionable]))
+                else:
+                    # "safe" or any invalid rating fails closed to safe
+                    query = query.filter(Media.rating == RatingEnum.safe)
         
         # Sorting
         sort_by = sort if sort else settings.get_default_sort()
@@ -605,6 +617,7 @@ async def get_adjacent_media(
     album_id: Optional[int] = None,
     q: Optional[str] = None,
     rating: Optional[str] = None,
+    rating_mode: Optional[str] = None,
     sort: Optional[str] = None,
     order: Optional[str] = None,
     seed: Optional[str] = None,
@@ -622,44 +635,67 @@ async def get_adjacent_media(
 
             if q:
                 parsed = parse_search_query(q)
-                if rating and rating != "explicit":
-                    rating_value = "safe" if rating == "safe" else "safe,questionable"
-                    if 'rating' not in parsed['meta']:
-                        parsed['meta']['rating'] = []
-                    parsed['meta']['rating'].append({'value': rating_value, 'negated': False})
+                if rating and 'rating' not in parsed['meta']:
+                    rating_lower = rating.lower()
+                    if rating_mode == "exact":
+                        parsed['meta']['rating'] = [{'value': rating_lower, 'negated': False}]
+                    else:
+                        if rating_lower == "explicit":
+                            pass
+                        elif rating_lower == "questionable":
+                            parsed['meta']['rating'] = [{'value': "safe,questionable", 'negated': False}]
+                        else:
+                            parsed['meta']['rating'] = [{'value': "safe", 'negated': False}]
                 media_query = apply_search_criteria(media_query, parsed, db)
             else:
-                if rating and rating != "explicit":
-                    allowed_ratings = {
-                        "safe": [RatingEnum.safe],
-                        "questionable": [RatingEnum.safe, RatingEnum.questionable]
-                    }
-                    media_query = media_query.filter(Media.rating.in_(allowed_ratings.get(rating, [])))
+                if rating:
+                    rating_lower = rating.lower()
+                    if rating_mode == "exact":
+                        exact_rating = {
+                            "safe": RatingEnum.safe,
+                            "questionable": RatingEnum.questionable,
+                            "explicit": RatingEnum.explicit
+                        }.get(rating_lower)
+                        media_query = media_query.filter(Media.rating == exact_rating)
+                    else:
+                        if rating_lower == "explicit":
+                            pass
+                        elif rating_lower == "questionable":
+                            media_query = media_query.filter(Media.rating.in_([RatingEnum.safe, RatingEnum.questionable]))
+                        else:
+                            media_query = media_query.filter(Media.rating == RatingEnum.safe)
 
-            sort_by = sort if sort else settings.get_default_sort()
-            sort_order = order if order else settings.get_default_order()
-
-            media_query = apply_media_sort(
-                media_query,
-                sort_by,
-                sort_order,
-                db,
-                seed,
-                column_overrides={
-                    'uploaded_at': Media.id,
-                    'last_modified': Media.id,
-                    'name': Media.filename,
-                },
-            )
+            if not q or ('order' not in parsed['meta'] and 'sort' not in parsed['meta']):
+                sort_by = sort if sort else settings.get_default_sort()
+                sort_order = order if order else settings.get_default_order()
+                media_query = media_query.order_by(None)
+                media_query = apply_media_sort(
+                    media_query,
+                    sort_by,
+                    sort_order,
+                    db,
+                    seed,
+                    column_overrides={
+                        'uploaded_at': Media.id,
+                        'last_modified': Media.id,
+                        'name': Media.filename,
+                    },
+                )
         else:
             media_query = db.query(Media.id)
 
             parsed = parse_search_query(q or "")
-            if rating and rating != "explicit":
-                rating_value = "safe" if rating == "safe" else "safe,questionable"
-                if 'rating' not in parsed['meta']:
-                    parsed['meta']['rating'] = []
-                parsed['meta']['rating'].append({'value': rating_value, 'negated': False})
+            if rating and 'rating' not in parsed['meta']:
+                rating_lower = rating.lower()
+                if rating_mode == "exact":
+                    parsed['meta']['rating'] = [{'value': rating_lower, 'negated': False}]
+                else:
+                    if rating_lower == "explicit":
+                        pass
+                    elif rating_lower == "questionable":
+                        parsed['meta']['rating'] = [{'value': "safe,questionable", 'negated': False}]
+                    else:
+                        parsed['meta']['rating'] = [{'value': "safe", 'negated': False}]
 
             media_query = apply_search_criteria(media_query, parsed, db)
 

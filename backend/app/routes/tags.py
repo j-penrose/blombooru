@@ -15,7 +15,7 @@ from ..utils.search_parser import apply_search_criteria, parse_search_query
 router = APIRouter(prefix="/api/tags", tags=["tags"])
 
 def get_effective_limit(limit: Optional[int]) -> int:
-    if limit is None or limit <= 0:
+    if limit is None or not isinstance(limit, int) or limit <= 0:
         return settings.get_items_per_page()
     return limit
 
@@ -177,11 +177,14 @@ async def search_related_tags(
     request: Request,
     q: str = Query(default="", description="Search query string"),
     rating: Optional[str] = Query(default=None),
+    rating_mode: Optional[str] = Query(default=None),
     limit: int = Query(default=20, ge=1, le=100),
     db: Session = Depends(get_db),
 ):
     """Get tags most commonly co-occurring with the given search query results."""
-    if not q or not q.strip():
+    if not isinstance(limit, int) or limit <= 0:
+        limit = 20
+    if not isinstance(q, str) or not q.strip():
         return []
 
     parsed = parse_search_query(q)
@@ -190,13 +193,24 @@ async def search_related_tags(
     media_query = db.query(Media.id)
     media_query = apply_search_criteria(media_query, parsed, db)
 
-    # Apply top-level rating filter (separate from query string rating: meta)
-    if rating and rating.lower() != "explicit":
-        allowed_ratings = {
-            "safe": [RatingEnum.safe],
-            "questionable": [RatingEnum.safe, RatingEnum.questionable]
-        }
-        media_query = media_query.filter(Media.rating.in_(allowed_ratings.get(rating.lower(), [])))
+    # Apply top-level rating filter if not already specified in query string
+    if rating and 'rating' not in parsed['meta']:
+        rating_lower = rating.lower()
+        if rating_mode == "exact":
+            exact_rating = {
+                "safe": RatingEnum.safe,
+                "questionable": RatingEnum.questionable,
+                "explicit": RatingEnum.explicit
+            }.get(rating_lower)
+            media_query = media_query.filter(Media.rating == exact_rating)
+        else:
+            if rating_lower == "explicit":
+                pass
+            elif rating_lower == "questionable":
+                media_query = media_query.filter(Media.rating.in_([RatingEnum.safe, RatingEnum.questionable]))
+            else:
+                # "safe" or any invalid rating fails closed to safe
+                media_query = media_query.filter(Media.rating == RatingEnum.safe)
 
     media_subquery = media_query.subquery()
 
@@ -209,7 +223,7 @@ async def search_related_tags(
             func.count(blombooru_media_tags.c.media_id).label("frequency"),
         )
         .join(blombooru_media_tags, blombooru_media_tags.c.tag_id == Tag.id)
-        .filter(blombooru_media_tags.c.media_id.in_(media_subquery))
+        .filter(blombooru_media_tags.c.media_id.in_(media_subquery.select()))
         .group_by(Tag.id)
         .order_by(desc("frequency"))
         .limit(limit + len(excluded_tag_names))  # over-fetch to allow exclusion

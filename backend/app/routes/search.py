@@ -22,6 +22,7 @@ async def search_media(
     request: Request,
     q: str = Query("", description="Search query"),
     rating: Optional[str] = None,
+    rating_mode: Optional[str] = None,
     page: int = 1,
     limit: int = Query(None),
     sort: Optional[str] = None,
@@ -30,17 +31,25 @@ async def search_media(
     db: Session = Depends(get_db)
 ):
     """Search media with tag-based query"""
-    if limit is None:
+    if limit is None or not isinstance(limit, int):
         limit = settings.get_items_per_page()
+    if not isinstance(q, str):
+        q = ""
     query = db.query(Media).options(selectinload(Media.tags))
     parsed = parse_search_query(q)
     
-    if rating and rating != "explicit":
-        rating_value = "safe" if rating == "safe" else "safe,questionable"
-        
-        if 'rating' not in parsed['meta']:
-            parsed['meta']['rating'] = []
-        parsed['meta']['rating'].append({'value': rating_value, 'negated': False})
+    if rating and 'rating' not in parsed['meta']:
+        rating_lower = rating.lower()
+        if rating_mode == "exact":
+            parsed['meta']['rating'] = [{'value': rating_lower, 'negated': False}]
+        else:
+            if rating_lower == "explicit":
+                pass
+            elif rating_lower == "questionable":
+                parsed['meta']['rating'] = [{'value': "safe,questionable", 'negated': False}]
+            else:
+                # "safe" or any invalid rating fails closed to safe
+                parsed['meta']['rating'] = [{'value': "safe", 'negated': False}]
 
     # Apply all criteria
     query = apply_search_criteria(query, parsed, db)
@@ -71,18 +80,27 @@ async def search_media(
 async def get_random_media(
     q: str = Query("", description="Search query"),
     rating: Optional[str] = None,
+    rating_mode: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
     """Get a random media ID matching the search criteria"""
+    if not isinstance(q, str):
+        q = ""
     query = db.query(Media.id)
     parsed = parse_search_query(q)
     
-    if rating and rating != "explicit":
-        rating_value = "safe" if rating == "safe" else "safe,questionable"
-        
-        if 'rating' not in parsed['meta']:
-            parsed['meta']['rating'] = []
-        parsed['meta']['rating'].append({'value': rating_value, 'negated': False})
+    if rating and 'rating' not in parsed['meta']:
+        rating_lower = rating.lower()
+        if rating_mode == "exact":
+            parsed['meta']['rating'] = [{'value': rating_lower, 'negated': False}]
+        else:
+            if rating_lower == "explicit":
+                pass
+            elif rating_lower == "questionable":
+                parsed['meta']['rating'] = [{'value': "safe,questionable", 'negated': False}]
+            else:
+                # "safe" or any invalid rating fails closed to safe
+                parsed['meta']['rating'] = [{'value': "safe", 'negated': False}]
 
     query = apply_search_criteria(query, parsed, db)
     total = query.count()
