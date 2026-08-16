@@ -1,7 +1,7 @@
 ## Admin: Settings
 
 > [!NOTE]
-> Last updated: `June 1, 2026`
+> Last updated: `August 16, 2026`
 
 **Base path:** `/api/admin`
 

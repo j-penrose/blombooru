@@ -1,7 +1,7 @@
 ## Admin: Backup & Import
 
 > [!NOTE]
-> Last updated: `August 14, 2026`
+> Last updated: `August 16, 2026`
 
 **Base path:** `/api/admin`
 
