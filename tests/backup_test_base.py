@@ -51,12 +51,16 @@ class BackupTestBase(unittest.TestCase):
         self.old_thumb = settings.THUMBNAIL_DIR
         self.old_data = settings.DATA_DIR
         self.old_settings_file = settings.SETTINGS_FILE
+        self.old_settings_dict = dict(settings.settings)
+        self.old_file_settings_dict = dict(settings.file_settings)
 
         settings.BASE_DIR = self.tmp_path
         settings.ORIGINAL_DIR = self.original_dir
         settings.THUMBNAIL_DIR = self.thumb_dir
         settings.DATA_DIR = self.data_dir
         settings.SETTINGS_FILE = self.data_dir / "settings.json"
+        settings.file_settings = {}
+        settings.settings = settings._get_default_settings()
 
     def tearDown(self):
         self.db.close()
@@ -65,6 +69,8 @@ class BackupTestBase(unittest.TestCase):
         settings.THUMBNAIL_DIR = self.old_thumb
         settings.DATA_DIR = self.old_data
         settings.SETTINGS_FILE = self.old_settings_file
+        settings.file_settings = self.old_file_settings_dict
+        settings.settings = self.old_settings_dict
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def wipe_database(self):
