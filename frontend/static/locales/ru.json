@@ -1178,5 +1178,9 @@
         "title": "Выбор медиафайлов",
         "select": "Выбрать",
         "media_id_placeholder": "ID медиафайла"
+    },
+    "changelog": {
+        "modal_title": "",
+        "english_only_notice": ""
     }
 }

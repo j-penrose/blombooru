@@ -1178,5 +1178,9 @@
         "title": "Välj media",
         "select": "Välj",
         "media_id_placeholder": "Media ID"
+    },
+    "changelog": {
+        "modal_title": "Vad som är Nytt",
+        "english_only_notice": "Versionsinformation är endast tillgänglig på engelska."
     }
 }

@@ -1178,5 +1178,9 @@
         "title": "Select Media",
         "select": "Select",
         "media_id_placeholder": "Media ID"
+    },
+    "changelog": {
+        "modal_title": "What's Changed",
+        "english_only_notice": "Release notes are only available in English."
     }
 }

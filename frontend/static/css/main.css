@@ -883,3 +883,94 @@ video:focus-visible {
         opacity: 0;
     }
 }
+
+/* Changelog modal markdown content */
+.changelog-content h1,
+.changelog-content h2,
+.changelog-content h3,
+.changelog-content h4 {
+    font-weight: bold;
+    color: var(--primary-color);
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.changelog-content h1:first-child,
+.changelog-content h2:first-child,
+.changelog-content h3:first-child,
+.changelog-content h4:first-child {
+    margin-top: 0;
+}
+
+.changelog-content h2 {
+    font-size: 1rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.25rem;
+}
+
+.changelog-content h3 {
+    font-size: 0.875rem;
+}
+
+.changelog-content p {
+    margin-bottom: 0.75rem;
+    line-height: 1.5;
+}
+
+.changelog-content p:last-child {
+    margin-bottom: 0;
+}
+
+.changelog-content ul,
+.changelog-content ol {
+    margin-left: 1.25rem;
+    margin-bottom: 0.75rem;
+    list-style-type: disc;
+}
+
+.changelog-content ol {
+    list-style-type: decimal;
+}
+
+.changelog-content li {
+    margin-bottom: 0.25rem;
+    line-height: 1.4;
+}
+
+.changelog-content code {
+    background-color: var(--surface);
+    padding: 0.125rem 0.25rem;
+    border-radius: 0.25rem;
+    font-family: monospace;
+    font-size: 0.85em;
+}
+
+.changelog-content pre {
+    background-color: var(--surface);
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    overflow-x: auto;
+    margin-bottom: 0.75rem;
+}
+
+.changelog-content pre code {
+    background: none;
+    padding: 0;
+}
+
+.changelog-content a {
+    color: var(--primary-color);
+    text-decoration: underline;
+}
+
+.changelog-content a:hover {
+    opacity: 0.8;
+}
+
+.changelog-content blockquote {
+    border-left: 3px solid var(--primary-color);
+    padding-left: 0.75rem;
+    margin-left: 0;
+    margin-bottom: 0.75rem;
+    color: var(--text-secondary);
+}

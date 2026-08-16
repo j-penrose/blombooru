@@ -1178,5 +1178,9 @@
         "title": "",
         "select": "",
         "media_id_placeholder": ""
+    },
+    "changelog": {
+        "modal_title": "",
+        "english_only_notice": ""
     }
 }
