@@ -273,19 +273,35 @@ class Settings:
     
     @property
     def SIDEBAR_FILTER_MODE(self) -> str:
-        """Get sidebar filter mode: 'rating', 'custom', or 'off'"""
-        val = self.file_settings.get("sidebar_filter_mode")
-        if val is not None:
-            return val
-        return os.getenv("BLOMBOORU_SIDEBAR_FILTER_MODE", self.settings.get("sidebar_filter_mode", "rating"))
+        """Get sidebar filter mode: 'rating', 'custom', 'both', or 'off'"""
+        if "sidebar_filter_mode" in self.file_settings:
+            val = self.file_settings["sidebar_filter_mode"]
+            if isinstance(val, str) and val.lower() in ("rating", "custom", "both", "off"):
+                return val.lower()
+            return "rating"
+        env_val = os.getenv("BLOMBOORU_SIDEBAR_FILTER_MODE")
+        if env_val and env_val.lower() in ("rating", "custom", "both", "off"):
+            return env_val.lower()
+        val = self.settings.get("sidebar_filter_mode")
+        if val and isinstance(val, str) and val.lower() in ("rating", "custom", "both", "off"):
+            return val.lower()
+        return "rating"
 
     @property
     def SIDEBAR_RATING_FILTER_MODE(self) -> str:
         """Get sidebar rating filter mode: 'inclusive' (all up to selected) or 'exact' (solely selected)"""
-        val = self.file_settings.get("sidebar_rating_filter_mode")
-        if val is not None:
-            return val
-        return os.getenv("BLOMBOORU_SIDEBAR_RATING_FILTER_MODE", self.settings.get("sidebar_rating_filter_mode", "inclusive"))
+        if "sidebar_rating_filter_mode" in self.file_settings:
+            val = self.file_settings["sidebar_rating_filter_mode"]
+            if isinstance(val, str) and val.lower() in ("inclusive", "exact"):
+                return val.lower()
+            return "inclusive"
+        env_val = os.getenv("BLOMBOORU_SIDEBAR_RATING_FILTER_MODE")
+        if env_val and env_val.lower() in ("inclusive", "exact"):
+            return env_val.lower()
+        val = self.settings.get("sidebar_rating_filter_mode")
+        if val and isinstance(val, str) and val.lower() in ("inclusive", "exact"):
+            return val.lower()
+        return "inclusive"
     
     @property
     def SIDEBAR_CUSTOM_BUTTONS(self) -> List[dict]:
