@@ -128,6 +128,7 @@ The `backup.json` contains:
     "popular_tags_mode": "current_page",
     "popular_tags_limit": 20,
     "sidebar_filter_mode": "rating",
+    "sidebar_rating_filter_mode": "inclusive",
     "sidebar_custom_buttons": [],
     "media_type_tags": {"image": [], "gif": [], "video": []},
     "wd_tagger": {

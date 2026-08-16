@@ -353,6 +353,7 @@ async def index(request: Request):
         "popular_tags_mode": settings.get_popular_tags_mode(),
         "popular_tags_limit": settings.get_popular_tags_limit(),
         "sidebar_filter_mode": settings.SIDEBAR_FILTER_MODE,
+        "sidebar_rating_filter_mode": settings.SIDEBAR_RATING_FILTER_MODE,
         "sidebar_custom_buttons": settings.SIDEBAR_CUSTOM_BUTTONS
     })
 
@@ -411,6 +412,7 @@ async def media_page(request: Request, media_id: int, db: Session = Depends(get_
         "media_id": media_id,
         "media": media_item,
         "sidebar_filter_mode": settings.SIDEBAR_FILTER_MODE,
+        "sidebar_rating_filter_mode": settings.SIDEBAR_RATING_FILTER_MODE,
         "external_share_url": settings.EXTERNAL_SHARE_URL
     })
 
@@ -428,6 +430,7 @@ async def album_media_page(request: Request, album_id: int, media_id: int, db: S
         "album_id": album_id,
         "media": media_item,
         "sidebar_filter_mode": settings.SIDEBAR_FILTER_MODE,
+        "sidebar_rating_filter_mode": settings.SIDEBAR_RATING_FILTER_MODE,
         "external_share_url": settings.EXTERNAL_SHARE_URL
     })
 
@@ -486,6 +489,7 @@ async def tags_overview_page(request: Request):
         "default_sort": settings.get_default_sort(),
         "default_order": settings.get_default_order(),
         "sidebar_filter_mode": settings.SIDEBAR_FILTER_MODE,
+        "sidebar_rating_filter_mode": settings.SIDEBAR_RATING_FILTER_MODE,
         "sidebar_custom_buttons": settings.SIDEBAR_CUSTOM_BUTTONS
     })
 
@@ -500,6 +504,7 @@ async def albums_page(request: Request):
         "popular_tags_mode": settings.get_popular_tags_mode(),
         "popular_tags_limit": settings.get_popular_tags_limit(),
         "sidebar_filter_mode": settings.SIDEBAR_FILTER_MODE,
+        "sidebar_rating_filter_mode": settings.SIDEBAR_RATING_FILTER_MODE,
         "sidebar_custom_buttons": settings.SIDEBAR_CUSTOM_BUTTONS
     })
 
@@ -519,6 +524,7 @@ async def album_detail_page(request: Request, album_id: int, db: Session = Depen
         "popular_tags_mode": settings.get_popular_tags_mode(),
         "popular_tags_limit": settings.get_popular_tags_limit(),
         "sidebar_filter_mode": settings.SIDEBAR_FILTER_MODE,
+        "sidebar_rating_filter_mode": settings.SIDEBAR_RATING_FILTER_MODE,
         "sidebar_custom_buttons": settings.SIDEBAR_CUSTOM_BUTTONS
     })
 

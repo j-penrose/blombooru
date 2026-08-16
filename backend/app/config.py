@@ -87,6 +87,7 @@ class Settings:
             "popular_tags_mode": "current_page",
             "popular_tags_limit": 20,
             "sidebar_filter_mode": "rating",
+            "sidebar_rating_filter_mode": "inclusive",
             "sidebar_custom_buttons": [],
             "media_type_tags": {"image": [], "gif": [], "video": []},
             "wd_tagger": {
@@ -277,6 +278,14 @@ class Settings:
         if val is not None:
             return val
         return os.getenv("BLOMBOORU_SIDEBAR_FILTER_MODE", self.settings.get("sidebar_filter_mode", "rating"))
+
+    @property
+    def SIDEBAR_RATING_FILTER_MODE(self) -> str:
+        """Get sidebar rating filter mode: 'inclusive' (all up to selected) or 'exact' (solely selected)"""
+        val = self.file_settings.get("sidebar_rating_filter_mode")
+        if val is not None:
+            return val
+        return os.getenv("BLOMBOORU_SIDEBAR_RATING_FILTER_MODE", self.settings.get("sidebar_rating_filter_mode", "inclusive"))
     
     @property
     def SIDEBAR_CUSTOM_BUTTONS(self) -> List[dict]:
