@@ -47,16 +47,32 @@ async def get_changelog(current_user: dict = Depends(require_admin_mode)):
     if last_seen == APP_VERSION:
         return ChangelogResponse(needs_modal=False)
 
-    sections = [s.strip() for s in re.split(r'(?m)^(?=##\s+)', content) if s.strip()] or [content]
+    def linkify_version_headings(text: str) -> str:
+        def replace_heading(m):
+            hashes = m.group(1)
+            ver_raw = m.group(2).strip()
+            tag = ver_raw if ver_raw.startswith("v") else f"v{ver_raw}"
+            url = f"https://github.com/mrblomblo/blombooru/releases/tag/{tag}"
+            return f"{hashes}[{ver_raw}]({url})"
+
+        return re.sub(r'^(#{1,6}\s+)(v?\d+[\w\.\-]*)$', replace_heading, text, flags=re.MULTILINE)
+
+    linked_content = linkify_version_headings(content)
+    sections = [s.strip() for s in re.split(r'(?m)^(?=##\s+)', linked_content) if s.strip()] or [linked_content]
 
     try:
         from wenmode import Wenmode
         from wenmode.presets import github
         wen = Wenmode(github)
-        rendered_sections = [
-            f'<div class="changelog-version bg p-3 md:p-4 border">{wen.render(s)}</div>'
-            for s in sections
-        ]
+        rendered_sections = []
+        for s in sections:
+            rendered = wen.render(s)
+            rendered = re.sub(
+                r'<a\s+(?!.*?target=)(href="[^"]+")',
+                r'<a target="_blank" rel="noopener noreferrer" referrerPolicy="no-referrer" \1',
+                rendered
+            )
+            rendered_sections.append(f'<div class="changelog-version bg p-3 md:p-4 border">{rendered}</div>')
         html = "\n".join(rendered_sections)
     except Exception as e:
         logger.error(f"Error rendering CHANGELOG.md: {e}")

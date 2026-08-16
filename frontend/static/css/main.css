@@ -912,6 +912,24 @@ video:focus-visible {
     font-size: 0.875rem;
 }
 
+.changelog-content h1 a,
+.changelog-content h2 a,
+.changelog-content h3 a,
+.changelog-content h4 a {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: color .15s cubic-bezier(.4, 0, .2, 1);
+}
+
+.changelog-content h1 a:hover,
+.changelog-content h2 a:hover,
+.changelog-content h3 a:hover,
+.changelog-content h4 a:hover {
+    color: var(--primary-hover);
+    text-decoration: none;
+    opacity: 1;
+}
+
 .changelog-content p {
     margin-bottom: 0.75rem;
     line-height: 1.5;
