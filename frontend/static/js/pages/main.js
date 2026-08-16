@@ -367,17 +367,25 @@ class Blombooru {
         let rating = 'explicit';
         let ratingMode = null;
 
-        if (sidebarMode === 'rating') {
+        if (sidebarMode === 'rating' || sidebarMode === 'both') {
             const ratingInput = document.querySelector('input[name="rating"]:checked');
             rating = ratingInput ? ratingInput.value : null;
             ratingMode = document.body.dataset.sidebarRatingMode || window.SIDEBAR_RATING_FILTER_MODE || 'inclusive';
         }
 
+        let q = '';
+        if (sidebarMode === 'custom' || sidebarMode === 'both') {
+            const customFilter = localStorage.getItem('selectedCustomFilter') || '';
+            if (customFilter) {
+                q = customFilter;
+            }
+        }
+
         try {
-            let url = '/api/search/random?q=';
+            let url = `/api/search/random?q=${encodeURIComponent(q)}`;
             if (rating) {
                 url += `&rating=${encodeURIComponent(rating)}`;
-                if (sidebarMode === 'rating' && ratingMode === 'exact') {
+                if ((sidebarMode === 'rating' || sidebarMode === 'both') && ratingMode === 'exact') {
                     url += '&rating_mode=exact';
                 }
             }

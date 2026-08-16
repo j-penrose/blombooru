@@ -40,7 +40,7 @@ class Gallery extends BaseGallery {
             apiParams.set('page', this.currentPage);
             if (this.currentRating) {
                 apiParams.set('rating', this.currentRating);
-                if (this.sidebarMode === 'rating' && this.sidebarRatingFilterMode === 'exact') {
+                if ((this.sidebarMode === 'rating' || this.sidebarMode === 'both') && this.sidebarRatingFilterMode === 'exact') {
                     apiParams.set('rating_mode', 'exact');
                 }
             }

@@ -772,7 +772,7 @@ class MediaViewer extends MediaViewerBase {
 
         let q = urlParams.get('q') || '';
         const sidebarMode = document.body.dataset.sidebarMode || window.SIDEBAR_FILTER_MODE || 'rating';
-        if (sidebarMode === 'custom') {
+        if (sidebarMode === 'custom' || sidebarMode === 'both') {
             const customFilter = localStorage.getItem('selectedCustomFilter') || '';
             if (customFilter) {
                 if (!q) {

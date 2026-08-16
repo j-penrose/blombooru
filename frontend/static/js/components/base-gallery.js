@@ -57,6 +57,9 @@ class BaseGallery {
         if (sidebarMode === 'custom' || sidebarMode === 'off') {
             this.currentRating = 'explicit';
             this.currentCustomFilter = sidebarMode === 'custom' ? (localStorage.getItem('selectedCustomFilter') || '') : '';
+        } else if (sidebarMode === 'both') {
+            this.currentCustomFilter = localStorage.getItem('selectedCustomFilter') || '';
+            this.currentRating = localStorage.getItem('selectedRating') || cookieRating || (this.sidebarRatingFilterMode === 'exact' ? '' : this.options.defaultRating);
         } else {
             this.currentCustomFilter = '';
             this.currentRating = localStorage.getItem('selectedRating') || cookieRating || (this.sidebarRatingFilterMode === 'exact' ? '' : this.options.defaultRating);
@@ -1382,7 +1385,7 @@ class BaseGallery {
             });
             if (this.currentRating) {
                 params.set('rating', this.currentRating);
-                if (this.sidebarMode === 'rating' && this.sidebarRatingFilterMode === 'exact') {
+                if ((this.sidebarMode === 'rating' || this.sidebarMode === 'both') && this.sidebarRatingFilterMode === 'exact') {
                     params.set('rating_mode', 'exact');
                 }
             }
