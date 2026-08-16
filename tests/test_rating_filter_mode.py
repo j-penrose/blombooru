@@ -388,17 +388,103 @@ class TestRatingFilterMode(BackupTestBase):
         res_p3_inc = asyncio.run(get_adjacent_media(media_id=1, mode="search", q="cat", rating="explicit", rating_mode="inclusive", order="asc", db=self.db))
         self.assertEqual(res_p3_inc.get("next_id"), 2)
 
+    def test_both_mode_query_composition_and(self):
+        """Test concurrent q (custom button tags) and rating filter (AND composition)."""
+        req = make_dummy_request()
+
+        def get_ids(res):
+            return [item["id"] if isinstance(item, dict) else item.id for item in res["items"]]
+
+        # Tag media 1 and 2 with 'cute', media 3 with 'cool'
+        tag_cute = Tag(id=50, name="cute", category=TagCategoryEnum.general, post_count=2)
+        tag_cool = Tag(id=51, name="cool", category=TagCategoryEnum.general, post_count=1)
+        self.db.add_all([tag_cute, tag_cool])
+        self.db.commit()
+        self.db.execute(blombooru_media_tags.insert().values([
+            {"media_id": 1, "tag_id": 50},
+            {"media_id": 2, "tag_id": 50},
+            {"media_id": 3, "tag_id": 51},
+        ]))
+        self.db.commit()
+
+        # q="cute" (custom button) AND rating="safe" -> should return media 1 only
+        res_safe = asyncio.run(search_media(request=req, q="cute", rating="safe", db=self.db))
+        self.assertEqual(get_ids(res_safe), [1])
+
+        # q="cute" AND rating="questionable" (inclusive) -> should return media 1 and 2
+        res_quest = asyncio.run(search_media(request=req, q="cute", rating="questionable", db=self.db))
+        self.assertCountEqual(get_ids(res_quest), [1, 2])
+
+        # q="cute" AND rating="questionable" (exact) -> should return media 2 only
+        res_exact = asyncio.run(search_media(request=req, q="cute", rating="questionable", rating_mode="exact", db=self.db))
+        self.assertEqual(get_ids(res_exact), [2])
+
+    def test_both_mode_custom_button_embedded_rating_override(self):
+        """Test that a custom button containing rating: overrides sidebar rating."""
+        req = make_dummy_request()
+
+        def get_ids(res):
+            return [item["id"] if isinstance(item, dict) else item.id for item in res["items"]]
+
+        # Custom button query is 'cat rating:explicit', sidebar rating is 'safe'
+        res = asyncio.run(search_media(request=req, q="cat rating:explicit", rating="safe", db=self.db))
+        self.assertEqual(get_ids(res), [3])
+
+    def test_search_related_tags_both_mode_composition(self):
+        """Test related tags in both mode with query and rating filter."""
+        req = make_dummy_request()
+
+        tag_x = Tag(id=60, name="rare_tag", category=TagCategoryEnum.general, post_count=1)
+        self.db.add(tag_x)
+        self.db.commit()
+        self.db.execute(blombooru_media_tags.insert().values([{"media_id": 2, "tag_id": 60}]))
+        self.db.commit()
+
+        # Related tags for q="cat" with rating="safe" -> rare_tag is on questionable media 2, should not appear
+        res_safe = asyncio.run(search_related_tags(request=req, q="cat", rating="safe", db=self.db))
+        names_safe = [t["name"] for t in res_safe]
+        self.assertNotIn("rare_tag", names_safe)
+
+        # Related tags for q="cat" with rating="questionable" -> rare_tag should appear
+        res_quest = asyncio.run(search_related_tags(request=req, q="cat", rating="questionable", db=self.db))
+        names_quest = [t["name"] for t in res_quest]
+        self.assertIn("rare_tag", names_quest)
+
     def test_config_and_schema(self):
+        from pydantic import ValidationError
+
+        # Verify SettingsUpdate schema parses valid sidebar_filter_mode values
+        for mode in ["rating", "custom", "both", "off"]:
+            su = SettingsUpdate(sidebar_filter_mode=mode)
+            self.assertEqual(su.sidebar_filter_mode, mode)
+
+        # Verify SettingsUpdate schema rejects invalid values
+        with self.assertRaises(ValidationError):
+            SettingsUpdate(sidebar_filter_mode="invalid_mode")
+
+        with self.assertRaises(ValidationError):
+            SettingsUpdate(sidebar_rating_filter_mode="invalid_rating_mode")
+
         # Verify SettingsUpdate schema parses sidebar_rating_filter_mode
         su = SettingsUpdate(sidebar_rating_filter_mode="exact")
         self.assertEqual(su.sidebar_rating_filter_mode, "exact")
 
         # Verify config defaults and property
+        self.assertEqual(settings.SIDEBAR_FILTER_MODE, "rating")
         self.assertEqual(settings.SIDEBAR_RATING_FILTER_MODE, "inclusive")
 
-        settings.save_settings({"sidebar_rating_filter_mode": "exact"})
-        self.assertEqual(settings.SIDEBAR_RATING_FILTER_MODE, "exact")
+        # Verify both mode in config
+        settings.save_settings({"sidebar_filter_mode": "both"})
+        self.assertEqual(settings.SIDEBAR_FILTER_MODE, "both")
+
+        # Verify corrupt/invalid value in file_settings safely falls back
+        settings.file_settings["sidebar_filter_mode"] = "corrupted_mode"
+        self.assertEqual(settings.SIDEBAR_FILTER_MODE, "rating")
+
+        settings.file_settings["sidebar_rating_filter_mode"] = "corrupted_mode"
+        self.assertEqual(settings.SIDEBAR_RATING_FILTER_MODE, "inclusive")
 
         # Restore default
-        settings.save_settings({"sidebar_rating_filter_mode": "inclusive"})
+        settings.save_settings({"sidebar_filter_mode": "rating", "sidebar_rating_filter_mode": "inclusive"})
+        self.assertEqual(settings.SIDEBAR_FILTER_MODE, "rating")
         self.assertEqual(settings.SIDEBAR_RATING_FILTER_MODE, "inclusive")
