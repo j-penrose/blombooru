@@ -58,6 +58,7 @@ class Settings:
         return {
             "app_name": "Blombooru",
             "first_run": True,
+            "last_seen_version": "",
             "database": {
                 "host": "db",
                 "port": 5432,
@@ -247,6 +248,10 @@ class Settings:
     @property
     def IS_FIRST_RUN(self) -> bool:
         return self.settings.get("first_run", True)
+
+    @property
+    def LAST_SEEN_VERSION(self) -> Optional[str]:
+        return self.file_settings.get("last_seen_version")
         
     @property
     def EXTERNAL_SHARE_URL(self) -> Optional[str]:

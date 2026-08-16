@@ -51,8 +51,8 @@ from .config import APP_VERSION, settings
 from .database import get_db, init_db, init_engine
 from .models import Media, Album
 from .routes import (admin, ai_tagger, albums, booru_config, booru_import,
-                     danbooru, media, search, sharing, system, tag_implications,
-                     tags, instance_info, url_import)
+                     changelog, danbooru, media, search, sharing, system,
+                     tag_implications, tags, instance_info, url_import)
 from .translations import language_registry, translation_helper
 from .utils.logger import logger
 
@@ -315,6 +315,7 @@ app.include_router(booru_import.router)
 app.include_router(url_import.router)
 app.include_router(booru_config.router)
 app.include_router(tag_implications.router)
+app.include_router(changelog.router)
 
 def _get_theme_for_context(is_admin: bool = False):
     """Return the theme dict to inject into template context. Uses the theme's backup theme in the Admin Panel."""
