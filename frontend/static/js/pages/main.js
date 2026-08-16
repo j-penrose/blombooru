@@ -363,16 +363,23 @@ class Blombooru {
     }
 
     async performRandomSearch() {
-        let rating = null;
-        if (window.SIDEBAR_FILTER_MODE === 'rating') {
+        const sidebarMode = document.body.dataset.sidebarMode || window.SIDEBAR_FILTER_MODE || 'rating';
+        let rating = 'explicit';
+        let ratingMode = null;
+
+        if (sidebarMode === 'rating') {
             const ratingInput = document.querySelector('input[name="rating"]:checked');
             rating = ratingInput ? ratingInput.value : null;
+            ratingMode = document.body.dataset.sidebarRatingMode || window.SIDEBAR_RATING_FILTER_MODE || 'inclusive';
         }
 
         try {
             let url = '/api/search/random?q=';
             if (rating) {
-                url += `&rating=${rating}`;
+                url += `&rating=${encodeURIComponent(rating)}`;
+                if (sidebarMode === 'rating' && ratingMode === 'exact') {
+                    url += '&rating_mode=exact';
+                }
             }
 
             const response = await this.apiCall(url);
@@ -479,7 +486,7 @@ class Blombooru {
         this.keybindingsModal.show();
 
         if (window.keybindings && typeof window.keybindings.refresh === 'function') {
-            window.keybindings.refresh().catch(() => {});
+            window.keybindings.refresh().catch(() => { });
         }
     }
 
@@ -535,11 +542,11 @@ class Blombooru {
                         </h3>
                         <div class="space-y-1.5">
                             ${group.actions.map(action => {
-                                const binding = bindings[action.id] || action.default;
-                                const chipText = binding ? (binding.key || binding.code || '?') : '?';
-                                const isSingleChar = chipText.length === 1;
-                                const label = window.i18n.t(action.labelKey);
-                                return `
+            const binding = bindings[action.id] || action.default;
+            const chipText = binding ? (binding.key || binding.code || '?') : '?';
+            const isSingleChar = chipText.length === 1;
+            const label = window.i18n.t(action.labelKey);
+            return `
                                     <div class="keybinding-row flex items-center justify-between gap-3 px-2 py-1.5 border surface">
                                         <span class="text-xs font-bold text">${this.escapeHtml(label)}</span>
                                         <div class="flex items-center gap-2">
@@ -547,7 +554,7 @@ class Blombooru {
                                         </div>
                                     </div>
                                 `;
-                            }).join('')}
+        }).join('')}
                         </div>
                     </div>
                 `).join('')}

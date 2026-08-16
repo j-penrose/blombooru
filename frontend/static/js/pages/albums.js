@@ -29,9 +29,14 @@ class AlbumsOverview extends BaseGallery {
         try {
             const params = new URLSearchParams({
                 page: this.currentPage,
-                root_only: 'true',
-                rating: this.currentRating
+                root_only: 'true'
             });
+            if (this.currentRating) {
+                params.set('rating', this.currentRating);
+                if (this.sidebarMode === 'rating' && this.sidebarRatingFilterMode === 'exact') {
+                    params.set('rating_mode', 'exact');
+                }
+            }
             this.appendSortParams(params);
 
             const response = await fetch(`/api/albums?${params}`);

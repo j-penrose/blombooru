@@ -49,13 +49,17 @@ class BaseGallery {
             if (parts.length === 2) return parts.pop().split(';').shift();
             return null;
         })('rating_filter');
-        this.currentRating = localStorage.getItem('selectedRating') || cookieRating || this.options.defaultRating;
 
-        const sidebarMode = document.body.dataset.sidebarMode || 'rating';
-        if (sidebarMode === 'custom') {
-            this.currentCustomFilter = localStorage.getItem('selectedCustomFilter') || '';
+        const sidebarMode = document.body.dataset.sidebarMode || window.SIDEBAR_FILTER_MODE || 'rating';
+        this.sidebarMode = sidebarMode;
+        this.sidebarRatingFilterMode = document.body.dataset.sidebarRatingMode || window.SIDEBAR_RATING_FILTER_MODE || 'inclusive';
+
+        if (sidebarMode === 'custom' || sidebarMode === 'off') {
+            this.currentRating = 'explicit';
+            this.currentCustomFilter = sidebarMode === 'custom' ? (localStorage.getItem('selectedCustomFilter') || '') : '';
         } else {
             this.currentCustomFilter = '';
+            this.currentRating = localStorage.getItem('selectedRating') || cookieRating || (this.sidebarRatingFilterMode === 'exact' ? '' : this.options.defaultRating);
         }
 
         const urlParams = new URLSearchParams(window.location.search);
@@ -109,6 +113,26 @@ class BaseGallery {
 
     setupRatingFilter() {
         document.querySelectorAll('.rating-filter-input').forEach(radio => {
+            // In exact mode, allow deselecting by clicking already-selected button
+            radio.addEventListener('click', (e) => {
+                if (this.sidebarRatingFilterMode === 'exact' && radio.checked && radio.dataset.wasChecked === 'true') {
+                    // Deselect
+                    radio.checked = false;
+                    radio.dataset.wasChecked = 'false';
+                    this.currentRating = '';
+                    this.updateRatingFilterLabels('');
+                    localStorage.setItem('selectedRating', '');
+                    document.cookie = "rating_filter=; path=/; max-age=0";
+                    this.onRatingChange();
+                    e.preventDefault();
+                } else {
+                    radio.dataset.wasChecked = 'true';
+                    document.querySelectorAll('.rating-filter-input').forEach(r => {
+                        if (r !== radio) r.dataset.wasChecked = 'false';
+                    });
+                }
+            });
+
             radio.addEventListener('change', (e) => {
                 this.currentRating = e.target.value;
                 this.updateRatingFilterLabels(this.currentRating);
@@ -119,10 +143,15 @@ class BaseGallery {
         });
 
         // Set initial state
-        const savedRadio = document.querySelector(`.rating-filter-input[value="${this.currentRating}"]`);
-        if (savedRadio) {
-            savedRadio.checked = true;
-            this.updateRatingFilterLabels(this.currentRating);
+        if (this.currentRating) {
+            const savedRadio = document.querySelector(`.rating-filter-input[value="${this.currentRating}"]`);
+            if (savedRadio) {
+                savedRadio.checked = true;
+                savedRadio.dataset.wasChecked = 'true';
+                this.updateRatingFilterLabels(this.currentRating);
+            }
+        } else {
+            this.updateRatingFilterLabels('');
         }
 
         this.setupCustomFilterButtons();
@@ -198,13 +227,16 @@ class BaseGallery {
             label.classList.remove('checked');
         });
 
-        document.querySelectorAll(`.rating-filter-input[value="${selectedValue}"]`).forEach(radio => {
-            radio.checked = true;
-            const label = radio.nextElementSibling;
-            if (label) {
-                label.classList.add('checked');
-            }
-        });
+        if (selectedValue) {
+            document.querySelectorAll(`.rating-filter-input[value="${selectedValue}"]`).forEach(radio => {
+                radio.checked = true;
+                radio.dataset.wasChecked = 'true';
+                const label = radio.nextElementSibling;
+                if (label) {
+                    label.classList.add('checked');
+                }
+            });
+        }
     }
 
     onRatingChange() {
@@ -1350,6 +1382,9 @@ class BaseGallery {
             });
             if (this.currentRating) {
                 params.set('rating', this.currentRating);
+                if (this.sidebarMode === 'rating' && this.sidebarRatingFilterMode === 'exact') {
+                    params.set('rating_mode', 'exact');
+                }
             }
             const res = await fetch(`/api/tags/search-related?${params.toString()}`, {
                 credentials: 'include'

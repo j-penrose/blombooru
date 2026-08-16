@@ -83,9 +83,14 @@ class AlbumViewer extends BaseGallery {
 
         try {
             const params = new URLSearchParams({
-                page: this.currentPage,
-                rating: this.currentRating
+                page: this.currentPage
             });
+            if (this.currentRating) {
+                params.set('rating', this.currentRating);
+                if (this.sidebarMode === 'rating' && this.sidebarRatingFilterMode === 'exact') {
+                    params.set('rating_mode', 'exact');
+                }
+            }
             this.appendSortParams(params);
 
             if (this.currentCustomFilter) {

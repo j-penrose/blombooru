@@ -784,8 +784,27 @@ class MediaViewer extends MediaViewerBase {
         }
         if (q) queryParams.set('q', q);
 
-        const rating = urlParams.get('rating') || localStorage.getItem('selectedRating');
-        if (rating) queryParams.set('rating', rating);
+        let rating = urlParams.get('rating');
+        let ratingMode = urlParams.get('rating_mode');
+
+        if (sidebarMode === 'custom' || sidebarMode === 'off') {
+            rating = 'explicit';
+            ratingMode = null;
+        } else {
+            if (rating === null) {
+                rating = localStorage.getItem('selectedRating');
+            }
+            if (!ratingMode) {
+                ratingMode = document.body.dataset.sidebarRatingMode || window.SIDEBAR_RATING_FILTER_MODE || 'inclusive';
+            }
+        }
+
+        if (rating) {
+            queryParams.set('rating', rating);
+            if (ratingMode === 'exact') {
+                queryParams.set('rating_mode', 'exact');
+            }
+        }
 
         const sort = urlParams.get('sort');
         if (sort) queryParams.set('sort', sort);

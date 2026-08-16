@@ -38,7 +38,12 @@ class Gallery extends BaseGallery {
 
             // 1. Basic pagination and filters
             apiParams.set('page', this.currentPage);
-            apiParams.set('rating', this.currentRating);
+            if (this.currentRating) {
+                apiParams.set('rating', this.currentRating);
+                if (this.sidebarMode === 'rating' && this.sidebarRatingFilterMode === 'exact') {
+                    apiParams.set('rating_mode', 'exact');
+                }
+            }
             this.appendSortParams(apiParams);
 
             // 2. Handle Search vs Browse
