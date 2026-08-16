@@ -352,8 +352,8 @@ class AdminSystem {
         if (!this.sidebarFilterModeSelect || !this.sidebarRatingFilterModeSelect) return;
 
         const mode = this.sidebarFilterModeSelect.getValue();
-        const isRating = mode === 'rating';
-        const isCustom = mode === 'custom';
+        const isRating = mode === 'rating' || mode === 'both';
+        const isCustom = mode === 'custom' || mode === 'both';
 
         const customContainer = document.getElementById('custom-buttons-container');
         if (customContainer) {
@@ -859,7 +859,7 @@ class AdminSystem {
         }
 
         // Require at least one valid button
-        if (sidebarMode === 'custom' && validButtons.length === 0) {
+        if ((sidebarMode === 'custom' || sidebarMode === 'both') && validButtons.length === 0) {
             app.showNotification(window.i18n.t('notifications.admin.error_custom_button_required'), 'error');
             return;
         }
