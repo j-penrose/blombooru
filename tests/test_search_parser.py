@@ -191,6 +191,20 @@ class TestSearchParser(unittest.TestCase):
         self.assertEqual(parsed["tags"]["include"], [":d"])
         self.assertEqual(parsed["meta"], {})
 
+    def test_canonicalize_leading_colon_tags(self):
+        canonical = canonicalize_query(":d :q -:d")
+        self.assertEqual(canonical, ":d :q -:d")
+
+    def test_tag_with_parentheses_and_colon(self):
+        parsed = parse_search_query("the_dahlia_(honkai:_star_rail) -the_dahlia_(honkai:_star_rail)")
+        self.assertEqual(parsed["tags"]["include"], ["the_dahlia_(honkai:_star_rail)"])
+        self.assertEqual(parsed["tags"]["exclude"], ["the_dahlia_(honkai:_star_rail)"])
+        self.assertEqual(parsed["meta"], {})
+
+    def test_canonicalize_tag_with_parentheses_and_colon(self):
+        canonical = canonicalize_query("the_dahlia_(honkai:_star_rail) rating:s")
+        self.assertEqual(canonical, "the_dahlia_(honkai:_star_rail) rating:s")
+
     def test_known_qualifier_not_treated_as_tag(self):
         # rating:s must still be a qualifier, not a tag
         parsed = parse_search_query("rating:s")
@@ -592,6 +606,19 @@ class TestSearchParserDBIntegration(unittest.TestCase):
         self.assertNotIn(1, ids)
         self.assertIn(2, ids)
         self.assertIn(3, ids)
+
+    def test_filter_by_tag_with_parentheses_and_colon(self):
+        t_complex = Tag(name="cool(tag:part_2)", category=TagCategoryEnum.character, post_count=1)
+        self.db.add(t_complex)
+        self.db.commit()
+        self.m1.tags.append(t_complex)
+        self.db.commit()
+
+        parsed = parse_search_query("cool(tag:part_2)")
+        q = apply_search_criteria(self.db.query(Media), parsed, self.db)
+        ids = [m.id for m in q.all()]
+        self.assertIn(1, ids)
+        self.assertNotIn(2, ids)
 
 if __name__ == "__main__":
     unittest.main()
