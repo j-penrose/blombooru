@@ -11,7 +11,8 @@ from ..models import Media
 from ..schemas import MediaResponse
 from ..utils.cache import cache_response
 from ..utils.media_sort import apply_media_sort
-from ..utils.search_parser import apply_search_criteria, parse_search_query
+from ..utils.search_parser import (apply_search_criteria, canonicalize_query,
+                                   parse_search_query)
 
 router = APIRouter(prefix="/api/search", tags=["search"])
 
@@ -73,7 +74,7 @@ async def search_media(
         "total": total,
         "page": page,
         "pages": max(1, (total + limit - 1) // limit),
-        "query": q
+        "query": canonicalize_query(q)
     }
 
 @router.get("/random")
