@@ -321,9 +321,9 @@ class SharedTagService:
                 batch = self.shared_db.query(SharedTagAlias).offset(offset).limit(BATCH_SIZE).all()
                 
                 for sa in batch:
-                    if sa.alias_name not in local_alias_names:
+                    if sa.alias_name not in local_alias_names and sa.alias_name not in local_tag_map:
                         target_name = shared_tag_id_to_name.get(sa.target_tag_id)
-                        if target_name and target_name in local_tag_map:
+                        if target_name and target_name in local_tag_map and sa.alias_name != target_name:
                             new_aliases.append(TagAlias(
                                 alias_name=sa.alias_name,
                                 target_tag_id=local_tag_map[target_name]
@@ -392,9 +392,9 @@ class SharedTagService:
                 batch = self.local_db.query(TagAlias).offset(offset).limit(BATCH_SIZE).all()
                 
                 for la in batch:
-                    if la.alias_name not in shared_alias_names:
+                    if la.alias_name not in shared_alias_names and la.alias_name not in shared_tag_map:
                         target_name = local_tag_id_to_name.get(la.target_tag_id)
-                        if target_name and target_name in shared_tag_map:
+                        if target_name and target_name in shared_tag_map and la.alias_name != target_name:
                             new_shared_aliases.append(SharedTagAlias(
                                 alias_name=la.alias_name,
                                 target_tag_id=shared_tag_map[target_name]

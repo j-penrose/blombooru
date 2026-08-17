@@ -169,7 +169,7 @@ def import_tags_csv_logic(csv_text: str, db: Session):
                 alias_names.add(alias)
             
             for alias_name in alias_names:
-                if alias_name not in existing_aliases:
+                if alias_name not in existing_aliases and alias_name not in tag_map:
                     aliases_to_create.append({
                         'alias_name': alias_name,
                         'target_tag_id': tag_id
@@ -622,29 +622,38 @@ async def merge_tag(
         db.add(target_tag)
         db.flush()
         
-    # Reassign existing aliases of source tag to target tag
-    db.query(TagAlias).filter(TagAlias.target_tag_id == source_tag.id).update({
+    # 1. Remove any alias that has target_name as its alias_name (e.g. if target_name was an alias of source_tag or another tag)
+    db.query(TagAlias).filter(TagAlias.alias_name == target_name).delete(synchronize_session='fetch')
+
+    # 2. Reassign existing aliases of source tag to target tag (excluding target_name and source_name)
+    db.query(TagAlias).filter(
+        TagAlias.target_tag_id == source_tag.id,
+        TagAlias.alias_name != target_name,
+        TagAlias.alias_name != source_tag.name
+    ).update({
         TagAlias.target_tag_id: target_tag.id
-    }, synchronize_session=False)
+    }, synchronize_session='fetch')
     
-    # Remove any existing alias that matches source_tag.name if it exists
-    existing_alias = db.query(TagAlias).filter(TagAlias.alias_name == source_tag.name).first()
-    if existing_alias:
-        db.delete(existing_alias)
-        db.flush()
+    # 3. Remove any existing alias that matches source_tag.name if it exists
+    db.query(TagAlias).filter(TagAlias.alias_name == source_tag.name).delete(synchronize_session='fetch')
         
-    # Add source tag name as an alias for target tag
+    # 4. Add source tag name as an alias for target tag
     db.add(TagAlias(alias_name=source_tag.name, target_tag_id=target_tag.id))
     
-    # Update media items
+    # 5. Update media items
     media_with_source = db.query(Media).filter(Media.tags.any(id=source_tag.id)).all()
     for media in media_with_source:
         if target_tag not in media.tags:
             media.tags.append(target_tag)
             
-    # Delete source tag
+    # 6. Delete source tag
     source_name = source_tag.name
     db.delete(source_tag)
+    db.flush()
+
+    # 7. Update target tag post counts
+    from ..media import update_tag_counts
+    update_tag_counts(db, [target_tag.id])
     
     try:
         db.commit()
@@ -652,6 +661,9 @@ async def merge_tag(
         db.rollback()
         raise HTTPException(status_code=500, detail=safe_error_detail("Failed to merge tag", e))
         
+    from ...utils.cache import invalidate_tag_cache
+    invalidate_tag_cache()
+
     return {
         "message": f"Successfully merged '{source_name}' into '{target_name}'",
         "source_tag_name": source_name,

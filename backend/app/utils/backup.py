@@ -313,7 +313,7 @@ def import_tags_logical(db: Session, tags: List[dict], aliases: List[dict]):
         name = alias_data.get('alias_name', '').strip().lower()
         target_name = alias_data.get('target_tag', '').strip().lower()
 
-        if name and name not in existing_aliases and target_name in existing_tags:
+        if name and name not in existing_aliases and name not in existing_tags and target_name in existing_tags and name != target_name:
             aliases_to_create.append({
                 'alias_name': name,
                 'target_tag_id': existing_tags[target_name].id
