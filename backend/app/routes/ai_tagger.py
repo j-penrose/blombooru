@@ -257,12 +257,14 @@ async def get_model_status(
                 huggingface_hub.hf_hub_download(
                     model_repo, 
                     WDTagger.MODEL_FILENAME,
-                    local_files_only=True
+                    local_files_only=True,
+                    cache_dir=settings.MODELS_DIR
                 )
                 huggingface_hub.hf_hub_download(
                     model_repo, 
                     WDTagger.LABEL_FILENAME,
-                    local_files_only=True
+                    local_files_only=True,
+                    cache_dir=settings.MODELS_DIR
                 )
                 is_downloaded = True
             except Exception:

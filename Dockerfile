@@ -19,7 +19,7 @@ RUN python -m pip install --upgrade pip && \
 COPY . .
 
 RUN useradd -m appuser && \
-    mkdir -p /app/media/original /app/media/thumbnails /app/data && \
+    mkdir -p /app/media/original /app/media/thumbnails /app/data /app/data/models && \
     chown -R appuser:appuser /app
 
 USER appuser
@@ -32,6 +32,7 @@ EXPOSE ${UVICORN_PORT}
 ENV APP_MODULE=backend.app.main:app \
     UVICORN_HOST=0.0.0.0 \
     UVICORN_PORT=${UVICORN_PORT} \
-    BUILD_ENV=${BUILD_ENV}
+    BUILD_ENV=${BUILD_ENV} \
+    HF_HOME=/app/data/models
 
 CMD ["sh", "-c", "uvicorn ${APP_MODULE} --host ${UVICORN_HOST} --port ${UVICORN_PORT} --workers ${UVICORN_WORKERS:-1}"]

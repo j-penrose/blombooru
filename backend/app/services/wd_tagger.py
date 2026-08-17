@@ -14,6 +14,7 @@ except ImportError:
     from huggingface_hub.errors import LocalEntryNotFoundError
 from PIL import Image
 
+from ..config import settings
 from ..utils.logger import logger
 
 class WDTagger:
@@ -252,15 +253,35 @@ class WDTagger:
             if force_download:
                 logger.info(f"Verifying hashes and re-downloading '{model_name}' if necessary...")
                 return (
-                    huggingface_hub.hf_hub_download(model_repo, self.LABEL_FILENAME, force_download=True),
-                    huggingface_hub.hf_hub_download(model_repo, self.MODEL_FILENAME, force_download=True)
+                    huggingface_hub.hf_hub_download(
+                        model_repo,
+                        self.LABEL_FILENAME,
+                        force_download=True,
+                        cache_dir=settings.MODELS_DIR
+                    ),
+                    huggingface_hub.hf_hub_download(
+                        model_repo,
+                        self.MODEL_FILENAME,
+                        force_download=True,
+                        cache_dir=settings.MODELS_DIR
+                    )
                 )
             
             try:
                 # Try to load from local cache first to avoid network requests
                 return (
-                    huggingface_hub.hf_hub_download(model_repo, self.LABEL_FILENAME, local_files_only=True),
-                    huggingface_hub.hf_hub_download(model_repo, self.MODEL_FILENAME, local_files_only=True)
+                    huggingface_hub.hf_hub_download(
+                        model_repo,
+                        self.LABEL_FILENAME,
+                        local_files_only=True,
+                        cache_dir=settings.MODELS_DIR
+                    ),
+                    huggingface_hub.hf_hub_download(
+                        model_repo,
+                        self.MODEL_FILENAME,
+                        local_files_only=True,
+                        cache_dir=settings.MODELS_DIR
+                    )
                 )
             except LocalEntryNotFoundError:
                 logger.info(f"Model '{model_name}' not found in cache. Downloading from HuggingFace...")

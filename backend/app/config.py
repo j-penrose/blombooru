@@ -19,12 +19,14 @@ class Settings:
         self.THUMBNAIL_DIR = self.MEDIA_DIR / "thumbnails"
         self.CACHE_DIR = self.MEDIA_DIR / "cache"
         self.DATA_DIR = self.BASE_DIR / "data"
+        self.MODELS_DIR = self.DATA_DIR / "models"
         self.SETTINGS_FILE = self.DATA_DIR / "settings.json"
         
         self.ORIGINAL_DIR.mkdir(parents=True, exist_ok=True)
         self.THUMBNAIL_DIR.mkdir(parents=True, exist_ok=True)
         self.CACHE_DIR.mkdir(parents=True, exist_ok=True)
         self.DATA_DIR.mkdir(parents=True, exist_ok=True)
+        self.MODELS_DIR.mkdir(parents=True, exist_ok=True)
         
         self.file_settings = self._load_file_settings()
         self.settings = self._get_default_settings()
