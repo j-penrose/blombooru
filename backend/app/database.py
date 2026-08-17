@@ -185,10 +185,27 @@ def check_and_migrate_schema(engine):
         migrate_add_description,
         migrate_add_implication_patterns,
         migrate_file_size_to_bigint,
+        migrate_remove_duplicate_tag_aliases,
     ]
     
     for migration in migrations:
         migration(engine, inspector)
+
+def migrate_remove_duplicate_tag_aliases(engine, inspector):
+    """Remove tag aliases whose alias_name already exists as a tag in blombooru_tags."""
+    from sqlalchemy import text
+
+    tables = inspector.get_table_names()
+    if 'blombooru_tags' not in tables or 'blombooru_tag_aliases' not in tables:
+        return
+
+    with engine.connect() as conn:
+        result = conn.execute(text(
+            "DELETE FROM blombooru_tag_aliases WHERE alias_name IN (SELECT name FROM blombooru_tags)"
+        ))
+        if result.rowcount and result.rowcount > 0:
+            logger.info(f"Removed {result.rowcount} duplicate tag alias(es) that also existed as tags.")
+        conn.commit()
 
 def migrate_add_parent_id(engine, inspector):
     """Add parent_id column and index to media table"""
