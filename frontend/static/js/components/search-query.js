@@ -33,16 +33,14 @@ function canonicalizeQuery(queryString) {
 
         if (key) {
             if (singularKeys.has(key)) {
-                const entryId = `singular:${key}`;
-                if (!orderedKeys.includes(entryId)) {
-                    orderedKeys.push(entryId);
+                if (!orderedKeys.some(e => e.type === 'singular' && e.key === key)) {
+                    orderedKeys.push({ type: 'singular', key: key });
                 }
                 singularValues.set(key, value);
             } else {
                 const mapKey = `${isNegated ? '-' : ''}${key}`;
-                const entryId = `meta:${mapKey}`;
-                if (!orderedKeys.includes(entryId)) {
-                    orderedKeys.push(entryId);
+                if (!orderedKeys.some(e => e.type === 'meta' && e.mapKey === mapKey)) {
+                    orderedKeys.push({ type: 'meta', mapKey: mapKey, isNegated: isNegated, key: key });
                 }
                 if (!qualifierValues.has(mapKey)) {
                     qualifierValues.set(mapKey, []);
@@ -51,10 +49,15 @@ function canonicalizeQuery(queryString) {
             }
         } else {
             const isWildcard = value.includes('*') || value.includes('?');
-            const entryId = `${isWildcard ? 'wildcard' : 'tag'}:${isNegated ? '-' : ''}${value}`;
-            if (!seenTags.has(entryId)) {
-                seenTags.add(entryId);
-                orderedKeys.push(entryId);
+            const tokenType = isWildcard ? 'wildcard' : 'tag';
+            const tagKey = `${tokenType}:${isNegated ? '-' : ''}${value}`;
+            if (!seenTags.has(tagKey)) {
+                seenTags.add(tagKey);
+                orderedKeys.push({
+                    type: tokenType,
+                    isNegated: isNegated,
+                    value: value
+                });
             }
         }
     }
@@ -410,27 +413,28 @@ function canonicalizeQuery(queryString) {
     }
 
     const formattedTokens = [];
-    for (const entryId of orderedKeys) {
-        if (entryId.startsWith('meta:')) {
-            const mapKey = entryId.slice(5);
-            const rawKey = mapKey.startsWith('-') ? mapKey.slice(1) : mapKey;
+    for (const entry of orderedKeys) {
+        if (entry.type === 'meta') {
+            const mapKey = entry.mapKey;
+            const rawKey = entry.key;
             const values = qualifierValues.get(mapKey) || [];
             const folded = foldConditionItems(values, rawKey);
             if (folded.length > 0) {
                 const valStr = folded.map(v => v.includes(' ') ? `"${v}"` : v).join(',');
                 formattedTokens.push(`${mapKey}:${valStr}`);
             }
-        } else if (entryId.startsWith('singular:')) {
-            const key = entryId.slice(9);
+        } else if (entry.type === 'singular') {
+            const key = entry.key;
             const val = singularValues.get(key) || '';
             if (val) {
                 const valFormatted = val.includes(' ') ? `"${val}"` : val;
                 formattedTokens.push(`${key}:${valFormatted}`);
             }
-        } else if (entryId.startsWith('tag:') || entryId.startsWith('wildcard:')) {
-            const tagVal = entryId.split(':', 2)[1];
+        } else if (entry.type === 'tag' || entry.type === 'wildcard') {
+            const prefix = entry.isNegated ? '-' : '';
+            const tagVal = entry.value;
             const formatted = tagVal.includes(' ') ? `"${tagVal}"` : tagVal;
-            formattedTokens.push(formatted);
+            formattedTokens.push(`${prefix}${formatted}`);
         }
     }
 
