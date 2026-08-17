@@ -350,9 +350,13 @@ class Blombooru {
         const searchInputMobile = document.getElementById('search-input-mobile');
 
         // Get query from whichever input has a value (prioritize desktop, then mobile)
-        const query = (searchInput && searchInput.value.trim()) ||
+        const rawQuery = (searchInput && searchInput.value.trim()) ||
             (searchInputMobile && searchInputMobile.value.trim()) ||
             '';
+
+        const query = canonicalizeQuery(rawQuery);
+        if (searchInput) searchInput.value = query;
+        if (searchInputMobile) searchInputMobile.value = query;
 
         if (query) {
             window.location.href = `/?q=${encodeURIComponent(query)}`;
@@ -591,12 +595,14 @@ class Blombooru {
 
                 <div class="bg p-2 border-2 border-info">
                     <h3 class="font-bold text-lg mb-2 text-info">${window.i18n.t('search.ranges')}</h3>
-                    <p class="mb-2 text-xs">${window.i18n.t('search.ranges_operators')}: <code>:</code>, <code>..</code>, <code>&gt;=</code>, <code>&gt;</code>, <code>&lt;=</code>, <code>&lt;</code></p>
+                    <p class="mb-2 text-xs">${window.i18n.t('search.ranges_operators')}: <code>:</code>, <code>..</code>, <code>&gt;=</code>, <code>&gt;</code>, <code>&lt;=</code>, <code>&lt;</code>, <code>!=</code></p>
                     <ul class="list-disc pl-5 space-y-1 text-sm">
                         <li><code class="surface">id:100</code>: ${window.i18n.t('search.ranges_exact')}</li>
                         <li><code class="surface">id:100..200</code>: ${window.i18n.t('search.ranges_between')}</li>
                         <li><code class="surface">id:&gt;=100</code>: ${window.i18n.t('search.ranges_gte')}</li>
                         <li><code class="surface">id:1,2,3</code>: ${window.i18n.t('search.ranges_in_list')}</li>
+                        <li><code class="surface">gentags:13,16,&lt;8,&gt;91</code>: ${window.i18n.t('search.ranges_multi_list')}</li>
+                        <li><code class="surface">gentags:6,4 gentags:8,&gt;4</code>: ${window.i18n.t('search.ranges_folding')} (<code class="surface">gentags:&gt;=4</code>)</li>
                     </ul>
                     <p class="mt-2 text-xs text-secondary">${window.i18n.t('search.ranges_note')}</p>
                 </div>
@@ -610,7 +616,7 @@ class Blombooru {
                         <li><code class="surface">rating</code>: ${window.i18n.t('search.meta_rating')}</li>
                         <li><code class="surface">source</code>: ${window.i18n.t('search.meta_source')}</li>
                         <li><code class="surface">filetype</code>: ${window.i18n.t('search.meta_filetype')}</li>
-                        <li><code class="surface">tagcount</code>, <code class="surface">gentags</code>...: ${window.i18n.t('search.meta_tagcount')}</li>
+                        <li><code class="surface">tagcount</code>, <code class="surface">gentags</code>, <code class="surface">chartags</code>...: ${window.i18n.t('search.meta_tagcount')}</li>
                     </ul>
                 </div>
 
@@ -620,7 +626,10 @@ class Blombooru {
                     <ul class="list-disc pl-5 space-y-1 text-sm">
                         <li><code class="surface">id</code> / <code class="surface">id_desc</code>: ${window.i18n.t('search.sorting_newest')}</li>
                         <li><code class="surface">id_asc</code>: ${window.i18n.t('search.sorting_oldest')}</li>
-                        <li><code class="surface">filesize</code>: ${window.i18n.t('search.sorting_filesize')}</li>
+                        <li><code class="surface">date_desc</code> / <code class="surface">date_asc</code>: ${window.i18n.t('search.sorting_date')}</li>
+                        <li><code class="surface">filesize</code> / <code class="surface">filesize_asc</code>: ${window.i18n.t('search.sorting_filesize')}</li>
+                        <li><code class="surface">width_desc</code> / <code class="surface">height_desc</code> / <code class="surface">mpixels_desc</code>: ${window.i18n.t('search.sorting_dimensions')}</li>
+                        <li><code class="surface">tagcount_desc</code> / <code class="surface">tagcount_asc</code>: ${window.i18n.t('search.sorting_tagcount')}</li>
                         <li><code class="surface">landscape</code> / <code class="surface">portrait</code>: ${window.i18n.t('search.sorting_aspect')}</li>
                     </ul>
                 </div>

@@ -78,6 +78,13 @@ class Gallery extends BaseGallery {
             const data = await response.json();
             this.totalPages = data.pages || 1;
 
+            if (data.query !== undefined && searchQuery) {
+                const searchInput = document.getElementById('search-input');
+                const searchInputMobile = document.getElementById('search-input-mobile');
+                if (searchInput && document.activeElement !== searchInput) searchInput.value = data.query;
+                if (searchInputMobile && document.activeElement !== searchInputMobile) searchInputMobile.value = data.query;
+            }
+
             if (data.items && data.items.length > 0) {
                 this.processTagCounts(data.items);
                 this.renderItems(data.items);
