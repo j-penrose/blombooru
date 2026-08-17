@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from ..auth import require_admin_mode
 from ..config import settings
 from ..database import get_db
-from ..models import Media, RatingEnum, Tag, User, blombooru_media_tags
+from ..models import Media, RatingEnum, Tag, TagAlias, User, blombooru_media_tags
 from ..schemas import TagCategoryEnum, TagCreate, TagResponse
 from ..utils.cache import cache_response, invalidate_tag_cache
 from ..utils.search_parser import apply_search_criteria, parse_search_query
@@ -261,6 +261,10 @@ async def create_tag(
     existing = db.query(Tag).filter(Tag.name == tag_data.name.lower()).first()
     if existing:
         raise HTTPException(status_code=400, detail="Tag already exists")
+
+    alias_existing = db.query(TagAlias).filter(TagAlias.alias_name == tag_data.name.lower()).first()
+    if alias_existing:
+        raise HTTPException(status_code=400, detail="Tag alias with this name already exists")
     
     tag = Tag(
         name=tag_data.name.lower(),

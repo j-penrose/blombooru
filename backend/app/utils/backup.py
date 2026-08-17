@@ -334,6 +334,7 @@ def import_media_logical(db: Session, zf: zipfile.ZipFile, media_list: List[dict
     logger.info(f"Found {len(existing_hashes)} existing media hashes in DB.")
     
     all_tags = {t.name: t.id for t in db.query(Tag.name, Tag.id).all()}
+    all_aliases = {a.alias_name: a.target_tag_id for a in db.query(TagAlias.alias_name, TagAlias.target_tag_id).all()}
     namelist = zf.namelist()
     namelist_set = set(namelist)
     
@@ -450,6 +451,10 @@ def import_media_logical(db: Session, zf: zipfile.ZipFile, media_list: List[dict
             normalized_name = tname.strip().lower()
             if normalized_name in all_tags:
                 tid = all_tags[normalized_name]
+                tag_ids_to_link.append(tid)
+                affected_tag_ids.add(tid)
+            elif normalized_name in all_aliases:
+                tid = all_aliases[normalized_name]
                 tag_ids_to_link.append(tid)
                 affected_tag_ids.add(tid)
             else:
