@@ -561,7 +561,7 @@ Paste a URL from a supported booru site (e.g., those using the Danbooru or Gelbo
 
 #### Ranges
 
-Most numeric and date qualifiers support range operators:
+Most numeric, size, date, and count qualifiers support range operators and comma-separated multi-value lists:
 
 | Syntax | Description |
 |:-------|:------------|
@@ -572,24 +572,30 @@ Most numeric and date qualifiers support range operators:
 | `id:<=100` | Less than or equal (`x <= 100`) |
 | `id:<100` | Less than (`x < 100`) |
 | `id:1,2,3` | In list (`x` is 1, 2, or 3) |
+| `gentags:13,16,<8,>91` | Multi-value list with mixed operators (matches 13 OR 16 OR <8 OR >91) |
+
+When multiple occurrences of the same qualifier appear in a query, they are automatically merged and simplified:
+- `rating:s human rating:q gentags:6,1 gentags:8,<4 hair` -> `rating:s,q human gentags:6,8,<4 hair`
+- `gentags:6,4 gentags:8,>4` -> `gentags:>=4` (folds `4` and `>4` into `>=4`, and removes `6` and `8` as they are covered by `>=4`)
+- `-rating:e cat -rating:q` -> `-rating:e,q cat`
 
 #### Meta Qualifiers
 
 | Qualifier | Description | Example(s) |
 |:----------|:------------|:-----------|
-| `id` | Search by internal ID | `id:100..200`, `id:>500` |
-| `width`, `height` | Search by image dimensions (pixels) | `width:>=1920`, `height:1080` |
-| `filesize` | Search by file size using `kb`, `mb`, `gb`, `b` units. Supports "fuzzy" matching: `filesize:52MB` finds `52.0MB` to `52.99MB`. | `filesize:1mb..5mb`, `filesize:52MB` |
-| `date` | Search by upload date (`YYYY-MM-DD`) | `date:2024-01-01` |
-| `age` | Search by age relative to now (`s`, `mi`, `h`, `d`, `w`, `mo`, `y`). Note: `<` means "newer than" (less age). | `age:<24h` (less than 1 day old), `age:1w..1mo` |
+| `id` | Search by internal ID | `id:100..200`, `id:>500`, `id:1,5,10` |
+| `width`, `height` | Search by image dimensions (pixels) | `width:>=1920`, `height:<720,>1080` |
+| `filesize` | Search by file size using `kb`, `mb`, `gb`, `b` units. Supports "fuzzy" matching: `filesize:52MB` finds `52.0MB` to `52.99MB`. | `filesize:1mb..5mb`, `filesize:<500kb,>10mb` |
+| `date` | Search by upload date (`YYYY-MM-DD`) | `date:2024-01-01`, `date:<2024-01-01,>2024-06-01` |
+| `age` | Search by age relative to now (`s`, `mi`, `h`, `d`, `w`, `mo`, `y`). Note: `<` means "newer than" (less age). | `age:<24h` (less than 1 day old), `age:1w..1mo`, `age:<24h,>1y` |
 | `rating` | Filter by rating: `s`/`safe`, `q`/`questionable`, `e`/`explicit`. Supports lists. | `rating:s,q`, `-rating:e` |
-| `source` | Search source. Use `none` for missing sources, `http` for web URLs. | `source:none`, `source:http`, `source:twitter` |
-| `filetype` | Search by file extension | `filetype:png`, `filetype:gif` |
+| `source` | Search source. Use `none` for missing sources, `http` for web URLs. | `source:none`, `source:http,twitter` |
+| `filetype` | Search by file extension or media type | `filetype:png,jpg,gif`, `filetype:video` |
 | `md5` | Search by file hash (exact) | `md5:d34e4c...` |
-| `pool`, `album` | Search by album/pool ID or name. `any`/`none` supported. | `album:any`, `pool:favorites`, `pool:5` |
-| `parent` | Search by parent ID. `any`/`none` supported. | `parent:none`, `parent:123` |
+| `pool`, `album` | Search by album/pool ID or name. `any`/`none` supported. | `album:any`, `pool:favorites,5`, `pool:none` |
+| `parent` | Search by parent ID. `any`/`none` supported. | `parent:none`, `parent:123,456` |
 | `child` | Filter parent posts by children. `any`/`none` supported. | `child:any` (has children), `child:none` |
-| `duration` | Search video/gif duration in seconds | `duration:>60` |
+| `duration` | Search video/gif duration in seconds | `duration:>60`, `duration:<10,>120` |
 
 > [!NOTE]
 > `duration` may not be set on all GIFs.
@@ -611,16 +617,25 @@ Filter by the number of tags on a post:
 
 #### Sorting
 
-Order results with `order:{value}`. Suffix with `_asc` or `_desc` where applicable (default is usually descending).
+Order results with `order:{value}` or `sort:{value}`. Suffix with `_asc` or `_desc` for explicit ordering:
 
 | Value | Description |
 |:------|:------------|
-| `id` / `id_desc` | Newest uploads first (default) |
-| `id_asc` | Oldest uploads first |
-| `filesize` | Largest files first |
-| `landscape` | Widest aspect ratio first |
-| `portrait` | Tallest aspect ratio first |
-| `md5` | Sort using MD5 hash (deterministic random-like shuffle) |
+| `id` / `id_desc` / `id_asc` | Newest / oldest upload ID |
+| `date_desc` / `date_asc` | Upload date |
+| `filesize_desc` / `filesize_asc` | Largest / smallest file size |
+| `width_desc` / `width_asc` | Widest / narrowest pixel width |
+| `height_desc` / `height_asc` | Tallest / shortest pixel height |
+| `mpixels_desc` / `mpixels_asc` | Highest / lowest total resolution |
+| `duration_desc` / `duration_asc` | Longest / shortest duration |
+| `landscape` / `landscape_asc` | Widest / least landscape aspect ratio |
+| `portrait` / `portrait_asc` | Tallest / least portrait aspect ratio |
+| `tagcount_desc` / `tagcount_asc` | Most / fewest total tags |
+| `gentags_desc` / `arttags_desc`... | Category tag counts |
+| `rating_asc` / `rating_desc` | Rating order |
+| `filename_asc` / `filename_desc` | Alphabetical file name |
+| `md5_asc` / `md5_desc` | Hash order |
+| `random` / `random:<seed>` | Deterministic random order |
 | `custom` | Sort by the order given in `id:list`. Example: `id:3,1,2 order:custom` |
 
 ### Sharing Media
