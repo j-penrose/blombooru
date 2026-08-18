@@ -377,53 +377,69 @@ class BulkTagModalBase {
     // ==================== Tag Validation ====================
 
     async validateAndCacheTag(tag) {
-        if (this.tagResolutionCache.has(tag)) return;
+        const normalized = tag?.toLowerCase().trim();
+        if (!normalized) return;
+        if (this.tagResolutionCache.has(normalized)) return;
         if (this.isCancelled) return;
 
         try {
-            const response = await this.fetchWithAbort(`/api/tags/autocomplete?q=${encodeURIComponent(tag)}`);
+            const response = await this.fetchWithAbort(`/api/tags/autocomplete?q=${encodeURIComponent(normalized)}`);
             let result = null;
 
             if (response.ok) {
                 const results = await response.json();
                 if (results && results.length > 0) {
-                    const aliasMatch = results.find(t => t.is_alias && t.alias_name === tag);
+                    const aliasMatch = results.find(t => t.is_alias && t.alias_name?.toLowerCase() === normalized);
                     if (aliasMatch) {
                         result = aliasMatch.name;
                     } else {
-                        const exactMatch = results.find(t => t.name === tag);
+                        const exactMatch = results.find(t => t.name?.toLowerCase() === normalized);
                         if (exactMatch) result = exactMatch.name;
                     }
                 }
             }
 
-            this.tagResolutionCache.set(tag, result);
+            this.tagResolutionCache.set(normalized, result);
         } catch (e) {
             if (e.name === 'AbortError') throw e;
-            this.tagResolutionCache.set(tag, null);
+            this.tagResolutionCache.set(normalized, null);
         }
     }
 
-    async validateTags(tags, concurrency = 20) {
-        const tagsToValidate = tags.filter(tag => !this.tagResolutionCache.has(tag.toLowerCase()));
+    async validateTags(tags, concurrency = 20, updateModalProgress = true) {
+        const tagsToValidate = tags
+            .map(t => t?.toLowerCase().trim())
+            .filter(tag => tag && !this.tagResolutionCache.has(tag));
 
         if (tagsToValidate.length === 0) return;
 
-        this.updateProgress(0, tagsToValidate.length, window.i18n.t('bulk_modal.progress.validating_tags'), window.i18n.t('bulk_modal.progress.tags_checked'));
+        if (updateModalProgress) {
+            this.updateProgress(0, tagsToValidate.length, window.i18n.t('bulk_modal.progress.validating_tags'), window.i18n.t('bulk_modal.progress.tags_checked'));
+        }
 
         try {
             // Use the batch endpoint for multiple tags
-            const namesParam = tagsToValidate.map(n => encodeURIComponent(n.toLowerCase().trim())).join(',');
+            const namesParam = tagsToValidate.map(n => encodeURIComponent(n)).join(',');
             const response = await this.fetchWithAbort(`/api/tags?names=${namesParam}`);
 
             if (response.ok) {
                 const results = await response.json();
                 const foundMap = new Map();
-                results.forEach(t => foundMap.set(t.name.toLowerCase(), t.name));
+                results.forEach(t => {
+                    const norm = t.name.toLowerCase().trim();
+                    foundMap.set(norm, t.name);
+                    if (this.tagInputHelper) {
+                        this.tagInputHelper.tagValidationCache.set(norm, true);
+                    }
+                });
 
                 tagsToValidate.forEach(tag => {
-                    const normalized = tag.toLowerCase().trim();
-                    this.tagResolutionCache.set(tag, foundMap.get(normalized) || null);
+                    const norm = tag.toLowerCase().trim();
+                    const resolved = foundMap.get(norm) || null;
+                    this.tagResolutionCache.set(norm, resolved);
+                    if (this.tagInputHelper && !resolved) {
+                        this.tagInputHelper.tagValidationCache.set(norm, false);
+                    }
                 });
             } else {
                 // Fallback to one-by-one if batch fails or is too large
@@ -432,7 +448,7 @@ class BulkTagModalBase {
                     if (this.isCancelled) return;
                     await this.validateAndCacheTag(tag);
                     progress++;
-                    if (!this.isCancelled) {
+                    if (!this.isCancelled && updateModalProgress) {
                         this.updateProgress(progress, tagsToValidate.length, window.i18n.t('bulk_modal.progress.validating_tags'), window.i18n.t('bulk_modal.progress.tags_checked'));
                     }
                 };
@@ -447,16 +463,21 @@ class BulkTagModalBase {
                 if (this.isCancelled) return;
                 await this.validateAndCacheTag(tag);
                 progress++;
-                this.updateProgress(progress, tagsToValidate.length, window.i18n.t('bulk_modal.progress.validating_tags'), window.i18n.t('bulk_modal.progress.tags_checked'));
+                if (updateModalProgress) {
+                    this.updateProgress(progress, tagsToValidate.length, window.i18n.t('bulk_modal.progress.validating_tags'), window.i18n.t('bulk_modal.progress.tags_checked'));
+                }
             };
             await this.processBatch(tagsToValidate, validateTag, concurrency);
         }
 
-        this.updateProgress(tagsToValidate.length, tagsToValidate.length, window.i18n.t('bulk_modal.progress.validating_tags'), window.i18n.t('bulk_modal.progress.tags_checked'));
+        if (updateModalProgress) {
+            this.updateProgress(tagsToValidate.length, tagsToValidate.length, window.i18n.t('bulk_modal.progress.validating_tags'), window.i18n.t('bulk_modal.progress.tags_checked'));
+        }
     }
 
     getResolvedTag(tag) {
-        return this.tagResolutionCache.get(tag.toLowerCase());
+        if (!tag) return null;
+        return this.tagResolutionCache.get(tag.toLowerCase().trim());
     }
 
     triggerValidation(input) {
@@ -487,28 +508,27 @@ class BulkTagModalBase {
 
     // ==================== Input Helpers ====================
 
-    async initializeInputHelpers(container) {
-        if (!this.tagInputHelper || this.isCancelled) return;
+    async initializeSingleInput(input) {
+        if (!this.tagInputHelper || this.isCancelled || !input) return;
 
         const prefix = this.options.classPrefix;
-        const inputs = container.querySelectorAll(`.${prefix}-input`);
 
         if (!this.resizeObserver) {
             this.resizeObserver = new ResizeObserver(entries => {
                 for (const entry of entries) {
-                    const input = entry.target;
-                    const wrapper = input.parentElement;
-                    const actions = wrapper.nextElementSibling;
+                    const inp = entry.target;
+                    const wrapper = inp.parentElement;
+                    const actions = wrapper ? wrapper.nextElementSibling : null;
 
                     if (!actions || !actions.classList.contains(`${prefix}-actions`)) continue;
 
                     // Compute line count
-                    const style = window.getComputedStyle(input);
+                    const style = window.getComputedStyle(inp);
                     const lineHeight = parseFloat(style.lineHeight) || 20;
                     const paddingTop = parseFloat(style.paddingTop);
                     const paddingBottom = parseFloat(style.paddingBottom);
 
-                    const contentHeight = input.clientHeight - paddingTop - paddingBottom;
+                    const contentHeight = inp.clientHeight - paddingTop - paddingBottom;
                     const lines = contentHeight / lineHeight;
 
                     if (lines > 2.5) {
@@ -520,46 +540,58 @@ class BulkTagModalBase {
             });
         }
 
+        this.resizeObserver.observe(input);
+
+        if (typeof TagAutocomplete !== 'undefined') {
+            new TagAutocomplete(input, {
+                multipleValues: true,
+                allowCreate: true,
+                containerClasses: 'surface border border-color shadow-lg z-50',
+                onSelect: () => this.triggerValidation(input)
+            });
+        }
+
+        this.tagInputHelper.setupTagInput(input, `${prefix}-${input.dataset.index}`, {
+            onValidate: () => { },
+            validationCache: this.tagInputHelper.tagValidationCache,
+            checkFunction: (tag) => {
+                const resolved = this.getResolvedTag(tag);
+                if (resolved !== null && resolved !== undefined) return true;
+                return this.tagInputHelper.checkTagExists(tag);
+            },
+            getHighlightTags: (inputElement) => {
+                const idx = inputElement.getAttribute('data-index');
+                if (idx !== null && this.itemsData && this.itemsData[idx]) {
+                    const item = this.itemsData[idx];
+                    if (!item.prefilledTags) return null;
+
+                    const prefilledSet = new Set(item.prefilledTags.map(t => t.toLowerCase()));
+                    const inputTags = this.tagInputHelper.getPlainTextFromDiv(inputElement).split(/\s+/).filter(t => t.length > 0);
+                    const highlightTags = new Set();
+                    for (const t of inputTags) {
+                        if (prefilledSet.has(t.toLowerCase())) {
+                            highlightTags.add(t.toLowerCase());
+                        }
+                    }
+                    return highlightTags;
+                }
+                return null;
+            }
+        });
+
+        await new Promise(r => setTimeout(r, 0));
+        this.triggerValidation(input);
+    }
+
+    async initializeInputHelpers(container) {
+        if (!this.tagInputHelper || this.isCancelled || !container) return;
+
+        const prefix = this.options.classPrefix;
+        const inputs = container.querySelectorAll(`.${prefix}-input`);
+
         for (const input of inputs) {
             if (this.isCancelled) return;
-
-            this.resizeObserver.observe(input);
-
-            if (typeof TagAutocomplete !== 'undefined') {
-                new TagAutocomplete(input, {
-                    multipleValues: true,
-                    allowCreate: true,
-                    containerClasses: 'surface border border-color shadow-lg z-50',
-                    onSelect: () => this.triggerValidation(input)
-                });
-            }
-
-            this.tagInputHelper.setupTagInput(input, `${prefix}-${input.dataset.index}`, {
-                onValidate: () => { },
-                validationCache: this.tagInputHelper.tagValidationCache,
-                checkFunction: (tag) => this.tagInputHelper.checkTagExists(tag),
-                getHighlightTags: (inputElement) => {
-                    const idx = inputElement.getAttribute('data-index');
-                    if (idx !== null && this.itemsData && this.itemsData[idx]) {
-                        const item = this.itemsData[idx];
-                        if (!item.prefilledTags) return null;
-
-                        const prefilledSet = new Set(item.prefilledTags.map(t => t.toLowerCase()));
-                        const inputTags = this.tagInputHelper.getPlainTextFromDiv(inputElement).split(/\s+/).filter(t => t.length > 0);
-                        const highlightTags = new Set();
-                        for (const t of inputTags) {
-                            if (prefilledSet.has(t.toLowerCase())) {
-                                highlightTags.add(t.toLowerCase());
-                            }
-                        }
-                        return highlightTags;
-                    }
-                    return null;
-                }
-            });
-
-            await new Promise(r => setTimeout(r, 0));
-            this.triggerValidation(input);
+            await this.initializeSingleInput(input);
         }
     }
 
@@ -660,6 +692,13 @@ class BulkTagModalBase {
     // ==================== Save ====================
 
     async saveTags() {
+        // Cancel any pending streaming/background fetch
+        this.isCancelled = true;
+        if (this.abortController) {
+            this.abortController.abort();
+            this.abortController = null;
+        }
+
         const prefix = this.options.classPrefix;
         const saveBtn = this.modalElement.querySelector(`.${prefix}-save`);
 

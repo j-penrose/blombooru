@@ -19,6 +19,7 @@ class BulkWDTaggerModal extends BulkTagModalBase {
 
         this.useStreaming = true;
         this.batchSize = 20;
+        this.displayedMediaIds = new Set();
         this.init();
     }
 
@@ -36,6 +37,46 @@ class BulkWDTaggerModal extends BulkTagModalBase {
             ${this.getErrorHTML()}
             ${this.getCancelledHTML()}
         `;
+    }
+
+    getContentHTML() {
+        const prefix = this.options.classPrefix;
+        return `
+            <div class="${prefix}-content flex-1 flex flex-col min-h-0" style="display: none;">
+                <p class="text-secondary mb-3 text-xs sm:text-sm flex-shrink-0">${window.i18n.t('bulk_modal.messages.review_tags')}</p>
+                <div class="flex-1 overflow-y-auto -mx-4 px-4 pb-2 flex flex-col" style="overscroll-behavior: contain;">
+                    <div class="${prefix}-items space-y-3"></div>
+                    <div class="${prefix}-scan-loading flex flex-col items-center justify-center py-8" style="display: none;">
+                        <div class="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mb-4"></div>
+                        <p class="text-secondary ${prefix}-scan-status text-center">${window.i18n.t('bulk_modal.progress.predicting_tags')}</p>
+                        <p class="text-secondary text-sm mt-2 text-center">
+                            <span class="${prefix}-scan-progress">0</span> / <span class="${prefix}-scan-total">0</span> <span class="${prefix}-scan-phase">${window.i18n.t('bulk_modal.progress.items_processed')}</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    updateScanProgress(current, total, status, phase) {
+        const prefix = this.options.classPrefix;
+        const loadingEl = this.modalElement?.querySelector(`.${prefix}-scan-loading`);
+        const progressEl = this.modalElement?.querySelector(`.${prefix}-scan-progress`);
+        const totalEl = this.modalElement?.querySelector(`.${prefix}-scan-total`);
+        const statusEl = this.modalElement?.querySelector(`.${prefix}-scan-status`);
+        const phaseEl = this.modalElement?.querySelector(`.${prefix}-scan-phase`);
+
+        if (loadingEl) loadingEl.style.display = 'flex';
+        if (progressEl) progressEl.textContent = current;
+        if (totalEl) totalEl.textContent = total;
+        if (statusEl && status) statusEl.textContent = status;
+        if (phaseEl && phase) phaseEl.textContent = phase;
+    }
+
+    hideScanProgress() {
+        const prefix = this.options.classPrefix;
+        const loadingEl = this.modalElement?.querySelector(`.${prefix}-scan-loading`);
+        if (loadingEl) loadingEl.style.display = 'none';
     }
 
     getDownloadConfirmHTML() {
@@ -92,6 +133,8 @@ class BulkWDTaggerModal extends BulkTagModalBase {
 
     reset() {
         super.reset();
+        this.displayedMediaIds = new Set();
+        this.hideScanProgress();
     }
 
     async onShow() {
@@ -177,6 +220,8 @@ class BulkWDTaggerModal extends BulkTagModalBase {
         this.showState('loading');
         const prefix = this.options.classPrefix;
         const itemsContainer = this.modalElement.querySelector(`.${prefix}-items`);
+        if (itemsContainer) itemsContainer.innerHTML = '';
+        this.displayedMediaIds = new Set();
 
         const selectedArray = Array.from(this.selectedItems);
 
@@ -222,12 +267,21 @@ class BulkWDTaggerModal extends BulkTagModalBase {
 
         if (this.isCancelled) return;
 
+        // Switch to content view and show the live scan progress indicator
+        this.showState('content');
+        this.updateScanProgress(
+            0,
+            selectedArray.length,
+            window.i18n.t('bulk_modal.progress.predicting_tags'),
+            window.i18n.t('bulk_modal.progress.items_processed')
+        );
+
         // Phase 2: Predict tags
         if (this.useStreaming) {
             try {
                 await this.predictWithStreaming(selectedArray, mediaInfoMap);
             } catch (e) {
-                if (e.name === 'AbortError') return;
+                if (this.isCancelled || e.name === 'AbortError') return;
                 console.warn('Streaming failed, falling back to batch:', e);
                 // Fallback to batch
                 await this.predictWithBatching(selectedArray, mediaInfoMap);
@@ -239,18 +293,16 @@ class BulkWDTaggerModal extends BulkTagModalBase {
 
     parseSSEEvents(buffer) {
         const events = [];
-        let remaining = buffer;
+        const normalized = buffer.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 
-        // SSE events are separated by double newlines
-        let idx;
-        while ((idx = remaining.indexOf('\n\n')) !== -1) {
-            const eventText = remaining.slice(0, idx);
-            remaining = remaining.slice(idx + 2);
+        const parts = normalized.split('\n\n');
+        const remaining = parts.pop() || '';
 
-            // Parse the event
-            for (const line of eventText.split('\n')) {
-                if (line.startsWith('data: ')) {
-                    const jsonStr = line.slice(6);
+        for (const block of parts) {
+            for (const line of block.split('\n')) {
+                const trimmed = line.trim();
+                if (trimmed.startsWith('data:')) {
+                    const jsonStr = trimmed.slice(5).trim();
                     try {
                         events.push(JSON.parse(jsonStr));
                     } catch (e) {
@@ -264,7 +316,12 @@ class BulkWDTaggerModal extends BulkTagModalBase {
     }
 
     async predictWithStreaming(mediaIds, mediaInfoMap) {
-        this.updateProgress(0, mediaIds.length, window.i18n.t('bulk_modal.progress.predicting_tags'), window.i18n.t('bulk_modal.progress.items_processed'));
+        this.updateScanProgress(
+            0,
+            mediaIds.length,
+            window.i18n.t('bulk_modal.progress.predicting_tags'),
+            window.i18n.t('bulk_modal.progress.items_processed')
+        );
 
         const response = await fetch('/api/ai-tagger/predict-stream', {
             method: 'POST',
@@ -299,7 +356,8 @@ class BulkWDTaggerModal extends BulkTagModalBase {
                 if (buffer.trim()) {
                     const { events } = this.parseSSEEvents(buffer + '\n\n');
                     for (const data of events) {
-                        this.handleStreamEvent(data, mediaInfoMap);
+                        if (this.isCancelled) break;
+                        await this.handleStreamEvent(data, mediaInfoMap);
                     }
                 }
                 break;
@@ -314,15 +372,15 @@ class BulkWDTaggerModal extends BulkTagModalBase {
             for (const data of events) {
                 if (this.isCancelled) break;
 
-                const shouldStop = this.handleStreamEvent(data, mediaInfoMap);
+                const shouldStop = await this.handleStreamEvent(data, mediaInfoMap);
                 if (shouldStop) break;
             }
         }
 
-        await this.finalizeResults();
+        this.finalizeScanning();
     }
 
-    handleStreamEvent(data, mediaInfoMap) {
+    async handleStreamEvent(data, mediaInfoMap) {
         if (data.type === 'complete') {
             return true; // Signal to stop
         }
@@ -333,15 +391,24 @@ class BulkWDTaggerModal extends BulkTagModalBase {
         }
 
         if (data.type === 'result' && data.media_id != null) {
-            const mediaData = mediaInfoMap.get(data.media_id);
-            const result = this.processStreamedResult(data, mediaData);
-
-            if (result) {
-                this.itemsData.push(result);
+            const mediaIdStr = String(data.media_id);
+            if (!this.displayedMediaIds.has(mediaIdStr)) {
+                this.displayedMediaIds.add(mediaIdStr);
+                const mediaData = mediaInfoMap.get(data.media_id) || mediaInfoMap.get(parseInt(data.media_id)) || mediaInfoMap.get(mediaIdStr);
+                await this.processAndDisplayScannedItem(data.media_id, data.tags || [], mediaData);
             }
 
             if (data.progress != null && data.total != null) {
-                this.updateProgress(
+                this.updateScanProgress(
+                    data.progress,
+                    data.total,
+                    window.i18n.t('bulk_modal.progress.predicting_tags'),
+                    window.i18n.t('bulk_modal.progress.items_processed')
+                );
+            }
+        } else if (data.type === 'error' && data.media_id != null) {
+            if (data.progress != null && data.total != null) {
+                this.updateScanProgress(
                     data.progress,
                     data.total,
                     window.i18n.t('bulk_modal.progress.predicting_tags'),
@@ -353,8 +420,78 @@ class BulkWDTaggerModal extends BulkTagModalBase {
         return false;
     }
 
+    async processAndDisplayScannedItem(mediaId, rawTags, mediaData) {
+        if (this.isCancelled) return;
+
+        const currentTags = (mediaData?.tags || []).map(t => (t.name || t).toLowerCase());
+        const currentTagsSet = new Set(currentTags);
+
+        const predictedTags = (rawTags || [])
+            .map(t => (t.name || t).replace(/ /g, '_'))
+            .filter(t => !currentTagsSet.has(t.toLowerCase()));
+
+        if (predictedTags.length === 0) return;
+
+        // Validate any un-cached tags immediately
+        const unvalidatedTags = predictedTags.filter(t => !this.tagResolutionCache.has(t.toLowerCase().trim()));
+        if (unvalidatedTags.length > 0) {
+            try {
+                await this.validateTags(unvalidatedTags, 20, false);
+            } catch (e) {
+                if (e.name === 'AbortError' || this.isCancelled) return;
+                console.error('Error validating tags for item:', e);
+            }
+        }
+
+        if (this.isCancelled) return;
+
+        // Filter and map to resolved tags
+        const validNewTags = [];
+        const seen = new Set();
+        for (const tag of predictedTags) {
+            const resolved = this.getResolvedTag(tag);
+            if (resolved && !seen.has(resolved.toLowerCase()) && !currentTagsSet.has(resolved.toLowerCase())) {
+                validNewTags.push(resolved);
+                seen.add(resolved.toLowerCase());
+            }
+        }
+
+        if (validNewTags.length === 0) return;
+
+        const item = {
+            mediaId,
+            currentTags: (mediaData?.tags || []).map(t => t.name || t),
+            predictedTags,
+            newTags: validNewTags,
+            filename: mediaData?.filename || window.i18n.t('bulk_modal.ai_tags.default_media_name', { id: mediaId })
+        };
+
+        const prefix = this.options.classPrefix;
+        const itemsContainer = this.modalElement.querySelector(`.${prefix}-items`);
+
+        const index = this.itemsData.length;
+        this.itemsData.push(item);
+
+        if (itemsContainer) {
+            const itemHTML = this.renderItem(item, index);
+            itemsContainer.insertAdjacentHTML('beforeend', itemHTML);
+
+            const input = itemsContainer.querySelector(`.${prefix}-input[data-index="${index}"]`);
+            if (input) {
+                await this.initializeSingleInput(input);
+            }
+        }
+
+        this.showSaveButton();
+    }
+
     async predictWithBatching(mediaIds, mediaInfoMap) {
-        this.updateProgress(0, mediaIds.length, window.i18n.t('bulk_modal.progress.predicting_tags'), window.i18n.t('bulk_modal.progress.items_processed'));
+        this.updateScanProgress(
+            0,
+            mediaIds.length,
+            window.i18n.t('bulk_modal.progress.predicting_tags'),
+            window.i18n.t('bulk_modal.progress.items_processed')
+        );
 
         let processed = 0;
 
@@ -385,16 +522,16 @@ class BulkWDTaggerModal extends BulkTagModalBase {
                 const batchResult = await response.json();
 
                 for (const result of batchResult.results) {
-                    const mediaData = mediaInfoMap.get(result.media_id);
-                    const processedResult = this.processBatchResult(result, mediaData);
-
-                    if (processedResult) {
-                        this.itemsData.push(processedResult);
+                    if (this.isCancelled) break;
+                    if (!this.displayedMediaIds.has(result.media_id)) {
+                        this.displayedMediaIds.add(result.media_id);
+                        const mediaData = mediaInfoMap.get(result.media_id);
+                        await this.processAndDisplayScannedItem(result.media_id, result.tags || [], mediaData);
                     }
                 }
 
                 processed += batchIds.length;
-                this.updateProgress(
+                this.updateScanProgress(
                     processed,
                     mediaIds.length,
                     window.i18n.t('bulk_modal.progress.predicting_tags'),
@@ -405,102 +542,29 @@ class BulkWDTaggerModal extends BulkTagModalBase {
                 if (e.name === 'AbortError') return;
                 console.error('Batch prediction error:', e);
                 processed += batchIds.length;
-                // Continue with next batch
+                this.updateScanProgress(
+                    processed,
+                    mediaIds.length,
+                    window.i18n.t('bulk_modal.progress.predicting_tags'),
+                    window.i18n.t('bulk_modal.progress.items_processed')
+                );
             }
         }
 
-        await this.finalizeResults();
+        this.finalizeScanning();
     }
 
-    processStreamedResult(data, mediaData) {
-        const currentTags = (mediaData?.tags || []).map(t => (t.name || t).toLowerCase());
-        const currentTagsSet = new Set(currentTags);
-
-        const predictedTags = data.tags
-            .map(t => t.name.replace(/ /g, '_'))
-            .filter(t => !currentTagsSet.has(t.toLowerCase()));
-
-        if (predictedTags.length > 0) {
-            return {
-                mediaId: data.media_id,
-                currentTags: (mediaData?.tags || []).map(t => t.name || t),
-                predictedTags,
-                filename: mediaData?.filename || window.i18n.t('bulk_modal.ai_tags.default_media_name', { id: data.media_id })
-            };
-        }
-        return null;
-    }
-
-    processBatchResult(result, mediaData) {
-        const currentTags = (mediaData?.tags || []).map(t => (t.name || t).toLowerCase());
-        const currentTagsSet = new Set(currentTags);
-
-        const predictedTags = result.tags
-            .map(t => t.name.replace(/ /g, '_'))
-            .filter(t => !currentTagsSet.has(t.toLowerCase()));
-
-        if (predictedTags.length > 0) {
-            return {
-                mediaId: result.media_id,
-                currentTags: (mediaData?.tags || []).map(t => t.name || t),
-                predictedTags,
-                filename: mediaData?.filename || window.i18n.t('bulk_modal.ai_tags.default_media_name', { id: result.media_id })
-            };
-        }
-        return null;
-    }
-
-    async finalizeResults() {
+    finalizeScanning() {
         if (this.isCancelled) return;
+
+        this.hideScanProgress();
 
         if (this.itemsData.length === 0) {
             this.showState('empty');
-            return;
+        } else {
+            this.showState('content');
+            this.showSaveButton();
         }
-
-        // Validate tags
-        const allTags = new Set();
-        for (const item of this.itemsData) {
-            item.predictedTags.forEach(tag => allTags.add(tag.toLowerCase()));
-        }
-
-        try {
-            await this.validateTags(Array.from(allTags));
-        } catch (e) {
-            if (e.name === 'AbortError') return;
-            throw e;
-        }
-
-        if (this.isCancelled) return;
-
-        // Apply validated tags
-        for (const item of this.itemsData) {
-            item.newTags = item.predictedTags.filter(tag => {
-                const resolved = this.getResolvedTag(tag);
-                return resolved !== null;
-            }).map(tag => {
-                const resolved = this.getResolvedTag(tag);
-                return resolved || tag;
-            });
-        }
-
-        this.itemsData = this.itemsData.filter(item => item.newTags.length > 0);
-
-        if (this.itemsData.length === 0) {
-            this.showState('empty');
-            return;
-        }
-
-        const prefix = this.options.classPrefix;
-        const itemsContainer = this.modalElement.querySelector(`.${prefix}-items`);
-
-        this.renderItems();
-        await this.initializeInputHelpers(itemsContainer);
-
-        if (this.isCancelled) return;
-
-        this.showState('content');
-        this.showSaveButton();
     }
 
     async refreshSingleItem(index, inputElement) {
@@ -532,21 +596,20 @@ class BulkWDTaggerModal extends BulkTagModalBase {
             const result = await response.json();
             const currentTagsSet = new Set((mediaData?.tags || []).map(t => (t.name || t).toLowerCase()));
 
-            const newPredictions = result.tags
-                .map(t => t.name.replace(/ /g, '_'))
+            const newPredictions = (result.tags || [])
+                .map(t => (t.name || t).replace(/ /g, '_'))
                 .filter(t => !currentTagsSet.has(t.toLowerCase()));
 
             if (newPredictions.length > 0) {
                 // Validate new tags
-                for (const tag of newPredictions) {
-                    if (!this.tagResolutionCache.has(tag.toLowerCase())) {
-                        await this.validateAndCacheTag(tag.toLowerCase());
-                    }
+                const unvalidated = newPredictions.filter(t => !this.tagResolutionCache.has(t.toLowerCase().trim()));
+                if (unvalidated.length > 0) {
+                    await this.validateTags(unvalidated, 20, false);
                 }
 
                 const validTags = newPredictions.filter(tag => {
                     const resolved = this.getResolvedTag(tag);
-                    return resolved !== null;
+                    return resolved !== null && resolved !== undefined;
                 }).map(tag => {
                     const resolved = this.getResolvedTag(tag);
                     return resolved || tag;
