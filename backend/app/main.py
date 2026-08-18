@@ -192,9 +192,9 @@ class SecurityHeadersMiddleware:
         await self.app(scope, receive, send_with_headers)
 
 class SelectiveGZipMiddleware:
-    """GZip middleware that skips binary media content types."""
+    """GZip middleware that skips binary media and streaming content types."""
 
-    _SKIP_PREFIXES = ("video/", "image/", "audio/", "application/octet-stream", "application/zip")
+    _SKIP_PREFIXES = ("video/", "image/", "audio/", "application/octet-stream", "application/zip", "text/event-stream")
 
     def __init__(self, app: ASGIApp, minimum_size: int = 1000) -> None:
         self.app = app
@@ -205,23 +205,7 @@ class SelectiveGZipMiddleware:
             await self.app(scope, receive, send)
             return
 
-        decided = False
-        use_gzip = True
-
-        async def inspect_send(message: Message) -> None:
-            nonlocal decided, use_gzip
-            if message["type"] == "http.response.start" and not decided:
-                decided = True
-                headers = dict(
-                    (k.decode("latin-1").lower(), v.decode("latin-1"))
-                    for k, v in message.get("headers", [])
-                )
-                ct = headers.get("content-type", "")
-                if any(ct.startswith(p) for p in self._SKIP_PREFIXES):
-                    use_gzip = False
-            await send(message)
-
-        # Skip gzip on known binary endpoints
+        # Skip gzip on known binary / streaming endpoints
         path = scope.get("path", "")
         if (
             path.startswith("/api/media/") and path.endswith("/file")
@@ -229,6 +213,8 @@ class SelectiveGZipMiddleware:
             or path.startswith("/api/shared/") and path.endswith("/file")
             or path.startswith("/api/shared/") and path.endswith("/thumbnail")
             or path.startswith("/api/admin/backup/")
+            or path.startswith("/api/ai-tagger/predict-stream")
+            or path.endswith("/predict-stream")
         ):
             await self.app(scope, receive, send)
         else:
