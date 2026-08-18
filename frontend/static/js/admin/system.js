@@ -886,6 +886,49 @@ class AdminSystem {
                 body: JSON.stringify(settings)
             });
 
+            const headerLogoTitle = document.getElementById('header-logo-title');
+            if (headerLogoTitle) {
+                headerLogoTitle.textContent = appName;
+            }
+            const headerLogoImg = document.getElementById('header-logo-img');
+            if (headerLogoImg) {
+                headerLogoImg.setAttribute('alt', appName);
+            }
+            const footerAppName = document.getElementById('footer-app-name');
+            if (footerAppName) {
+                footerAppName.textContent = appName;
+            }
+            if (document.title.includes(' - ')) {
+                const parts = document.title.split(' - ');
+                parts[parts.length - 1] = appName;
+                document.title = parts.join(' - ');
+            } else if (document.title === window._appName) {
+                document.title = appName;
+            }
+            window._appName = appName;
+
+            let themes = this._themes || [];
+            let targetTheme = themes.find(t => t.id === theme);
+            if (!targetTheme) {
+                try {
+                    const themeResp = await fetch('/api/admin/themes');
+                    if (themeResp.ok) {
+                        const themeData = await themeResp.json();
+                        this._themes = themeData.themes || [];
+                        targetTheme = this._themes.find(t => t.id === theme);
+                    }
+                } catch (e) {
+                    console.error('Error fetching themes for on-the-fly update:', e);
+                }
+            }
+            if (targetTheme && targetTheme.css_path) {
+                const themeLink = document.getElementById('theme-stylesheet');
+                if (themeLink) {
+                    themeLink.href = `${targetTheme.css_path}?v=${Date.now()}`;
+                }
+            }
+            await this.loadThemes();
+
             app.showNotification(window.i18n.t('notifications.admin.settings_updated'), 'success');
         } catch (error) {
             app.showNotification(error.message, 'error', window.i18n.t('notifications.admin.error_saving_settings'));
@@ -973,6 +1016,7 @@ class AdminSystem {
         try {
             const response = await fetch('/api/admin/themes');
             const data = await response.json();
+            this._themes = data.themes || [];
 
             if (!this.themeSelect) {
                 console.error('themeSelect is not initialized!');
