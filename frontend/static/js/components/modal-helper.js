@@ -31,6 +31,7 @@ class ModalHelper {
 
     getDefaultTitle(type) {
         const titles = {
+            primary: window.i18n.t('common.info'),
             info: window.i18n.t('common.info'),
             warning: window.i18n.t('common.warning'),
             danger: window.i18n.t('common.explicit_content_warning')
@@ -40,6 +41,11 @@ class ModalHelper {
 
     getIconSVG(type) {
         const icons = {
+            primary: `
+                <svg class="mx-auto mb-4" width="64" height="64" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" fill="var(--primary)"/>
+                </svg>
+            `,
             info: `
                 <svg class="mx-auto mb-4" width="64" height="64" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" fill="var(--info)"/>
@@ -61,6 +67,7 @@ class ModalHelper {
 
     getTitleClass(type) {
         const classes = {
+            primary: 'text-primary',
             info: 'text-info',
             warning: 'text-warning',
             danger: 'text-danger'
@@ -70,6 +77,7 @@ class ModalHelper {
 
     getBorderClass(type) {
         const classes = {
+            primary: 'border-primary',
             info: 'border-info',
             warning: 'border-warning',
             danger: 'border-danger'
@@ -79,6 +87,7 @@ class ModalHelper {
 
     getConfirmButtonClass(type) {
         const classes = {
+            primary: 'btn-primary',
             info: 'bg-info hover:bg-info tag-text',
             warning: 'bg-warning hover:bg-warning tag-text',
             danger: 'btn-danger'
