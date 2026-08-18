@@ -311,6 +311,61 @@ async def get_model_status(
             detail=f"AI Tagger dependencies not installed: {str(e)}"
         )
 
+@router.delete("/model/{model_name}")
+async def delete_model(
+    model_name: str,
+    current_user: User = Depends(require_admin_mode)
+):
+    """Delete a downloaded model from the local cache."""
+    if model_name not in WDTagger.AVAILABLE_MODELS:
+        raise HTTPException(status_code=400, detail=f"Unknown model: {model_name}")
+
+    if WDTagger.is_downloading(model_name):
+        raise HTTPException(status_code=409, detail="Cannot delete a model that is currently downloading.")
+
+    try:
+        import huggingface_hub
+        import shutil
+
+        repo_id = WDTagger.AVAILABLE_MODELS[model_name]
+        cache_info = huggingface_hub.scan_cache_dir(cache_dir=settings.MODELS_DIR)
+
+        deleted = False
+        for repo in cache_info.repos:
+            if repo.repo_id == repo_id:
+                revisions = [r.commit_hash for r in repo.revisions]
+                if revisions:
+                    delete_strategy = cache_info.delete_revisions(*revisions)
+                    delete_strategy.execute()
+                if hasattr(repo, "repo_path") and Path(repo.repo_path).exists():
+                    shutil.rmtree(repo.repo_path, ignore_errors=True)
+                deleted = True
+                break
+
+        if not deleted:
+            repo_folder_name = "models--" + repo_id.replace("/", "--")
+            repo_dir = settings.MODELS_DIR / repo_folder_name
+            if repo_dir.exists():
+                shutil.rmtree(repo_dir, ignore_errors=True)
+                deleted = True
+
+        if not deleted:
+            raise HTTPException(status_code=404, detail=f"Model '{model_name}' is not downloaded.")
+
+        # Unload from memory if it was the active model
+        tagger = get_wd_tagger()
+        if tagger.is_loaded and tagger.current_model == model_name:
+            tagger.shutdown()
+
+        return {"success": True, "model_name": model_name}
+
+    except HTTPException:
+        raise
+    except ImportError as e:
+        raise HTTPException(status_code=503, detail=f"AI Tagger dependencies not installed: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=safe_error_detail(e))
+
 @router.post("/download/{model_name}")
 async def download_model(
     model_name: str,
