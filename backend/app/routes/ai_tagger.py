@@ -61,14 +61,19 @@ def compile_blacklist(blacklisted_tags: List[str]) -> List[re.Pattern]:
         compiled.append(re.compile(regex_str, re.IGNORECASE))
     return compiled
 
-def filter_tags(tags: List[dict], blacklisted_tags: List[str]) -> List[dict]:
-    if not blacklisted_tags:
+def filter_tags(tags: List[dict], blacklisted_tags: List[str], blacklisted_categories: Optional[List[str]] = None) -> List[dict]:
+    if not blacklisted_tags and not blacklisted_categories:
         return tags
-    compiled_patterns = compile_blacklist(blacklisted_tags)
+    compiled_patterns = compile_blacklist(blacklisted_tags) if blacklisted_tags else []
+    cat_set = {c.lower().strip() for c in blacklisted_categories} if blacklisted_categories else set()
     filtered = []
     for tag in tags:
-        if not any(pattern.match(tag["name"]) for pattern in compiled_patterns):
-            filtered.append(tag)
+        tag_cat = (tag.get("category") or "").lower().strip()
+        if cat_set and tag_cat in cat_set:
+            continue
+        if compiled_patterns and any(pattern.match(tag["name"]) for pattern in compiled_patterns):
+            continue
+        filtered.append(tag)
     return filtered
 
 def enrich_predicted_tags(tags: List[dict], db: Session) -> List[dict]:
@@ -197,6 +202,7 @@ class WDTaggerSettingsRequest(BaseModel):
     character_threshold: Optional[float] = None
     model_name: Optional[str] = None
     blacklisted_tags: Optional[List[str]] = None
+    blacklisted_categories: Optional[List[str]] = None
 
 @router.get("/settings")
 async def get_settings(
@@ -235,6 +241,9 @@ async def update_settings(
 
     if req.blacklisted_tags is not None:
         current_settings["blacklisted_tags"] = req.blacklisted_tags
+
+    if req.blacklisted_categories is not None:
+        current_settings["blacklisted_categories"] = req.blacklisted_categories
         
     settings.save_settings({"wd_tagger": current_settings})
     
@@ -516,12 +525,14 @@ async def predict_tags(
         predictions = await loop.run_in_executor(_inference_executor, do_predict)
         
         blacklisted_tags = settings.WD_TAGGER_SETTINGS.get("blacklisted_tags", [])
-        filtered_predictions = filter_tags(predictions, blacklisted_tags)
+        blacklisted_categories = settings.WD_TAGGER_SETTINGS.get("blacklisted_categories", [])
+        filtered_predictions = filter_tags(predictions, blacklisted_tags, blacklisted_categories)
         enriched_predictions = enrich_predicted_tags(filtered_predictions, db)
+        final_predictions = filter_tags(enriched_predictions, blacklisted_tags, blacklisted_categories)
         
         return PredictTagsResponse(
             media_id=media_id,
-            tags=[PredictedTag(**tag) for tag in enriched_predictions],
+            tags=[PredictedTag(**tag) for tag in final_predictions],
             model_used=request.model_name
         )
     
@@ -616,15 +627,17 @@ async def predict_tags_batch(
         results = []
         path_to_media_id = {fp: mid for mid, fp in file_info}
         blacklisted_tags = settings.WD_TAGGER_SETTINGS.get("blacklisted_tags", [])
+        blacklisted_categories = settings.WD_TAGGER_SETTINGS.get("blacklisted_categories", [])
         
         for file_path, tags in predictions:
             media_id = path_to_media_id.get(file_path)
             if media_id is not None:
-                filtered_tags = filter_tags(tags, blacklisted_tags)
+                filtered_tags = filter_tags(tags, blacklisted_tags, blacklisted_categories)
                 enriched_tags = enrich_predicted_tags(filtered_tags, db)
+                final_tags = filter_tags(enriched_tags, blacklisted_tags, blacklisted_categories)
                 results.append(PredictTagsResponse(
                     media_id=media_id,
-                    tags=[PredictedTag(**tag) for tag in enriched_tags],
+                    tags=[PredictedTag(**tag) for tag in final_tags],
                     model_used=request.model_name
                 ))
         
@@ -731,6 +744,7 @@ async def predict_tags_stream(
             total = len(file_paths)
             processed = 0
             blacklisted_tags = settings.WD_TAGGER_SETTINGS.get("blacklisted_tags", [])
+            blacklisted_categories = settings.WD_TAGGER_SETTINGS.get("blacklisted_categories", [])
             
             target_size = 1
             i = 0
@@ -768,13 +782,14 @@ async def predict_tags_stream(
                     processed += 1
                     tags = chunk_results.get(fp, [])
                     
-                    filtered_tags = filter_tags(tags, blacklisted_tags)
+                    filtered_tags = filter_tags(tags, blacklisted_tags, blacklisted_categories)
                     enriched_tags = enrich_predicted_tags(filtered_tags, db)
+                    final_tags = filter_tags(enriched_tags, blacklisted_tags, blacklisted_categories)
                     
                     event = {
                         "type": "result",
                         "media_id": media_id,
-                        "tags": enriched_tags,
+                        "tags": final_tags,
                         "progress": processed,
                         "total": total
                     }

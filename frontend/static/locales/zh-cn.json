@@ -462,7 +462,8 @@
             "character_threshold": "角色标签置信度阈值",
             "settings_saved": "",
             "threshold_hint": "",
-            "blacklisted_tags": ""
+            "blacklisted_tags": "",
+            "blacklisted_categories": ""
         },
         "update": {
             "backup_warning": "如果不小心，更新可能会导致数据丢失。更新前请务必进行备份。",

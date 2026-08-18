@@ -96,7 +96,8 @@ class Settings:
                 "general_threshold": 0.35,
                 "character_threshold": 0.85,
                 "model_name": "wd-eva02-large-tagger-v3",
-                "blacklisted_tags": []
+                "blacklisted_tags": [],
+                "blacklisted_categories": []
             },
             "custom_background": {
                 "enabled": False,
@@ -320,7 +321,8 @@ class Settings:
             "general_threshold": 0.35,
             "character_threshold": 0.85,
             "model_name": "wd-eva02-large-tagger-v3",
-            "blacklisted_tags": []
+            "blacklisted_tags": [],
+            "blacklisted_categories": []
         }
         saved = self.file_settings.get("wd_tagger") or self.settings.get("wd_tagger", {})
         return {**defaults, **saved}

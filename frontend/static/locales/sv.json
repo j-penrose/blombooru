@@ -462,7 +462,8 @@
             "character_threshold": "Konfidenströskel (karaktärer)",
             "settings_saved": "AI Tagger-inställningar sparade",
             "threshold_hint": "Konfidenspoäng (0.0 till 1.0). Taggar med konfidenspoäng under tröskeln exkluderas från prediktioner.",
-            "blacklisted_tags": "Svartlistade taggar"
+            "blacklisted_tags": "Svartlistade taggar",
+            "blacklisted_categories": "Svartlistade taggkategorier"
         },
         "update": {
             "backup_warning": "Uppdatering kan orsaka dataförlust om det inte görs försiktigt. Gör alltid en säkerhetskopia före uppdatering.",

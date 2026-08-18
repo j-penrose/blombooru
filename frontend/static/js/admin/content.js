@@ -159,6 +159,21 @@ class AdminContent {
                 setTimeout(() => this.app.tagInputHelper.validateAndStyleTags(blacklistEl), 100);
             }
 
+            // Init blacklisted category buttons
+            const blacklistedCategories = new Set(data.blacklisted_categories || []);
+            document.querySelectorAll('.wd-category-btn').forEach(btn => {
+                const cat = btn.dataset.category;
+                const isBlacklisted = blacklistedCategories.has(cat);
+                this.setCategoryButtonState(btn, isBlacklisted);
+                if (!btn.dataset.bound) {
+                    btn.dataset.bound = 'true';
+                    btn.addEventListener('click', () => {
+                        const nowBlacklisted = !btn.classList.contains('bg-danger');
+                        this.setCategoryButtonState(btn, nowBlacklisted);
+                    });
+                }
+            });
+
             // Populate model dropdown
             const dropdown = document.getElementById('wd-model-dropdown');
             if (dropdown && data.available_models) {
@@ -194,6 +209,16 @@ class AdminContent {
             }
         } catch (e) {
             console.error('Error loading AI Tagger settings:', e);
+        }
+    }
+
+    setCategoryButtonState(btn, isBlacklisted) {
+        if (isBlacklisted) {
+            btn.classList.remove('bg', 'hover:border-primary');
+            btn.classList.add('bg-danger', 'border-danger', 'tag-text', 'hover:bg-danger');
+        } else {
+            btn.classList.remove('bg-danger', 'border-danger', 'tag-text', 'hover:bg-danger');
+            btn.classList.add('bg', 'hover:border-primary');
         }
     }
 
@@ -309,11 +334,19 @@ class AdminContent {
             blacklistedTags = text.split(/\s+/).filter(t => t.length > 0);
         }
 
+        const blacklistedCategories = [];
+        document.querySelectorAll('.wd-category-btn').forEach(btn => {
+            if (btn.classList.contains('bg-danger') && btn.dataset.category) {
+                blacklistedCategories.push(btn.dataset.category);
+            }
+        });
+
         const body = {};
         if (generalEl && generalEl.value) body.general_threshold = parseFloat(generalEl.value);
         if (charEl && charEl.value) body.character_threshold = parseFloat(charEl.value);
         if (modelName) body.model_name = modelName;
         body.blacklisted_tags = blacklistedTags;
+        body.blacklisted_categories = blacklistedCategories;
 
         try {
             const res = await fetch('/api/ai-tagger/settings', {
