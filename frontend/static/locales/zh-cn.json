@@ -874,8 +874,11 @@
             "message": "您确定要删除此标签及其别名吗？此操作无法撤销。",
             "title": "删除标签"
         },
+        "delete_model": {
+            "message": "",
+            "title": ""
+        },
         "download_model": {
-            "confirm": "下载并继续",
             "download_needed": "需要先下载 AI 模型。",
             "download_wait": "根据您的网络连接状况，这可能需要几分钟。",
             "downloading_model": "正在下载 AI 模型...",
@@ -957,6 +960,7 @@
             "error_creating_album": "创建相册出错",
             "error_deleting_album": "删除相册出错",
             "error_deleting_tag": "删除标签出错",
+            "model_deleted": "",
             "error_generating_api_key": "生成 API 密钥出错",
             "error_loading_albums": "加载相册出错",
             "error_renaming_album": "重命名相册出错",

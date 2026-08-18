@@ -183,8 +183,10 @@ class ModelDownloadModal {
                 title: window.i18n.t('modal.download_model.downloading_model'),
                 message: messageHTML,
                 showIcon: false,
-                confirmText: window.i18n.t('modal.download_model.confirm'),
+                confirmText: window.i18n.t('common.download'),
                 cancelText: window.i18n.t('common.cancel'),
+                confirmId: 'download-model-confirm-yes',
+                cancelId: 'download-model-confirm-no',
                 onCancel: () => this.cancel(),
                 closeOnOutsideClick: false
             });
@@ -352,8 +354,10 @@ class ModelDownloadModal {
                 title: window.i18n.t('modal.download_model.title'),
                 message: confirmMessageHTML,
                 showIcon: false,
-                confirmText: window.i18n.t('modal.download_model.confirm'),
+                confirmText: window.i18n.t('common.download'),
                 cancelText: window.i18n.t('common.cancel'),
+                confirmId: 'download-model-confirm-yes',
+                cancelId: 'download-model-confirm-no',
                 onConfirm: () => {
                     this.startDownload();
                 },

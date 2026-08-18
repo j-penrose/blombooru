@@ -874,8 +874,11 @@
             "message": "Вы уверены, что хотите удалить этот тег и его псевдонимы? Это действие нельзя отменить",
             "title": "Удалить тег"
         },
+        "delete_model": {
+            "message": "",
+            "title": ""
+        },
         "download_model": {
-            "confirm": "Скачать и продолжить",
             "download_needed": "Сначала необходимо загрузить AI модель",
             "download_wait": "Это может занять несколько минут в зависимости от скорости вашей сети",
             "downloading_model": "Скачивание AI модели...",
@@ -957,6 +960,7 @@
             "error_creating_album": "Ошибка при создании альбома",
             "error_deleting_album": "Ошибка при удалении альбома",
             "error_deleting_tag": "Ошибка при удалении тега",
+            "model_deleted": "",
             "error_generating_api_key": "Ошибка при создании API ключа",
             "error_loading_albums": "Ошибка при загрузке альбомов",
             "error_renaming_album": "Ошибка при переименовании альбома",

@@ -176,10 +176,119 @@ class AdminContent {
             const modelSelectEl = document.getElementById('wd-model-select');
             if (modelSelectEl) {
                 this.wdModelSelect = new CustomSelect(modelSelectEl);
+                modelSelectEl.addEventListener('change', (e) => {
+                    this.updateWDModelActionBtn(e.detail?.value || this.wdModelSelect.getValue());
+                });
                 if (data.model_name) this.wdModelSelect.setValue(data.model_name);
+            }
+
+            const actionBtn = document.getElementById('wd-model-action-btn');
+            if (actionBtn && !this.wdModelActionBtnBound) {
+                this.wdModelActionBtnBound = true;
+                actionBtn.addEventListener('click', () => this.handleWDModelAction());
+            }
+
+            const initialModel = data.model_name || (this.wdModelSelect ? this.wdModelSelect.getValue() : null);
+            if (initialModel) {
+                await this.updateWDModelActionBtn(initialModel);
             }
         } catch (e) {
             console.error('Error loading AI Tagger settings:', e);
+        }
+    }
+
+    async updateWDModelActionBtn(modelName) {
+        const btn = document.getElementById('wd-model-action-btn');
+        if (!btn) return;
+
+        if (!modelName) {
+            btn.style.display = 'none';
+            this.wdModelActionState = null;
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/ai-tagger/model-status/${encodeURIComponent(modelName)}`);
+            if (!res.ok) {
+                btn.style.display = 'none';
+                this.wdModelActionState = null;
+                return;
+            }
+            const status = await res.json();
+            const isDownloaded = Boolean(status.is_downloaded);
+            this.wdModelActionState = { modelName, isDownloaded };
+
+            btn.style.display = 'flex';
+            if (isDownloaded) {
+                btn.className = 'btn-danger p-2 flex items-center justify-center flex-shrink-0 text-xs';
+                btn.title = window.i18n.t('common.delete');
+                btn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        <line x1="10" y1="11" x2="10" y2="17"></line>
+                        <line x1="14" y1="11" x2="14" y2="17"></line>
+                    </svg>
+                `;
+            } else {
+                btn.className = 'btn-primary p-2 flex items-center justify-center flex-shrink-0 text-xs';
+                btn.title = window.i18n.t('common.download');
+                btn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                `;
+            }
+        } catch (e) {
+            console.error('Error checking model status:', e);
+            btn.style.display = 'none';
+            this.wdModelActionState = null;
+        }
+    }
+
+    async handleWDModelAction() {
+        if (!this.wdModelActionState || !this.wdModelActionState.modelName) return;
+        const { modelName, isDownloaded } = this.wdModelActionState;
+
+        if (isDownloaded) {
+            const modal = new ModalHelper({
+                id: 'delete-model-modal',
+                type: 'danger',
+                title: window.i18n.t('modal.delete_model.title'),
+                message: window.i18n.t('modal.delete_model.message', { modelName }),
+                confirmText: window.i18n.t('common.delete'),
+                cancelText: window.i18n.t('common.cancel'),
+                confirmId: 'delete-model-confirm-yes',
+                cancelId: 'delete-model-confirm-no',
+                onConfirm: async () => {
+                    const btn = document.getElementById('wd-model-action-btn');
+                    if (btn) btn.disabled = true;
+                    try {
+                        const res = await fetch(`/api/ai-tagger/model/${encodeURIComponent(modelName)}`, {
+                            method: 'DELETE'
+                        });
+                        if (!res.ok) {
+                            const err = await res.json();
+                            throw new Error(err.detail || 'Failed to delete model');
+                        }
+                        app.showNotification(window.i18n.t('notifications.admin.model_deleted'), 'success');
+                        await this.updateWDModelActionBtn(modelName);
+                    } catch (e) {
+                        app.showNotification(e.message, 'error');
+                    } finally {
+                        if (btn) btn.disabled = false;
+                    }
+                }
+            });
+            modal.show();
+        } else {
+            const downloadModal = new ModelDownloadModal();
+            const isReady = await downloadModal.ensureModelReady(modelName);
+            if (isReady) {
+                await this.updateWDModelActionBtn(modelName);
+            }
         }
     }
 

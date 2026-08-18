@@ -874,8 +874,11 @@
             "message": "Är du säker på att du vill radera denna tagg och dess alias? Denna åtgärd kan inte ångras.",
             "title": "Radera tagg"
         },
+        "delete_model": {
+            "message": "Är du säker på att du vill radera \"{modelName}\"?",
+            "title": "Radera modell"
+        },
         "download_model": {
-            "confirm": "Ladda ner & fortsätt",
             "download_needed": "AI-modellen måste laddas ner först.",
             "download_wait": "Detta kan ta några minuter beroende på din anslutning.",
             "downloading_model": "Laddar ner AI-modell...",
@@ -957,6 +960,7 @@
             "error_creating_album": "Fel vid skapande av album",
             "error_deleting_album": "Fel vid radering av album",
             "error_deleting_tag": "Fel vid radering av tagg",
+            "model_deleted": "Modellen raderades",
             "error_generating_api_key": "Fel vid generering av API-nyckel",
             "error_loading_albums": "Fel vid laddning av album",
             "error_renaming_album": "Fel vid namnändring av album",
