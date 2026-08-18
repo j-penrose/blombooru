@@ -124,14 +124,18 @@ class BulkTagModalBase {
 
     // ==================== HTML Helpers ====================
 
+    getSpinnerHTML(extraClass = '') {
+        return `<div class="spinner ${extraClass}"></div>`;
+    }
+
     getLoadingHTML(statusText) {
         if (!statusText) statusText = window.i18n.t('common.processing');
         const prefix = this.options.classPrefix;
         return `
             <div class="${prefix}-loading flex flex-col items-center justify-center h-full py-12" style="display: none;">
-                <div class="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mb-4"></div>
-                <p class="text-secondary ${prefix}-status text-center">${statusText}</p>
-                <p class="text-secondary text-sm mt-2 text-center">
+                <div class="spinner"></div>
+                <p class="text-secondary mt-2 ${prefix}-status text-center">${statusText}</p>
+                <p class="text-secondary text-sm text-center">
                     <span class="${prefix}-progress">0</span> / <span class="${prefix}-total">0</span> <span class="${prefix}-phase">${window.i18n.t('bulk_modal.progress.items_processed')}</span>
                 </p>
             </div>

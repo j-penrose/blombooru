@@ -1,23 +1,3 @@
-/**
- * MediaPickerModal - A reusable media gallery picker modal.
- *
- * Extracted from the relation manager gallery logic so that both
- * the relation manager and the new background picker can share
- * the same search / gallery / pagination UI.
- *
- * Options:
- *   title           {string}    Modal title (default: i18n media_picker.title)
- *   mode            {'single'|'multi'}  Selection mode (default: 'multi')
- *   excludeIds      {number[]}  IDs to hide from results
- *   onSelect        {Function}  Called with array of selected media objects
- *   onCancel        {Function}  Called when modal is closed/cancelled
- *   confirmText     {string}    Confirm button label
- *   cancelText      {string}    Cancel button label
- *   filterFn        {Function}  Extra per-item filter (item) => boolean
- *   getInitialItems {Function}  async () => items[] for the default view
- *   statusHtml      {string}    Optional HTML to show in the status bar
- *   extraButtons    {Array}     Extra action buttons [{id, text, className, onClick}]
- */
 class MediaPickerModal {
     constructor(options = {}) {
         this.options = {
@@ -102,7 +82,7 @@ class MediaPickerModal {
                 <div class="flex-1 overflow-y-auto p-4 mpicker-gallery-container">
                     <div class="mpicker-gallery grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2"></div>
                     <div class="mpicker-loading text-center py-8" style="display:none">
-                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                        <div class="spinner"></div>
                         <p class="text-secondary mt-2">${this._esc(window.i18n.t('common.loading'))}</p>
                     </div>
                     <div class="mpicker-empty text-center py-8 text-secondary" style="display:none">

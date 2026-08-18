@@ -271,10 +271,10 @@ location='desktop') %}
 {% endmacro %}
 
 {# Loading Indicator #}
-{% macro loading_indicator() %}
-<div id="loading-indicator" class="text-center py-8">
+{% macro loading_indicator(id='loading-indicator', text=None) %}
+<div id="{{ id }}" class="text-center py-8">
     <div class="spinner"></div>
-    <p class="text-secondary mt-2">{{ t('common.loading') }}</p>
+    <p class="text-secondary mt-2">{{ text if text is not none else t('common.loading') }}</p>
 </div>
 {% endmacro %}
 

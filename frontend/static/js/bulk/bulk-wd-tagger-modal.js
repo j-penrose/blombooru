@@ -47,9 +47,9 @@ class BulkWDTaggerModal extends BulkTagModalBase {
                 <div class="flex-1 overflow-y-auto -mx-4 px-4 pb-2 flex flex-col" style="overscroll-behavior: contain;">
                     <div class="${prefix}-items space-y-3"></div>
                     <div class="${prefix}-scan-loading flex flex-col items-center justify-center py-8" style="display: none;">
-                        <div class="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mb-4"></div>
-                        <p class="text-secondary ${prefix}-scan-status text-center">${window.i18n.t('bulk_modal.progress.predicting_tags')}</p>
-                        <p class="text-secondary text-sm mt-2 text-center">
+                        <div class="spinner"></div>
+                        <p class="text-secondary mt-2 ${prefix}-scan-status text-center">${window.i18n.t('bulk_modal.progress.predicting_tags')}</p>
+                        <p class="text-secondary text-sm text-center">
                             <span class="${prefix}-scan-progress">0</span> / <span class="${prefix}-scan-total">0</span> <span class="${prefix}-scan-phase">${window.i18n.t('bulk_modal.progress.items_processed')}</span>
                         </p>
                     </div>
@@ -107,7 +107,7 @@ class BulkWDTaggerModal extends BulkTagModalBase {
         return `
             <div class="${prefix}-downloading flex flex-col items-center justify-center text-center py-8" style="display: none;">
                 <div class="mb-4">
-                    <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
+                    <div class="spinner"></div>
                 </div>
                 <p class="text-secondary mb-2">${window.i18n.t('bulk_modal.progress.downloading_model')}</p>
                 <p class="text-secondary text-sm">${window.i18n.t('bulk_modal.messages.download_wait')}</p>
