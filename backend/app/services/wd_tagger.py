@@ -691,7 +691,7 @@ class WDTagger:
         self.ensure_loaded(model_name)
         
         if batch_size is None:
-            target_size = self._dynamic_batch_size
+            target_size = 1
         else:
             target_size = batch_size
             
@@ -714,10 +714,9 @@ class WDTagger:
                 
                 if batch_size is None:
                     if self._oom_encountered:
-                        self._dynamic_batch_size = min(self._dynamic_batch_size + 1, 64)
+                        target_size = min(target_size + 1, 8)
                     else:
-                        self._dynamic_batch_size = min(self._dynamic_batch_size * 2, 64)
-                    target_size = self._dynamic_batch_size
+                        target_size = min(target_size * 2, 8)
         finally:
             self._reset_idle_timer()
     
