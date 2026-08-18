@@ -558,64 +558,16 @@ class MediaViewer extends MediaViewerBase {
         if (!btn) return;
 
         try {
-            // Check model status first
-            const statusRes = await fetch(`/api/ai-tagger/model-status/${this.wdTaggerSettings.modelName}`);
-            if (!statusRes.ok) {
-                throw new Error('Failed to check model status');
-            }
-
-            const status = await statusRes.json();
-
-            if (!status.is_downloaded && !status.is_loaded) {
-                // Show download confirmation modal
-                const modal = new ModalHelper({
-                    id: 'wd-download-modal',
-                    type: 'info',
-                    title: window.i18n.t('modal.download_model.title'),
-                    message: window.i18n.t('modal.download_model.message', {
-                        modelName: this.wdTaggerSettings.modelName,
-                        size: status.download_size_mb || 850
-                    }),
-                    confirmText: window.i18n.t('modal.download_model.confirm'),
-                    cancelText: window.i18n.t('common.cancel'),
-                    showIcon: true,
-                    onConfirm: async () => {
-                        await this.downloadModelAndPredict(btn);
-                    }
-                });
-                modal.show();
-                return;
-            }
+            const downloadModal = new ModelDownloadModal();
+            const isReady = await downloadModal.ensureModelReady(this.wdTaggerSettings.modelName);
+            if (!isReady) return;
 
             // Model is ready, perform prediction
             await this.performWDPrediction(btn);
 
         } catch (e) {
-            console.error('Error checking model status:', e);
+            console.error('Error checking/downloading model:', e);
             app.showNotification(window.i18n.t('notifications.media.error_checking_ai_model', { error: e.message }), 'error');
-        }
-    }
-
-    async downloadModelAndPredict(btn) {
-        this.setButtonState(btn, window.i18n.t('media.progress.downloading'), true);
-
-        try {
-            const res = await fetch(`/api/ai-tagger/download/${this.wdTaggerSettings.modelName}`, {
-                method: 'POST'
-            });
-
-            if (!res.ok) {
-                const error = await res.json().catch(() => ({}));
-                throw new Error(error.detail || 'Download failed');
-            }
-
-            // Download complete, now predict
-            await this.performWDPrediction(btn);
-
-        } catch (e) {
-            console.error('Error downloading model:', e);
-            app.showNotification(window.i18n.t('notifications.media.error_downloading_ai_model', { error: e.message }), 'error');
-            this.setButtonState(btn, window.i18n.t('media.tags.predict_tags'), false);
         }
     }
 

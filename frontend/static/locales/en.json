@@ -460,8 +460,6 @@
             "description": "Configure settings for the WD Tagger, used for the AI tag prediction tools. The default settings should in most cases be fine. Note that for the tag prediction to work, you will need to import tag dump from Danbooru. Click <a class='text-primary transition-colors hover:text-primary' href='https://github.com/mrblomblo/blombooru#1-csv-import' target='_blank' rel='noopener noreferrer' referrerPolicy='no-referrer'>here</a> to find out how.",
             "general_threshold": "General Confidence Threshold",
             "character_threshold": "Character Confidence Threshold",
-            "model": "Model",
-            "save_settings": "Save Settings",
             "settings_saved": "AI Tagger settings saved",
             "threshold_hint": "Confidence score (0.0 to 1.0). Tags with a confidence score below the threshold are excluded from predictions.",
             "blacklisted_tags": "Blacklisted Tags"
@@ -552,7 +550,6 @@
         },
         "buttons": {
             "clear_tags": "Clear tags",
-            "download_continue": "Download & Continue",
             "refresh_tags": "Refresh tags"
         },
         "defaults": {
@@ -561,9 +558,7 @@
         },
         "messages": {
             "current": "Current: ",
-            "download_wait": "This may take a few minutes depending on your connection.",
             "error_occurred": "An error occurred.",
-            "model_cached": "Model files are cached locally for future use.",
             "operation_cancelled": "Operation cancelled.",
             "review_tags": "Review and edit tags for each item. Invalid tags are highlighted in red.",
             "tag_overflow": "+{count}"
@@ -573,8 +568,6 @@
             "updated_success": "Successfully updated {count} item(s)"
         },
         "progress": {
-            "checking_model": "Checking AI model status...",
-            "downloading_model": "Downloading AI model...",
             "fetching_media": "Fetching media info...",
             "fetching_metadata": "Fetching metadata...",
             "initializing_tagger": "Initializing AI Tagger...",
@@ -585,12 +578,7 @@
             "validating_tags": "Validating tags..."
         },
         "wd_tagger": {
-            "character_threshold": "Character Confidence Threshold",
-            "download_needed": "The AI model needs to be downloaded first.",
             "empty_message": "No tags predicted for the selected items.",
-            "general_threshold": "General Confidence Threshold",
-            "model": "Model",
-            "size": "Size",
             "title": "Bulk Predict Tags (WD Tagger)"
         }
     },
@@ -663,6 +651,7 @@
         "manage_tags": "Manage Tags",
         "manual_tag_editor": "Manual Tag Editor",
         "media_not_found": "Media not found",
+        "model": "Model",
         "no_tags": "No tags",
         "processing": "Processing...",
         "search_syntax_guide": "Search Syntax Guide",
@@ -886,8 +875,12 @@
             "title": "Delete Tag"
         },
         "download_model": {
-            "confirm": "Download & Predict",
-            "message": "The AI tagging model needs to be downloaded first.<br><br><strong>Model:</strong> {modelName}<br><strong>Size:</strong> ~{size} MB<br><br>This only needs to be done once.",
+            "confirm": "Download & Continue",
+            "download_needed": "The AI model needs to be downloaded first.",
+            "download_wait": "This may take a few minutes depending on your connection.",
+            "downloading_model": "Downloading model...",
+            "model_cached": "Model files are cached locally for future use.",
+            "size": "Size",
             "title": "Download AI Model"
         },
         "remove_children": {

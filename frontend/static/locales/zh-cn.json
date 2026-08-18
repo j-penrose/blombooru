@@ -458,10 +458,8 @@
         "ai_tagger": {
             "title": "",
             "description": "",
-            "general_threshold": "",
-            "character_threshold": "",
-            "model": "",
-            "save_settings": "",
+            "general_threshold": "常规标签置信度阈值",
+            "character_threshold": "角色标签置信度阈值",
             "settings_saved": "",
             "threshold_hint": "",
             "blacklisted_tags": ""
@@ -552,7 +550,6 @@
         },
         "buttons": {
             "clear_tags": "清空标签",
-            "download_continue": "下载并继续",
             "refresh_tags": "刷新标签"
         },
         "defaults": {
@@ -561,9 +558,7 @@
         },
         "messages": {
             "current": "当前: ",
-            "download_wait": "根据您的网络连接状况，这可能需要几分钟。",
             "error_occurred": "发生错误。",
-            "model_cached": "模型文件已缓存在本地，以供将来使用。",
             "operation_cancelled": "操作已取消。",
             "review_tags": "为每个项目查看并编辑标签。无效标签将以红色高亮显示。",
             "tag_overflow": "+{count}"
@@ -573,8 +568,6 @@
             "updated_success": "成功更新 {count} 个项目"
         },
         "progress": {
-            "checking_model": "正在检查 AI 模型状态...",
-            "downloading_model": "正在下载 AI 模型...",
             "fetching_media": "正在获取媒体信息...",
             "fetching_metadata": "正在获取元数据...",
             "initializing_tagger": "正在初始化 AI 标注器...",
@@ -585,12 +578,7 @@
             "validating_tags": "正在验证标签..."
         },
         "wd_tagger": {
-            "character_threshold": "角色标签置信度阈值",
-            "download_needed": "需要先下载 AI 模型。",
             "empty_message": "未为选定项目预测出标签。",
-            "general_threshold": "常规标签置信度阈值",
-            "model": "模型",
-            "size": "大小",
             "title": "批量预测标签 (WD 标注器)"
         }
     },
@@ -663,6 +651,7 @@
         "manage_tags": "管理标签",
         "manual_tag_editor": "手动标签编辑器",
         "media_not_found": "未找到媒体",
+        "model": "模型",
         "no_tags": "无标签",
         "processing": "正在处理...",
         "search_syntax_guide": "搜索语法指南",
@@ -886,8 +875,12 @@
             "title": "删除标签"
         },
         "download_model": {
-            "confirm": "下载并预测",
-            "message": "需要先下载 AI 标注模型。<br><br><strong>模型:</strong> {modelName}<br><strong>大小:</strong> 约 {size} MB<br><br>此操作仅需执行一次。",
+            "confirm": "下载并继续",
+            "download_needed": "需要先下载 AI 模型。",
+            "download_wait": "根据您的网络连接状况，这可能需要几分钟。",
+            "downloading_model": "正在下载 AI 模型...",
+            "model_cached": "模型文件已缓存在本地，以供将来使用。",
+            "size": "大小",
             "title": "下载 AI 模型"
         },
         "remove_children": {

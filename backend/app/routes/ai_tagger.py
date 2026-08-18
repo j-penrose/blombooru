@@ -16,7 +16,7 @@ from ..config import settings
 from ..utils.request_helpers import safe_error_detail
 from ..database import get_db
 from ..models import Media, User
-from ..services.wd_tagger import WDTagger, get_wd_tagger
+from ..services.wd_tagger import DownloadCancelledException, WDTagger, get_wd_tagger
 
 router = APIRouter(prefix="/api/ai-tagger", tags=["ai-tagger"])
 
@@ -27,8 +27,9 @@ def shutdown_tagger_resources():
     """Cleanup tagger resources on application shutdown."""
     _inference_executor.shutdown(wait=False)
     try:
-        from ..services.wd_tagger import get_wd_tagger
+        from ..services.wd_tagger import cleanup_orphaned_model_temp_files, get_wd_tagger
         get_wd_tagger().shutdown()
+        cleanup_orphaned_model_temp_files()
     except Exception as e:
         pass
 
@@ -169,6 +170,7 @@ class ModelStatusResponse(BaseModel):
     model_name: str
     is_downloaded: bool
     is_loaded: bool
+    is_downloading: bool = False
     download_size_mb: Optional[float] = None
     optimal_batch_size: Optional[int] = None
 
@@ -197,81 +199,94 @@ class WDTaggerSettingsRequest(BaseModel):
     blacklisted_tags: Optional[List[str]] = None
 
 @router.get("/settings")
-async def get_tagger_settings(current_user: User = Depends(require_admin_mode)):
-    """Get the persisted WD Tagger settings (thresholds + model)."""
+async def get_settings(
+    current_user: User = Depends(require_admin_mode)
+):
+    """Get AI tagger settings."""
     return {
         **settings.WD_TAGGER_SETTINGS,
-        "available_models": list(WDTagger.AVAILABLE_MODELS.keys()),
+        "available_models": list(WDTagger.AVAILABLE_MODELS.keys())
     }
 
 @router.put("/settings")
-async def save_tagger_settings(
-    request: WDTaggerSettingsRequest,
+@router.post("/settings")
+async def update_settings(
+    req: WDTaggerSettingsRequest,
     current_user: User = Depends(require_admin_mode)
 ):
-    """Save WD Tagger settings to the persistent settings file."""
-    current = settings.WD_TAGGER_SETTINGS.copy()
-
-    if request.general_threshold is not None:
-        val = max(0.0, min(1.0, request.general_threshold))
-        current["general_threshold"] = round(val, 4)
-
-    if request.character_threshold is not None:
-        val = max(0.0, min(1.0, request.character_threshold))
-        current["character_threshold"] = round(val, 4)
-
-    if request.model_name is not None:
-        if request.model_name not in WDTagger.AVAILABLE_MODELS:
+    """Update AI tagger settings in settings.json and in-memory."""
+    current_settings = settings.WD_TAGGER_SETTINGS.copy()
+    
+    if req.general_threshold is not None:
+        val = max(0.0, min(1.0, req.general_threshold))
+        current_settings["general_threshold"] = round(val, 4)
+        
+    if req.character_threshold is not None:
+        val = max(0.0, min(1.0, req.character_threshold))
+        current_settings["character_threshold"] = round(val, 4)
+        
+    if req.model_name is not None:
+        if req.model_name not in WDTagger.AVAILABLE_MODELS:
             raise HTTPException(
                 status_code=400,
-                detail=f"Unknown model: {request.model_name}. "
-                       f"Valid models: {list(WDTagger.AVAILABLE_MODELS.keys())}"
+                detail=f"Unknown model: {req.model_name}. Valid models: {list(WDTagger.AVAILABLE_MODELS.keys())}"
             )
-        current["model_name"] = request.model_name
+        current_settings["model_name"] = req.model_name
 
-    if request.blacklisted_tags is not None:
-        current["blacklisted_tags"] = request.blacklisted_tags
+    if req.blacklisted_tags is not None:
+        current_settings["blacklisted_tags"] = req.blacklisted_tags
+        
+    settings.save_settings({"wd_tagger": current_settings})
+    
+    return {
+        "success": True,
+        **current_settings,
+        "available_models": list(WDTagger.AVAILABLE_MODELS.keys())
+    }
 
-    settings.save_settings({"wd_tagger": current})
-    return {"success": True, **current}
+@router.get("/models")
+async def get_models(
+    current_user: User = Depends(require_admin_mode)
+):
+    """Get list of available models and their download/load status."""
+    try:
+        tagger = get_wd_tagger()
+        current_model = tagger.current_model if tagger.is_loaded else None
+        
+        models_info = []
+        for model_name, repo_id in WDTagger.AVAILABLE_MODELS.items():
+            models_info.append({
+                "name": model_name,
+                "repo_id": repo_id,
+                "is_downloaded": WDTagger.is_model_downloaded(model_name),
+                "is_loaded": (current_model == model_name),
+                "is_downloading": WDTagger.is_downloading(model_name),
+                "speed_rank": WDTagger.MODEL_SPEED_RANKING.get(model_name, 99),
+            })
+        
+        models_info.sort(key=lambda x: x["speed_rank"])
+        return models_info
+        
+    except ImportError as e:
+        raise HTTPException(
+            status_code=503,
+            detail=f"AI Tagger dependencies not installed: {str(e)}"
+        )
 
 @router.get("/model-status/{model_name}", response_model=ModelStatusResponse)
 async def get_model_status(
     model_name: str,
     current_user: User = Depends(require_admin_mode)
 ):
-    """Check if a specific model is downloaded and/or loaded."""
+    """Check if a specific model is downloaded, loaded, or currently downloading."""
     if model_name not in WDTagger.AVAILABLE_MODELS:
         raise HTTPException(status_code=400, detail=f"Unknown model: {model_name}")
     
     try:
         tagger = get_wd_tagger()
         is_loaded = tagger.is_loaded and tagger.current_model == model_name
-        
-        is_downloaded = False
-        try:
-            import huggingface_hub
-            model_repo = WDTagger.AVAILABLE_MODELS[model_name]
-            
-            try:
-                huggingface_hub.hf_hub_download(
-                    model_repo, 
-                    WDTagger.MODEL_FILENAME,
-                    local_files_only=True,
-                    cache_dir=settings.MODELS_DIR
-                )
-                huggingface_hub.hf_hub_download(
-                    model_repo, 
-                    WDTagger.LABEL_FILENAME,
-                    local_files_only=True,
-                    cache_dir=settings.MODELS_DIR
-                )
-                is_downloaded = True
-            except Exception:
-                is_downloaded = False
-                
-        except ImportError:
-            pass
+        is_downloading = WDTagger.is_downloading(model_name)
+        is_downloaded = WDTagger.is_model_downloaded(model_name)
         
         model_sizes = {
             "wd-eva02-large-tagger-v3": 850,
@@ -285,6 +300,7 @@ async def get_model_status(
             model_name=model_name,
             is_downloaded=is_downloaded,
             is_loaded=is_loaded,
+            is_downloading=is_downloading,
             download_size_mb=model_sizes.get(model_name),
             optimal_batch_size=WDTagger.OPTIMAL_BATCH_SIZES.get(model_name)
         )
@@ -298,36 +314,114 @@ async def get_model_status(
 @router.post("/download/{model_name}")
 async def download_model(
     model_name: str,
+    request: Request,
     current_user: User = Depends(require_admin_mode)
 ):
-    """Download a specific model (blocking)."""
+    """Download a specific model with real-time streaming progress."""
     if model_name not in WDTagger.AVAILABLE_MODELS:
         raise HTTPException(status_code=400, detail=f"Unknown model: {model_name}")
     
-    try:
+    async def generate():
+        disconnect_event = asyncio.Event()
+
+        async def watch_disconnect():
+            try:
+                while not disconnect_event.is_set():
+                    msg = await request.receive()
+                    if msg.get("type") == "http.disconnect":
+                        disconnect_event.set()
+                        break
+            except Exception:
+                disconnect_event.set()
+
+        disconnect_task = asyncio.create_task(watch_disconnect())
+        queue = asyncio.Queue()
         loop = asyncio.get_event_loop()
-        
-        def load():
-            tagger = get_wd_tagger()
-            tagger.ensure_loaded(model_name)
-            return tagger.get_optimal_batch_size(model_name)
-        
-        batch_size = await loop.run_in_executor(_inference_executor, load)
-        
-        return {
-            "success": True,
-            "model": model_name,
-            "optimal_batch_size": batch_size,
-            "message": f"Model {model_name} downloaded and loaded successfully"
+
+        def listener(data: dict):
+            loop.call_soon_threadsafe(queue.put_nowait, data)
+
+        task, is_new = WDTagger.register_download(model_name)
+        task.add_listener(listener)
+
+        if is_new:
+            def run_download():
+                tagger = None
+                try:
+                    tagger = get_wd_tagger()
+                    tagger.ensure_loaded(
+                        model_name,
+                        is_cancelled=task.is_cancelled,
+                        progress_callback=task.notify
+                    )
+                    batch_size = tagger.get_optimal_batch_size(model_name)
+                    task.notify({
+                        "type": "complete",
+                        "model": model_name,
+                        "optimal_batch_size": batch_size,
+                        "message": f"Model {model_name} downloaded and loaded successfully"
+                    })
+                except DownloadCancelledException:
+                    task.cancelled = True
+                    task.notify({"type": "cancelled"})
+                except Exception as e:
+                    task.notify({"type": "error", "error": str(e)})
+                finally:
+                    WDTagger.unregister_download(model_name)
+                    if tagger is not None:
+                        tagger._reset_idle_timer()
+
+            loop.run_in_executor(_inference_executor, run_download)
+
+        try:
+            while True:
+                if disconnect_event.is_set():
+                    break
+                
+                try:
+                    item = await asyncio.wait_for(queue.get(), timeout=0.2)
+                except asyncio.TimeoutError:
+                    if not WDTagger.is_downloading(model_name) and queue.empty():
+                        break
+                    continue
+
+                yield f"data: {json.dumps(item)}\n\n"
+                
+                if item.get("type") in ("complete", "error", "cancelled"):
+                    break
+
+        except (asyncio.CancelledError, GeneratorExit):
+            disconnect_event.set()
+        finally:
+            disconnect_event.set()
+            task.remove_listener(listener)
+            if disconnect_task and not disconnect_task.done():
+                disconnect_task.cancel()
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
         }
-        
-    except ImportError as e:
-        raise HTTPException(
-            status_code=503,
-            detail=f"AI Tagger dependencies not installed: {str(e)}"
-        )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=safe_error_detail("Failed to download model", e))
+    )
+
+@router.post("/cancel-download")
+async def cancel_active_downloads(current_user: User = Depends(require_admin_mode)):
+    """Cancel all active model downloads."""
+    WDTagger.cancel_all_downloads()
+    return {"success": True}
+
+@router.post("/download/{model_name}/cancel")
+async def cancel_model_download(
+    model_name: str,
+    current_user: User = Depends(require_admin_mode)
+):
+    """Cancel an active model download."""
+    WDTagger.cancel_download(model_name)
+    return {"success": True}
 
 @router.post("/predict/{media_id}", response_model=PredictTagsResponse)
 async def predict_tags(
@@ -558,9 +652,11 @@ async def predict_tags_stream(
 
         async def watch_disconnect():
             try:
-                msg = await request.receive()
-                if msg.get("type") == "http.disconnect":
-                    disconnect_event.set()
+                while not disconnect_event.is_set():
+                    msg = await request.receive()
+                    if msg.get("type") == "http.disconnect":
+                        disconnect_event.set()
+                        break
             except Exception:
                 disconnect_event.set()
 
@@ -572,7 +668,7 @@ async def predict_tags_stream(
             loop = asyncio.get_event_loop()
             
             def load_model():
-                tagger.ensure_loaded(batch_request.model_name)
+                tagger.ensure_loaded(batch_request.model_name, is_cancelled=lambda: disconnect_event.is_set())
             
             await loop.run_in_executor(_inference_executor, load_model)
             
@@ -666,34 +762,63 @@ async def predict_tags_stream(
 
 @router.post("/load")
 async def load_model(
+    request: Request,
     model_name: str = Query(default="wd-eva02-large-tagger-v3"),
     current_user: User = Depends(require_admin_mode)
 ):
     """Pre-load a specific model."""
+    disconnect_event = asyncio.Event()
+
+    async def watch_disconnect():
+        try:
+            while not disconnect_event.is_set():
+                msg = await request.receive()
+                if msg.get("type") == "http.disconnect":
+                    disconnect_event.set()
+                    break
+        except Exception:
+            disconnect_event.set()
+
+    disconnect_task = asyncio.create_task(watch_disconnect())
+    tagger = None
+
     try:
+        tagger = get_wd_tagger()
         loop = asyncio.get_event_loop()
         
         def load():
-            tagger = get_wd_tagger()
-            tagger.ensure_loaded(model_name)
-            tagger._reset_idle_timer()
+            tagger.ensure_loaded(model_name, is_cancelled=lambda: disconnect_event.is_set())
             return tagger.get_optimal_batch_size(model_name)
         
         batch_size = await loop.run_in_executor(_inference_executor, load)
         
+        if disconnect_event.is_set():
+            raise HTTPException(status_code=499, detail="Load cancelled")
+            
         return {
             "success": True,
             "model": model_name,
             "optimal_batch_size": batch_size,
             "message": f"Model {model_name} loaded successfully"
         }
-    
+        
+    except (asyncio.CancelledError, GeneratorExit, DownloadCancelledException):
+        disconnect_event.set()
+        raise HTTPException(status_code=499, detail="Load cancelled")
     except ImportError as e:
         raise HTTPException(
             status_code=503,
             detail=f"AI Tagger dependencies not installed: {str(e)}"
         )
+    except HTTPException:
+        raise
     except ValueError as e:
         raise HTTPException(status_code=400, detail=safe_error_detail("Invalid model", e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=safe_error_detail("Failed to load model", e))
+    finally:
+        disconnect_event.set()
+        if disconnect_task and not disconnect_task.done():
+            disconnect_task.cancel()
+        if tagger is not None:
+            tagger._reset_idle_timer()

@@ -24,13 +24,11 @@ class BulkWDTaggerModal extends BulkTagModalBase {
     }
 
     getStates() {
-        return ['loading', 'content', 'empty', 'error', 'cancelled', 'download-confirm', 'downloading'];
+        return ['loading', 'content', 'empty', 'error', 'cancelled'];
     }
 
     getBodyHTML() {
         return `
-            ${this.getDownloadConfirmHTML()}
-            ${this.getDownloadingHTML()}
             ${this.getLoadingHTML(window.i18n.t('bulk_modal.progress.initializing_tagger'))}
             ${this.getContentHTML()}
             ${this.getEmptyHTML()}
@@ -79,67 +77,48 @@ class BulkWDTaggerModal extends BulkTagModalBase {
         if (loadingEl) loadingEl.style.display = 'none';
     }
 
-    getDownloadConfirmHTML() {
-        const prefix = this.options.classPrefix;
-        return `
-            <div class="${prefix}-download-confirm flex flex-col items-center justify-center text-center py-8" style="display: none;">
-                <div class="mb-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mx-auto text-warning">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="7 10 12 15 17 10"></polyline>
-                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                    </svg>
-                </div>
-                <p class="text-secondary mb-2">${window.i18n.t('bulk_modal.wd_tagger.download_needed')}</p>
-                <div class="text-secondary text-sm mb-4 flex flex-col gap-1">
-                    <div>${window.i18n.t('bulk_modal.wd_tagger.model')}: <strong class="download-model-name">${this.settings.modelName}</strong></div>
-                    <div>${window.i18n.t('bulk_modal.wd_tagger.size')}: <strong class="download-model-size">~850 MB</strong></div>
-                </div>
-                <button class="${prefix}-download-confirm-btn btn-primary w-full sm:w-auto px-4 py-3 sm:py-2 text-sm font-medium">
-                    ${window.i18n.t('bulk_modal.buttons.download_continue')}
-                </button>
-            </div>
-        `;
-    }
-
-    getDownloadingHTML() {
-        const prefix = this.options.classPrefix;
-        return `
-            <div class="${prefix}-downloading flex flex-col items-center justify-center text-center py-8" style="display: none;">
-                <div class="mb-4">
-                    <div class="spinner"></div>
-                </div>
-                <p class="text-secondary mb-2">${window.i18n.t('bulk_modal.progress.downloading_model')}</p>
-                <p class="text-secondary text-sm">${window.i18n.t('bulk_modal.messages.download_wait')}</p>
-                <p class="text-secondary text-xs mt-2">${window.i18n.t('bulk_modal.messages.model_cached')}</p>
-            </div>
-        `;
-    }
-
-    setupAdditionalEventListeners() {
-        const prefix = this.options.classPrefix;
-
-        // Download buttons
-        const downloadCancelBtn = this.modalElement.querySelector(`.${prefix}-download-cancel`);
-        if (downloadCancelBtn) {
-            downloadCancelBtn.addEventListener('click', () => this.cancel());
-        }
-
-        const downloadConfirmBtn = this.modalElement.querySelector(`.${prefix}-download-confirm-btn`);
-        if (downloadConfirmBtn) {
-            downloadConfirmBtn.addEventListener('click', () => this.downloadModelAndContinue());
-        }
-    }
-
     reset() {
         super.reset();
         this.displayedMediaIds = new Set();
         this.hideScanProgress();
     }
 
-    async onShow() {
+    async show(selectedItems) {
+        if (!this.modalElement) {
+            this.init();
+        }
+
+        this.selectedItems = new Set(selectedItems);
+        this.reset();
+        this.isCancelled = false;
+        this.abortController = new AbortController();
+
+        // Keep bulk modal hidden while checking or downloading model
+        this.modalElement.style.display = 'none';
+        this.isVisible = false;
+
         await this.loadAdminSettings();
-        await this.checkModelAndStart();
+
+        const downloadModal = new ModelDownloadModal({
+            onCancel: () => this.cancel()
+        });
+
+        const isReady = await downloadModal.ensureModelReady(this.settings.modelName);
+        if (this.isCancelled || !isReady) {
+            this.cancel();
+            return this;
+        }
+
+        // Model is ready, now display the bulk modal
+        this.modalElement.style.display = 'flex';
+        this.isVisible = true;
+        document.body.style.overflow = 'hidden';
+        document.documentElement.style.overflow = 'hidden';
+
+        this.showState('loading');
+        await this.fetchTags();
+
+        return this;
     }
 
     async loadAdminSettings() {
@@ -153,64 +132,6 @@ class BulkWDTaggerModal extends BulkTagModalBase {
             }
         } catch (e) {
             // Non-fatal, keep current defaults
-        }
-    }
-
-    async checkModelAndStart() {
-        this.showState('loading');
-        this.updateProgress(0, 0, window.i18n.t('bulk_modal.progress.checking_model'), '');
-
-        try {
-            const response = await this.fetchWithAbort(`/api/ai-tagger/model-status/${this.settings.modelName}`);
-
-            if (this.isCancelled) return;
-
-            if (!response.ok) {
-                throw new Error('Failed to check model status');
-            }
-
-            const status = await response.json();
-
-            if (status.is_downloaded || status.is_loaded) {
-                await this.fetchTags();
-            } else {
-                const modelNameEl = this.modalElement.querySelector('.download-model-name');
-                const modelSizeEl = this.modalElement.querySelector('.download-model-size');
-
-                if (modelNameEl) modelNameEl.textContent = this.settings.modelName;
-                if (modelSizeEl) modelSizeEl.textContent = status.download_size_mb
-                    ? `~${status.download_size_mb} MB`
-                    : 'Unknown';
-
-                this.showState('download-confirm');
-            }
-        } catch (e) {
-            if (e.name === 'AbortError') return;
-            console.error('Error checking model status:', e);
-            this.showError(`Failed to check model status: ${e.message}`);
-        }
-    }
-
-    async downloadModelAndContinue() {
-        this.showState('downloading');
-
-        try {
-            const response = await this.fetchWithAbort(`/api/ai-tagger/download/${this.settings.modelName}`, {
-                method: 'POST'
-            });
-
-            if (this.isCancelled) return;
-
-            if (!response.ok) {
-                const error = await response.json().catch(() => ({}));
-                throw new Error(error.detail || 'Download failed');
-            }
-
-            await this.fetchTags();
-        } catch (e) {
-            if (e.name === 'AbortError') return;
-            console.error('Error downloading model:', e);
-            this.showError(`Failed to download model: ${e.message}`);
         }
     }
 

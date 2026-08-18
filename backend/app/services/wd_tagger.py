@@ -1,7 +1,9 @@
 import os
 import threading
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+from contextlib import contextmanager
 from typing import Any, Callable, Dict, Generator, List, Optional, Tuple
 
 import huggingface_hub
@@ -17,6 +19,188 @@ from PIL import Image
 from ..config import settings
 from ..utils.logger import logger
 
+class DownloadCancelledException(Exception):
+    """Raised when a model download is cancelled by the client."""
+    pass
+
+def cleanup_orphaned_model_temp_files():
+    """Remove any orphaned tmp* files in MODELS_DIR left by aborted downloads."""
+    try:
+        models_dir = settings.MODELS_DIR
+        if models_dir.exists():
+            for p in models_dir.glob("tmp*"):
+                if p.is_file():
+                    try:
+                        p.unlink()
+                        logger.info(f"Cleaned up orphaned model temp file: {p.name}")
+                    except Exception as e:
+                        logger.warning(f"Could not remove orphaned model temp file {p.name}: {e}")
+    except Exception as e:
+        logger.warning(f"Error cleaning up orphaned model temp files: {e}")
+
+@contextmanager
+def cancellable_hf_download(
+    is_cancelled: Optional[Callable[[], bool]] = None,
+    progress_callback: Optional[Callable[[dict], None]] = None,
+    expected_total_bytes: Optional[int] = None
+):
+    """Context manager to intercept and cancel streaming Hugging Face model downloads, report progress, and clean up temporary files."""
+    import huggingface_hub.file_download as fd
+    orig_request_wrapper = fd._request_wrapper
+    orig_http_get = fd.http_get
+
+    active_temp_paths = set()
+    session_start_time = time.time()
+    last_report_time = 0.0
+    cumulative_completed_bytes = 0
+    file_index = 0
+
+    def custom_http_get(*g_args, **g_kwargs):
+        temp_file = g_kwargs.get("temp_file") or (g_args[1] if len(g_args) > 1 else None)
+        temp_name = getattr(temp_file, "name", None)
+        if temp_name:
+            active_temp_paths.add(temp_name)
+        try:
+            return orig_http_get(*g_args, **g_kwargs)
+        except Exception:
+            if temp_file and not getattr(temp_file, "closed", True):
+                try:
+                    temp_file.close()
+                except Exception:
+                    pass
+            if temp_name and os.path.exists(temp_name):
+                try:
+                    os.unlink(temp_name)
+                    logger.info(f"Cleaned up cancelled model temp file: {temp_name}")
+                except Exception as ex:
+                    logger.warning(f"Failed to unlink temp file {temp_name}: {ex}")
+            raise
+        finally:
+            if temp_name:
+                active_temp_paths.discard(temp_name)
+
+    def custom_request_wrapper(*r_args, **r_kwargs):
+        nonlocal file_index
+        file_index += 1
+        
+        r = orig_request_wrapper(*r_args, **r_kwargs)
+        orig_iter = r.iter_content
+        
+        content_length = r.headers.get("Content-Length")
+        file_total_bytes = int(content_length) if content_length and content_length.isdigit() else None
+        
+        url = r_kwargs.get("url") or (r_args[1] if len(r_args) > 1 else "")
+        filename = url.split("/")[-1].split("?")[0] if url else f"file_{file_index}"
+        
+        file_downloaded_bytes = 0
+
+        def custom_iter(*i_args, **i_kwargs):
+            nonlocal file_downloaded_bytes, cumulative_completed_bytes, last_report_time
+            # Use 512KB subchunks for responsive cancellation and smooth progress
+            chunk_size = min(i_kwargs.get("chunk_size", 524288), 524288)
+            for chunk in orig_iter(chunk_size=chunk_size):
+                if is_cancelled and is_cancelled():
+                    raise DownloadCancelledException("Model download cancelled by user")
+                
+                chunk_len = len(chunk)
+                file_downloaded_bytes += chunk_len
+                total_dl = cumulative_completed_bytes + file_downloaded_bytes
+                now = time.time()
+                
+                if progress_callback and (now - last_report_time >= 0.25 or (file_total_bytes and file_downloaded_bytes >= file_total_bytes)):
+                    last_report_time = now
+                    elapsed = max(now - session_start_time, 0.001)
+                    speed_bps = total_dl / elapsed
+                    
+                    effective_total = expected_total_bytes or (cumulative_completed_bytes + file_total_bytes if file_total_bytes else None)
+                    if effective_total and effective_total > 0:
+                        percent = min(round((total_dl / effective_total) * 100, 1), 99.9)
+                    else:
+                        percent = None
+                        
+                    progress_callback({
+                        "type": "progress",
+                        "filename": filename,
+                        "file_index": file_index,
+                        "file_downloaded_bytes": file_downloaded_bytes,
+                        "file_total_bytes": file_total_bytes,
+                        "downloaded_bytes": total_dl,
+                        "total_bytes": effective_total,
+                        "percent": percent,
+                        "speed_bps": speed_bps,
+                        "elapsed_seconds": round(elapsed, 1)
+                    })
+                yield chunk
+            
+            cumulative_completed_bytes += file_downloaded_bytes
+
+        r.iter_content = custom_iter
+        return r
+
+    fd._request_wrapper = custom_request_wrapper
+    fd.http_get = custom_http_get
+    try:
+        if is_cancelled and is_cancelled():
+            raise DownloadCancelledException("Model download cancelled by user")
+        yield
+    except Exception:
+        for p in list(active_temp_paths):
+            if os.path.exists(p):
+                try:
+                    os.unlink(p)
+                except Exception:
+                    pass
+        cleanup_orphaned_model_temp_files()
+        raise
+    finally:
+        fd._request_wrapper = orig_request_wrapper
+        fd.http_get = orig_http_get
+
+class DownloadTask:
+    """Tracks an in-progress model download and broadcasts progress to subscribers."""
+    def __init__(self, model_name: str):
+        self.model_name = model_name
+        self.listeners = set()
+        self.cancelled = False
+        self.last_progress = None
+        self.lock = threading.Lock()
+
+    def add_listener(self, cb: Callable[[dict], None]):
+        with self.lock:
+            self.listeners.add(cb)
+            if self.last_progress:
+                try:
+                    cb(self.last_progress)
+                except Exception:
+                    pass
+
+    def remove_listener(self, cb: Callable[[dict], None]):
+        with self.lock:
+            self.listeners.discard(cb)
+
+    def cancel(self):
+        with self.lock:
+            self.cancelled = True
+
+    def has_listeners(self) -> bool:
+        with self.lock:
+            return len(self.listeners) > 0
+
+    def notify(self, event: dict):
+        with self.lock:
+            if event.get("type") == "progress":
+                self.last_progress = event
+            listeners = list(self.listeners)
+        for cb in listeners:
+            try:
+                cb(event)
+            except Exception:
+                pass
+
+    def is_cancelled(self) -> bool:
+        with self.lock:
+            return self.cancelled
+
 class WDTagger:
     """
     WD Tagger using ONNX models from SmilingWolf's collection.
@@ -25,6 +209,74 @@ class WDTagger:
     _instance = None
     _initialized = False
     _lock = threading.Lock()
+    _downloads_lock = threading.Lock()
+    _active_downloads: Dict[str, DownloadTask] = {}
+    
+    @classmethod
+    def is_downloading(cls, model_name: str) -> bool:
+        """Check if a model is currently being downloaded."""
+        with cls._downloads_lock:
+            return model_name in cls._active_downloads
+
+    @classmethod
+    def is_model_downloaded(cls, model_name: str) -> bool:
+        """Check if a model is fully downloaded in local cache without acquiring file locks."""
+        if model_name not in cls.AVAILABLE_MODELS:
+            return False
+        if cls.is_downloading(model_name):
+            return False
+        try:
+            import huggingface_hub
+            repo_id = cls.AVAILABLE_MODELS[model_name]
+            model_path = huggingface_hub.try_to_load_from_cache(
+                repo_id, cls.MODEL_FILENAME, cache_dir=settings.MODELS_DIR
+            )
+            csv_path = huggingface_hub.try_to_load_from_cache(
+                repo_id, cls.LABEL_FILENAME, cache_dir=settings.MODELS_DIR
+            )
+            return bool(
+                isinstance(model_path, str) and os.path.exists(model_path) and
+                isinstance(csv_path, str) and os.path.exists(csv_path)
+            )
+        except Exception:
+            return False
+
+    @classmethod
+    def get_active_download(cls, model_name: str) -> Optional[DownloadTask]:
+        """Get the active download task for a model if one exists."""
+        with cls._downloads_lock:
+            return cls._active_downloads.get(model_name)
+
+    @classmethod
+    def register_download(cls, model_name: str) -> Tuple[DownloadTask, bool]:
+        """Register a new download task or get an existing one. Returns (task, is_new)."""
+        with cls._downloads_lock:
+            if model_name in cls._active_downloads:
+                return cls._active_downloads[model_name], False
+            task = DownloadTask(model_name)
+            cls._active_downloads[model_name] = task
+            return task, True
+
+    @classmethod
+    def unregister_download(cls, model_name: str):
+        """Unregister a download task."""
+        with cls._downloads_lock:
+            cls._active_downloads.pop(model_name, None)
+
+    @classmethod
+    def cancel_download(cls, model_name: str):
+        """Cancel an active model download."""
+        with cls._downloads_lock:
+            task = cls._active_downloads.get(model_name)
+            if task:
+                task.cancel()
+
+    @classmethod
+    def cancel_all_downloads(cls):
+        """Cancel all active downloads."""
+        with cls._downloads_lock:
+            for task in list(cls._active_downloads.values()):
+                task.cancel()
     
     AVAILABLE_MODELS = {
         "wd-eva02-large-tagger-v3": "SmilingWolf/wd-eva02-large-tagger-v3",
@@ -53,6 +305,15 @@ class WDTagger:
         "wd-swinv2-tagger-v3": 8,
         "wd-convnext-tagger-v3": 12,
         "wd-vit-large-tagger-v3": 2,
+    }
+
+    # Total download sizes (model.onnx + selected_tags.csv) in bytes
+    MODEL_DOWNLOAD_SIZES_BYTES = {
+        "wd-vit-tagger-v3": int(379.3 * 1024 * 1024),
+        "wd-convnext-tagger-v3": int(375.3 * 1024 * 1024),
+        "wd-swinv2-tagger-v3": int(445.3 * 1024 * 1024),
+        "wd-eva02-large-tagger-v3": int(850.3 * 1024 * 1024),
+        "wd-vit-large-tagger-v3": int(1200.3 * 1024 * 1024),
     }
     
     def __new__(cls):
@@ -250,7 +511,12 @@ class WDTagger:
                 return first_half
             raise
 
-    def _load_model(self, model_name: str = "wd-eva02-large-tagger-v3"):
+    def _load_model(
+        self,
+        model_name: str = "wd-eva02-large-tagger-v3",
+        is_cancelled: Optional[Callable[[], bool]] = None,
+        progress_callback: Optional[Callable[[dict], None]] = None
+    ):
         """Load the specified model with optimizations."""
         if model_name not in self.AVAILABLE_MODELS:
             raise ValueError(f"Unknown model: {model_name}. Available: {list(self.AVAILABLE_MODELS.keys())}")
@@ -258,25 +524,32 @@ class WDTagger:
         if self._current_model_name == model_name and self._model is not None:
             return
         
+        if is_cancelled and is_cancelled():
+            raise DownloadCancelledException("Operation cancelled")
+        
         model_repo = self.AVAILABLE_MODELS[model_name]
         
         def _fetch_paths(force_download: bool = False):
+            if is_cancelled and is_cancelled():
+                raise DownloadCancelledException("Operation cancelled")
+            expected_total = self.MODEL_DOWNLOAD_SIZES_BYTES.get(model_name)
             if force_download:
                 logger.info(f"Verifying hashes and re-downloading '{model_name}' if necessary...")
-                return (
-                    huggingface_hub.hf_hub_download(
-                        model_repo,
-                        self.LABEL_FILENAME,
-                        force_download=True,
-                        cache_dir=settings.MODELS_DIR
-                    ),
-                    huggingface_hub.hf_hub_download(
-                        model_repo,
-                        self.MODEL_FILENAME,
-                        force_download=True,
-                        cache_dir=settings.MODELS_DIR
+                with cancellable_hf_download(is_cancelled, progress_callback, expected_total_bytes=expected_total):
+                    return (
+                        huggingface_hub.hf_hub_download(
+                            model_repo,
+                            self.LABEL_FILENAME,
+                            force_download=True,
+                            cache_dir=settings.MODELS_DIR
+                        ),
+                        huggingface_hub.hf_hub_download(
+                            model_repo,
+                            self.MODEL_FILENAME,
+                            force_download=True,
+                            cache_dir=settings.MODELS_DIR
+                        )
                     )
-                )
             
             try:
                 # Try to load from local cache first to avoid network requests
@@ -300,6 +573,9 @@ class WDTagger:
 
         csv_path, model_path = _fetch_paths()
         
+        if is_cancelled and is_cancelled():
+            raise DownloadCancelledException("Operation cancelled")
+        
         try:
             # Attempt to load the model and labels
             df = pd.read_csv(csv_path)
@@ -319,9 +595,14 @@ class WDTagger:
                 providers=providers
             )
         except Exception as e:
+            if isinstance(e, DownloadCancelledException):
+                raise
             # If loading fails (e.g. corrupted file), force network check and re-download
             logger.warning(f"Failed to load model from cache: {e}. Verifying hashes and re-downloading...")
             csv_path, model_path = _fetch_paths(force_download=True)
+            
+            if is_cancelled and is_cancelled():
+                raise DownloadCancelledException("Operation cancelled")
             
             # Retry loading
             df = pd.read_csv(csv_path)
@@ -350,12 +631,25 @@ class WDTagger:
         self._input_name = input_info.name
         self._current_model_name = model_name
 
-    def ensure_loaded(self, model_name: str = "wd-eva02-large-tagger-v3"):
+    def ensure_loaded(
+        self,
+        model_name: str = "wd-eva02-large-tagger-v3",
+        is_cancelled: Optional[Callable[[], bool]] = None,
+        progress_callback: Optional[Callable[[dict], None]] = None
+    ):
         """Ensure the model is loaded."""
+        if is_cancelled and is_cancelled():
+            raise DownloadCancelledException("Operation cancelled")
         if self._model is None or self._current_model_name != model_name:
             with self._lock:
+                if is_cancelled and is_cancelled():
+                    raise DownloadCancelledException("Operation cancelled")
                 if self._model is None or self._current_model_name != model_name:
-                    self._load_model(model_name)
+                    self._load_model(
+                        model_name,
+                        is_cancelled=is_cancelled,
+                        progress_callback=progress_callback
+                    )
         
         with self._unload_lock:
             if self._unload_timer:

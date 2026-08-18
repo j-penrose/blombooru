@@ -285,8 +285,7 @@
                             {{ t('admin.settings.media_type_tags_images') }}
                         </label>
                         <div style="position: relative;">
-                            <div id="media-type-tags-image" contenteditable="true"
-                                data-placeholder="photo scenery"
+                            <div id="media-type-tags-image" contenteditable="true" data-placeholder="photo scenery"
                                 class="w-full bg px-3 py-2 border text-xs focus:outline-none hover:border-primary transition-colors focus:border-primary tag-input"
                                 style="min-height: 1.5rem; white-space: pre-wrap; overflow-wrap: break-word;">
                             </div>
@@ -308,8 +307,7 @@
                             {{ t('admin.settings.media_type_tags_videos') }}
                         </label>
                         <div style="position: relative;">
-                            <div id="media-type-tags-video" contenteditable="true"
-                                data-placeholder="video animated"
+                            <div id="media-type-tags-video" contenteditable="true" data-placeholder="video animated"
                                 class="w-full bg px-3 py-2 border text-xs focus:outline-none hover:border-primary transition-colors focus:border-primary tag-input"
                                 style="min-height: 1.5rem; white-space: pre-wrap; overflow-wrap: break-word;">
                             </div>
@@ -423,7 +421,7 @@
     <form id="ai-tagger-settings-form">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
-                <label class="block text-xs font-bold mb-2">{{ t('admin.ai_tagger.model') }}</label>
+                <label class="block text-xs font-bold mb-2">{{ t('common.model') }}</label>
                 <div id="wd-model-select" class="custom-select" data-value="">
                     <button
                         class="custom-select-trigger w-full flex items-center justify-between gap-3 px-3 py-2 bg border text-xs cursor-pointer focus:outline-none hover:border-primary transition-colors focus:border-primary"
@@ -474,7 +472,7 @@
             </div>
         </div>
         <button type="submit" class="btn-primary w-full md:w-auto px-6" id="save-ai-tagger-btn">
-            {{ t('admin.ai_tagger.save_settings') }}
+            {{ t('admin.settings.save_settings') }}
         </button>
     </form>
 </div>

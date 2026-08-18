@@ -246,13 +246,29 @@ class BulkTagModalBase {
         }
 
         window.addEventListener('beforeunload', () => {
-            if (this.isVisible) this.cancel();
+            if (this.isVisible) this.handleUnload();
         });
         window.addEventListener('pagehide', () => {
-            if (this.isVisible) this.cancel();
+            if (this.isVisible) this.handleUnload();
         });
 
         this.setupAdditionalEventListeners();
+    }
+
+    handleUnload() {
+        this.isCancelled = true;
+
+        if (this.activeReader) {
+            try {
+                this.activeReader.cancel();
+            } catch (e) { }
+            this.activeReader = null;
+        }
+
+        if (this.abortController) {
+            this.abortController.abort();
+            this.abortController = null;
+        }
     }
 
     // ==================== Visibility Management ====================

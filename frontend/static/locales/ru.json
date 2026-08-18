@@ -460,8 +460,6 @@
             "description": "Настройте параметры для WD предсказателя тегов. Значения по умолчанию, как правило, подходят всем. Для работы инструмента необходимо импортировать базу тегов. Нажмите <a class='text-primary transition-colors hover:text-primary' href='https://github.com/mrblomblo/blombooru/blob/main/README_RU.md#1-csv-%D0%B8%D0%BC%D0%BF%D0%BE%D1%80%D1%82' target='_blank' rel='noopener noreferrer' referrerPolicy='no-referrer'>сюда</a> чтобы узнать, как.",
             "general_threshold": "Порог общей уверенности",
             "character_threshold": "Порог уверенности по персонажу",
-            "model": "Модель",
-            "save_settings": "Сохранить настройки",
             "settings_saved": "Настройки сохранены",
             "threshold_hint": "Значения от 0.0 до 1.0. Если значение ниже порога, тег не будет применен.",
             "blacklisted_tags": "Чёрный список тегов"
@@ -552,7 +550,6 @@
         },
         "buttons": {
             "clear_tags": "Очистить теги",
-            "download_continue": "Скачать и продолжить",
             "refresh_tags": "Обновить теги"
         },
         "defaults": {
@@ -561,9 +558,7 @@
         },
         "messages": {
             "current": "Текущий: ",
-            "download_wait": "Это может занять несколько минут в зависимости от скорости вашей сети",
             "error_occurred": "Произошла ошибка",
-            "model_cached": "Файлы модели кэшируются локально для последующего использования",
             "operation_cancelled": "Операция отменена",
             "review_tags": "Просмотрите и отредактируйте теги для каждого элемента. Недопустимые теги выделены красным цветом",
             "tag_overflow": "+{count}"
@@ -573,8 +568,6 @@
             "updated_success": "Успешно обновлено {count} элемент(-ов)"
         },
         "progress": {
-            "checking_model": "Проверка статуса AI модели...",
-            "downloading_model": "Скачивание AI модели...",
             "fetching_media": "Получение информации о медиафайлах...",
             "fetching_metadata": "Получение метаданных...",
             "initializing_tagger": "Инициализация AI теггера...",
@@ -585,12 +578,7 @@
             "validating_tags": "Валидация тегов..."
         },
         "wd_tagger": {
-            "character_threshold": "Порог уверенности по персонажу",
-            "download_needed": "Сначала необходимо загрузить AI модель",
             "empty_message": "Теги не предсказаны для выбранных элементов",
-            "general_threshold": "Порог общей уверенности",
-            "model": "Модель",
-            "size": "Размер",
             "title": "Массово предсказать теги (WD Tagger)"
         }
     },
@@ -663,6 +651,7 @@
         "manage_tags": "Управление тегами",
         "manual_tag_editor": "Ручная правка тегов",
         "media_not_found": "Медиафайл не найден",
+        "model": "Модель",
         "no_tags": "Нет тегов",
         "processing": "Обработка...",
         "search_syntax_guide": "Руководство по синтаксису поиска",
@@ -886,8 +875,12 @@
             "title": "Удалить тег"
         },
         "download_model": {
-            "confirm": "Скачать и предсказать",
-            "message": "Сначала необходимо загрузить ИИ модель для предсказания тегов.<br><br><strong>Модель:</strong> {modelName}<br><strong>Размер:</strong> ~{size} MB<br><br>Это нужно сделать только один раз",
+            "confirm": "Скачать и продолжить",
+            "download_needed": "Сначала необходимо загрузить AI модель",
+            "download_wait": "Это может занять несколько минут в зависимости от скорости вашей сети",
+            "downloading_model": "Скачивание AI модели...",
+            "model_cached": "Файлы модели кэшируются локально для последующего использования",
+            "size": "Размер",
             "title": "Скачать модель"
         },
         "remove_children": {

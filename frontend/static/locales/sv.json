@@ -460,8 +460,6 @@
             "description": "Konfigurera inställningar för WD Tagger. Dessa används för AI-taggförutsägelseverktygen. Standardinställningarna bör i de flesta fall vara tillräckliga. För att taggförutsägelse ska fungera måste du importera en taggdump från Danbooru. Klicka <a class='text-primary transition-colors hover:text-primary' href='https://github.com/mrblomblo/blombooru/blob/main/README_SV.md#1-csv-import' target='_blank' rel='noopener noreferrer' referrerPolicy='no-referrer'>här</a> för att se hur man gör.",
             "general_threshold": "Konfidenströskel (allmänt)",
             "character_threshold": "Konfidenströskel (karaktärer)",
-            "model": "Modell",
-            "save_settings": "Spara inställningar",
             "settings_saved": "AI Tagger-inställningar sparade",
             "threshold_hint": "Konfidenspoäng (0.0 till 1.0). Taggar med konfidenspoäng under tröskeln exkluderas från prediktioner.",
             "blacklisted_tags": "Svartlistade taggar"
@@ -552,7 +550,6 @@
         },
         "buttons": {
             "clear_tags": "Rensa taggar",
-            "download_continue": "Ladda ner & fortsätt",
             "refresh_tags": "Uppdatera taggar"
         },
         "defaults": {
@@ -561,9 +558,7 @@
         },
         "messages": {
             "current": "Nuvarande: ",
-            "download_wait": "Detta kan ta några minuter beroende på din anslutning.",
             "error_occurred": "Ett fel uppstod.",
-            "model_cached": "Modellfiler cacheas lokalt för framtida användning.",
             "operation_cancelled": "Åtgärd avbruten.",
             "review_tags": "Granska och redigera taggar för varje objekt. Ogiltiga taggar markeras i rött.",
             "tag_overflow": "+{count}"
@@ -573,8 +568,6 @@
             "updated_success": "Uppdaterade {count} objekt"
         },
         "progress": {
-            "checking_model": "Kontrollerar AI-modellstatus...",
-            "downloading_model": "Laddar ner AI-modell...",
             "fetching_media": "Hämtar mediainformation...",
             "fetching_metadata": "Hämtar metadata...",
             "initializing_tagger": "Initierar AI-taggare...",
@@ -585,12 +578,7 @@
             "validating_tags": "Validerar taggar..."
         },
         "wd_tagger": {
-            "character_threshold": "Karaktärkonfidenströskel",
-            "download_needed": "AI-modellen måste laddas ner först.",
             "empty_message": "Inga taggar förutsagda för de valda objekten.",
-            "general_threshold": "Allmän konfidenströskel",
-            "model": "Modell",
-            "size": "Storlek",
             "title": "Massförutsäg taggar (WD Tagger)"
         }
     },
@@ -663,6 +651,7 @@
         "manage_tags": "Hantera taggar",
         "manual_tag_editor": "Manuell tagghanterare",
         "media_not_found": "Media hittades inte",
+        "model": "Modell",
         "no_tags": "Inga taggar",
         "processing": "Bearbetar...",
         "search_syntax_guide": "Söksyntaxguide",
@@ -886,8 +875,12 @@
             "title": "Radera tagg"
         },
         "download_model": {
-            "confirm": "Ladda ner & förutsäg",
-            "message": "AI-taggningsmodellen måste laddas ner först.<br><br><strong>Modell:</strong> {modelName}<br><strong>Storlek:</strong> ~{size} MB<br><br>Detta behöver endast göras en gång.",
+            "confirm": "Ladda ner & fortsätt",
+            "download_needed": "AI-modellen måste laddas ner först.",
+            "download_wait": "Detta kan ta några minuter beroende på din anslutning.",
+            "downloading_model": "Laddar ner AI-modell...",
+            "model_cached": "Modellfiler cacheas lokalt för framtida användning.",
+            "size": "Storlek",
             "title": "Ladda ner AI-modell"
         },
         "remove_children": {
