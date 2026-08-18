@@ -548,6 +548,7 @@ async def predict_tags_stream(
                 "error": "File not found"
             }
             yield f"data: {json.dumps(event)}\n\n"
+            await asyncio.sleep(0)
         
         if not file_info:
             yield f"data: {json.dumps({'type': 'complete', 'total': 0})}\n\n"
@@ -555,39 +556,68 @@ async def predict_tags_stream(
         
         try:
             tagger = get_wd_tagger()
-            tagger.ensure_loaded(batch_request.model_name)
+            loop = asyncio.get_event_loop()
+            
+            def load_model():
+                tagger.ensure_loaded(batch_request.model_name)
+            
+            await loop.run_in_executor(_inference_executor, load_model)
             
             file_paths = [fp for _, fp in file_info]
             total = len(file_paths)
             processed = 0
+            blacklisted_tags = settings.WD_TAGGER_SETTINGS.get("blacklisted_tags", [])
             
-            for file_path, tags in tagger.predict_from_files_streaming(
-                file_paths,
-                general_threshold=batch_request.general_threshold,
-                character_threshold=batch_request.character_threshold,
-                hide_rating_tags=batch_request.hide_rating_tags,
-                character_tags_first=batch_request.character_tags_first,
-                model_name=batch_request.model_name
-            ):
-                # Check for client disconnect
+            target_size = 1
+            i = 0
+            
+            while i < total:
                 if await request.is_disconnected():
                     return
                 
-                media_id = path_to_id.get(file_path)
-                processed += 1
+                actual_chunk_size = min(target_size, total - i)
+                batch_paths = file_paths[i:i + actual_chunk_size]
                 
-                blacklisted_tags = settings.WD_TAGGER_SETTINGS.get("blacklisted_tags", [])
-                filtered_tags = filter_tags(tags, blacklisted_tags)
-                enriched_tags = enrich_predicted_tags(filtered_tags, db)
+                def do_chunk():
+                    return tagger._process_chunk_oom_protected(
+                        batch_paths,
+                        batch_request.general_threshold,
+                        batch_request.character_threshold,
+                        batch_request.hide_rating_tags,
+                        batch_request.character_tags_first
+                    )
                 
-                event = {
-                    "type": "result",
-                    "media_id": media_id,
-                    "tags": enriched_tags,
-                    "progress": processed,
-                    "total": total
-                }
-                yield f"data: {json.dumps(event)}\n\n"
+                chunk_results = await loop.run_in_executor(_inference_executor, do_chunk)
+                
+                for fp in batch_paths:
+                    if await request.is_disconnected():
+                        return
+                    
+                    media_id = path_to_id.get(fp)
+                    processed += 1
+                    tags = chunk_results.get(fp, [])
+                    
+                    filtered_tags = filter_tags(tags, blacklisted_tags)
+                    enriched_tags = enrich_predicted_tags(filtered_tags, db)
+                    
+                    event = {
+                        "type": "result",
+                        "media_id": media_id,
+                        "tags": enriched_tags,
+                        "progress": processed,
+                        "total": total
+                    }
+                    yield f"data: {json.dumps(event)}\n\n"
+                    await asyncio.sleep(0)
+                
+                i += actual_chunk_size
+                
+                if tagger._oom_encountered:
+                    target_size = min(target_size + 1, 8)
+                else:
+                    target_size = min(target_size * 2, 8)
+            
+            tagger._reset_idle_timer()
             
             # Completion event
             yield f"data: {json.dumps({'type': 'complete', 'total': processed})}\n\n"
