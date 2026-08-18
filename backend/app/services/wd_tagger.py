@@ -2,7 +2,7 @@ import os
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Any, Dict, Generator, List, Optional, Tuple
+from typing import Any, Callable, Dict, Generator, List, Optional, Tuple
 
 import huggingface_hub
 import numpy as np
@@ -187,19 +187,28 @@ class WDTagger:
         general_threshold: float,
         character_threshold: float,
         hide_rating_tags: bool,
-        character_tags_first: bool
+        character_tags_first: bool,
+        is_cancelled: Optional[Callable[[], bool]] = None
     ) -> Dict[str, List[Dict[str, Any]]]:
+        if is_cancelled and is_cancelled():
+            return {}
         try:
-            prepared = self._prepare_images_parallel(file_paths)
+            prepared = self._prepare_images_parallel(file_paths, is_cancelled=is_cancelled)
+            if is_cancelled and is_cancelled():
+                return {}
             valid_items = [(fp, img) for fp, img in prepared if img is not None]
             failed_paths = [fp for fp, img in prepared if img is None]
             
             results = {fp: [] for fp in failed_paths}
             
             if valid_items:
+                if is_cancelled and is_cancelled():
+                    return {}
                 batch_images = np.stack([img for _, img in valid_items], axis=0)
                 
                 with self._inference_lock:
+                    if is_cancelled and is_cancelled():
+                        return {}
                     preds = self._model.run(None, {self._input_name: batch_images})[0]
                 
                 for (fp, _), scores in zip(valid_items, preds):
@@ -229,11 +238,13 @@ class WDTagger:
                 mid = len(file_paths) // 2
                 first_half = self._process_chunk_oom_protected(
                     file_paths[:mid], general_threshold, character_threshold,
-                    hide_rating_tags, character_tags_first
+                    hide_rating_tags, character_tags_first,
+                    is_cancelled=is_cancelled
                 )
                 second_half = self._process_chunk_oom_protected(
                     file_paths[mid:], general_threshold, character_threshold,
-                    hide_rating_tags, character_tags_first
+                    hide_rating_tags, character_tags_first,
+                    is_cancelled=is_cancelled
                 )
                 first_half.update(second_half)
                 return first_half
@@ -416,7 +427,8 @@ class WDTagger:
     def _prepare_images_parallel(
         self, 
         file_paths: List[str],
-        max_workers: Optional[int] = None
+        max_workers: Optional[int] = None,
+        is_cancelled: Optional[Callable[[], bool]] = None
     ) -> List[Tuple[str, Optional[np.ndarray]]]:
         """Prepare multiple images in parallel."""
         if max_workers is None:
@@ -433,6 +445,8 @@ class WDTagger:
         # Collect results in submission order
         path_to_result = {}
         for future in as_completed(futures):
+            if is_cancelled and is_cancelled():
+                break
             file_path, prepared = future.result()
             path_to_result[file_path] = prepared
         
@@ -512,7 +526,7 @@ class WDTagger:
         
         return results
     
-    def predict(
+    def predict_image(
         self,
         image: Image.Image,
         general_threshold: float = 0.35,
@@ -523,21 +537,23 @@ class WDTagger:
     ) -> List[Dict[str, Any]]:
         """Predict tags for a single image."""
         self.ensure_loaded(model_name)
-        
-        processed_image = self._prepare_image(image)
-        processed_batch = np.expand_dims(processed_image, axis=0)
-        
-        preds = self._run_with_oom_retry(processed_batch)
-        
-        scores = preds[0]  # First (and only) batch item
-        
-        results = self._extract_tags_from_scores(
-            scores, general_threshold, character_threshold,
-            hide_rating_tags, character_tags_first
-        )
-        
-        self._reset_idle_timer()
-        return results
+        try:
+            processed_image = self._prepare_image(image)
+            processed_batch = np.expand_dims(processed_image, axis=0)
+            
+            preds = self._run_with_oom_retry(processed_batch)
+            
+            scores = preds[0]  # First (and only) batch item
+            
+            results = self._extract_tags_from_scores(
+                scores, general_threshold, character_threshold,
+                hide_rating_tags, character_tags_first
+            )
+            return results
+        finally:
+            self._reset_idle_timer()
+    
+    predict = predict_image
     
     def predict_batch(
         self,
@@ -558,24 +574,24 @@ class WDTagger:
             return []
         
         self.ensure_loaded(model_name)
-        
-        # Stack into batch
-        batch = np.stack(images, axis=0)
-        
-        # Run inference
-        preds = self._run_with_oom_retry(batch)
-        
-        # Extract tags for each image
-        results = []
-        for scores in preds:
-            tags = self._extract_tags_from_scores(
-                scores, general_threshold, character_threshold,
-                hide_rating_tags, character_tags_first
-            )
-            results.append(tags)
-        
-        self._reset_idle_timer()
-        return results
+        try:
+            # Stack into batch
+            batch = np.stack(images, axis=0)
+            
+            # Run inference
+            preds = self._run_with_oom_retry(batch)
+            
+            # Extract tags for each image
+            results = []
+            for scores in preds:
+                tags = self._extract_tags_from_scores(
+                    scores, general_threshold, character_threshold,
+                    hide_rating_tags, character_tags_first
+                )
+                results.append(tags)
+            return results
+        finally:
+            self._reset_idle_timer()
     
     def predict_from_file(
         self,
@@ -590,21 +606,20 @@ class WDTagger:
         
         model_name = kwargs.get('model_name', 'wd-eva02-large-tagger-v3')
         self.ensure_loaded(model_name)
-        
-        batch = np.expand_dims(prepared, axis=0)
-        
-        preds = self._run_with_oom_retry(batch)
-        
-        results = self._extract_tags_from_scores(
-            preds[0],
-            kwargs.get('general_threshold', 0.35),
-            kwargs.get('character_threshold', 0.85),
-            kwargs.get('hide_rating_tags', True),
-            kwargs.get('character_tags_first', True)
-        )
-        
-        self._reset_idle_timer()
-        return results
+        try:
+            batch = np.expand_dims(prepared, axis=0)
+            preds = self._run_with_oom_retry(batch)
+            
+            results = self._extract_tags_from_scores(
+                preds[0],
+                kwargs.get('general_threshold', 0.35),
+                kwargs.get('character_threshold', 0.85),
+                kwargs.get('hide_rating_tags', True),
+                kwargs.get('character_tags_first', True)
+            )
+            return results
+        finally:
+            self._reset_idle_timer()
     
     def predict_from_files_batch(
         self,
@@ -641,33 +656,35 @@ class WDTagger:
         results = {}
         processed_count = 0
         
-        i = 0
-        while i < total:
-            actual_chunk_size = min(target_size, total - i)
-            batch_paths = file_paths[i:i + actual_chunk_size]
-            
-            chunk_results = self._process_chunk_oom_protected(
-                batch_paths, general_threshold, character_threshold,
-                hide_rating_tags, character_tags_first
-            )
-            results.update(chunk_results)
-            
-            processed_count += len(batch_paths)
-            
-            if progress_callback:
-                progress_callback(processed_count, total)
+        try:
+            i = 0
+            while i < total:
+                actual_chunk_size = min(target_size, total - i)
+                batch_paths = file_paths[i:i + actual_chunk_size]
                 
-            i += actual_chunk_size
-            
-            if batch_size is None:
-                if self._oom_encountered:
-                    self._dynamic_batch_size = min(self._dynamic_batch_size + 1, 64)
-                else:
-                    self._dynamic_batch_size = min(self._dynamic_batch_size * 2, 64)
-                target_size = self._dynamic_batch_size
+                chunk_results = self._process_chunk_oom_protected(
+                    batch_paths, general_threshold, character_threshold,
+                    hide_rating_tags, character_tags_first
+                )
+                results.update(chunk_results)
+                
+                processed_count += len(batch_paths)
+                
+                if progress_callback:
+                    progress_callback(processed_count, total)
+                    
+                i += actual_chunk_size
+                
+                if batch_size is None:
+                    if self._oom_encountered:
+                        self._dynamic_batch_size = min(self._dynamic_batch_size + 1, 64)
+                    else:
+                        self._dynamic_batch_size = min(self._dynamic_batch_size * 2, 64)
+                    target_size = self._dynamic_batch_size
+        finally:
+            self._reset_idle_timer()
         
         # Return in original order
-        self._reset_idle_timer()
         return [(fp, results.get(fp, [])) for fp in file_paths]
     
     def predict_from_files_streaming(
@@ -678,7 +695,8 @@ class WDTagger:
         hide_rating_tags: bool = True,
         character_tags_first: bool = True,
         model_name: str = "wd-eva02-large-tagger-v3",
-        batch_size: Optional[int] = None
+        batch_size: Optional[int] = None,
+        is_cancelled: Optional[Callable[[], bool]] = None
     ) -> Generator[Tuple[str, List[Dict[str, Any]]], None, None]:
         """
         Stream prediction results as they complete.
@@ -699,13 +717,19 @@ class WDTagger:
         total = len(file_paths)
         try:
             while i < total:
+                if is_cancelled and is_cancelled():
+                    break
                 actual_chunk_size = min(target_size, total - i)
                 batch_paths = file_paths[i:i + actual_chunk_size]
                 
                 chunk_results = self._process_chunk_oom_protected(
                     batch_paths, general_threshold, character_threshold,
-                    hide_rating_tags, character_tags_first
+                    hide_rating_tags, character_tags_first,
+                    is_cancelled=is_cancelled
                 )
+                
+                if is_cancelled and is_cancelled():
+                    break
                 
                 for fp in batch_paths:
                     yield (fp, chunk_results.get(fp, []))

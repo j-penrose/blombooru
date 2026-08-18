@@ -343,38 +343,53 @@ class BulkWDTaggerModal extends BulkTagModalBase {
         }
 
         const reader = response.body.getReader();
+        this.activeReader = reader;
         const decoder = new TextDecoder();
         let buffer = '';
 
-        while (true) {
-            if (this.isCancelled) break;
-
-            const { done, value } = await reader.read();
-
-            if (done) {
-                // Process any remaining buffer
-                if (buffer.trim()) {
-                    const { events } = this.parseSSEEvents(buffer + '\n\n');
-                    for (const data of events) {
-                        if (this.isCancelled) break;
-                        await this.handleStreamEvent(data, mediaInfoMap);
-                    }
+        try {
+            while (true) {
+                if (this.isCancelled) {
+                    try { await reader.cancel(); } catch (e) { }
+                    break;
                 }
-                break;
+
+                let done, value;
+                try {
+                    const res = await reader.read();
+                    done = res.done;
+                    value = res.value;
+                } catch (e) {
+                    break;
+                }
+
+                if (done) {
+                    // Process any remaining buffer
+                    if (buffer.trim()) {
+                        const { events } = this.parseSSEEvents(buffer + '\n\n');
+                        for (const data of events) {
+                            if (this.isCancelled) break;
+                            await this.handleStreamEvent(data, mediaInfoMap);
+                        }
+                    }
+                    break;
+                }
+
+                buffer += decoder.decode(value, { stream: true });
+
+                // Parse complete events from buffer
+                const { events, remaining } = this.parseSSEEvents(buffer);
+                buffer = remaining;
+
+                for (const data of events) {
+                    if (this.isCancelled) break;
+
+                    const shouldStop = await this.handleStreamEvent(data, mediaInfoMap);
+                    if (shouldStop) break;
+                }
             }
-
-            buffer += decoder.decode(value, { stream: true });
-
-            // Parse complete events from buffer
-            const { events, remaining } = this.parseSSEEvents(buffer);
-            buffer = remaining;
-
-            for (const data of events) {
-                if (this.isCancelled) break;
-
-                const shouldStop = await this.handleStreamEvent(data, mediaInfoMap);
-                if (shouldStop) break;
-            }
+        } finally {
+            this.activeReader = null;
         }
 
         this.finalizeScanning();

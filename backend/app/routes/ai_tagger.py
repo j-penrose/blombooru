@@ -554,6 +554,19 @@ async def predict_tags_stream(
             yield f"data: {json.dumps({'type': 'complete', 'total': 0})}\n\n"
             return
         
+        disconnect_event = asyncio.Event()
+
+        async def watch_disconnect():
+            try:
+                msg = await request.receive()
+                if msg.get("type") == "http.disconnect":
+                    disconnect_event.set()
+            except Exception:
+                disconnect_event.set()
+
+        disconnect_task = asyncio.create_task(watch_disconnect())
+
+        tagger = None
         try:
             tagger = get_wd_tagger()
             loop = asyncio.get_event_loop()
@@ -572,7 +585,8 @@ async def predict_tags_stream(
             i = 0
             
             while i < total:
-                if await request.is_disconnected():
+                if disconnect_event.is_set() or await request.is_disconnected():
+                    disconnect_event.set()
                     return
                 
                 actual_chunk_size = min(target_size, total - i)
@@ -584,13 +598,19 @@ async def predict_tags_stream(
                         batch_request.general_threshold,
                         batch_request.character_threshold,
                         batch_request.hide_rating_tags,
-                        batch_request.character_tags_first
+                        batch_request.character_tags_first,
+                        is_cancelled=lambda: disconnect_event.is_set()
                     )
                 
                 chunk_results = await loop.run_in_executor(_inference_executor, do_chunk)
                 
+                if disconnect_event.is_set() or await request.is_disconnected():
+                    disconnect_event.set()
+                    return
+                
                 for fp in batch_paths:
-                    if await request.is_disconnected():
+                    if disconnect_event.is_set() or await request.is_disconnected():
+                        disconnect_event.set()
                         return
                     
                     media_id = path_to_id.get(fp)
@@ -617,13 +637,22 @@ async def predict_tags_stream(
                 else:
                     target_size = min(target_size * 2, 8)
             
-            tagger._reset_idle_timer()
-            
             # Completion event
-            yield f"data: {json.dumps({'type': 'complete', 'total': processed})}\n\n"
+            if not disconnect_event.is_set():
+                yield f"data: {json.dumps({'type': 'complete', 'total': processed})}\n\n"
             
+        except (asyncio.CancelledError, GeneratorExit):
+            disconnect_event.set()
+            return
         except Exception as e:
-            yield f"data: {json.dumps({'type': 'error', 'error': str(e)})}\n\n"
+            if not disconnect_event.is_set():
+                yield f"data: {json.dumps({'type': 'error', 'error': str(e)})}\n\n"
+        finally:
+            disconnect_event.set()
+            if disconnect_task and not disconnect_task.done():
+                disconnect_task.cancel()
+            if tagger is not None:
+                tagger._reset_idle_timer()
     
     return StreamingResponse(
         generate(),
@@ -647,6 +676,7 @@ async def load_model(
         def load():
             tagger = get_wd_tagger()
             tagger.ensure_loaded(model_name)
+            tagger._reset_idle_timer()
             return tagger.get_optimal_batch_size(model_name)
         
         batch_size = await loop.run_in_executor(_inference_executor, load)

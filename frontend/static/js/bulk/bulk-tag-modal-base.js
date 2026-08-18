@@ -19,6 +19,7 @@ class BulkTagModalBase {
 
         // Cancellation support
         this.abortController = null;
+        this.activeReader = null;
         this.isCancelled = false;
 
         // Tag resolution cache - persists across modal opens
@@ -244,6 +245,13 @@ class BulkTagModalBase {
             });
         }
 
+        window.addEventListener('beforeunload', () => {
+            if (this.isVisible) this.cancel();
+        });
+        window.addEventListener('pagehide', () => {
+            if (this.isVisible) this.cancel();
+        });
+
         this.setupAdditionalEventListeners();
     }
 
@@ -285,6 +293,13 @@ class BulkTagModalBase {
 
     cancel() {
         this.isCancelled = true;
+
+        if (this.activeReader) {
+            try {
+                this.activeReader.cancel();
+            } catch (e) { }
+            this.activeReader = null;
+        }
 
         if (this.abortController) {
             this.abortController.abort();
