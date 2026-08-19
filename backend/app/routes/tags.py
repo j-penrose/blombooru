@@ -10,7 +10,8 @@ from ..database import get_db
 from ..models import Media, RatingEnum, Tag, TagAlias, User, blombooru_media_tags
 from ..schemas import TagCategoryEnum, TagCreate, TagResponse
 from ..utils.cache import cache_response, invalidate_tag_cache
-from ..utils.search_parser import apply_search_criteria, parse_search_query
+from ..utils.search_parser import (apply_custom_filters_or,
+                                   apply_search_criteria, parse_search_query)
 
 router = APIRouter(prefix="/api/tags", tags=["tags"])
 
@@ -177,7 +178,7 @@ async def search_related_tags(
     request: Request,
     q: str = Query(default="", description="Search query string"),
     rating: Optional[str] = Query(default=None),
-    rating_mode: Optional[str] = Query(default=None),
+    custom_filter: Optional[List[str]] = Query(default=None),
     limit: int = Query(default=20, ge=1, le=100),
     db: Session = Depends(get_db),
 ):
@@ -195,22 +196,13 @@ async def search_related_tags(
 
     # Apply top-level rating filter if not already specified in query string
     if rating and 'rating' not in parsed['meta']:
-        rating_lower = rating.lower()
-        if rating_mode == "exact":
-            exact_rating = {
-                "safe": RatingEnum.safe,
-                "questionable": RatingEnum.questionable,
-                "explicit": RatingEnum.explicit
-            }.get(rating_lower)
-            media_query = media_query.filter(Media.rating == exact_rating)
-        else:
-            if rating_lower == "explicit":
-                pass
-            elif rating_lower == "questionable":
-                media_query = media_query.filter(Media.rating.in_([RatingEnum.safe, RatingEnum.questionable]))
-            else:
-                # "safe" or any invalid rating fails closed to safe
-                media_query = media_query.filter(Media.rating == RatingEnum.safe)
+        ratings_list = [r.strip().lower() for r in rating.split(",") if r.strip()]
+        valid_ratings = [RatingEnum[r] for r in ratings_list if r in RatingEnum.__members__]
+        if valid_ratings:
+            media_query = media_query.filter(Media.rating.in_(valid_ratings))
+
+    if custom_filter:
+        media_query = apply_custom_filters_or(media_query, custom_filter, db)
 
     media_subquery = media_query.subquery()
 

@@ -31,7 +31,8 @@ from ..utils.media_helpers import (create_stripped_media_cache,
                                    serve_media_file)
 from ..utils.media_processor import calculate_file_hash, process_media_file
 from ..utils.media_sort import apply_media_sort
-from ..utils.search_parser import apply_search_criteria, parse_search_query
+from ..utils.search_parser import (apply_custom_filters_or,
+                                   apply_search_criteria, parse_search_query)
 from ..utils.thumbnail_generator import generate_thumbnail
 
 router = APIRouter(prefix="/api/media", tags=["media"])
@@ -486,7 +487,7 @@ async def get_media_list(
     page: int = 1,
     limit: int = Query(None),
     rating: Optional[str] = None,
-    rating_mode: Optional[str] = None,
+    custom_filter: Optional[List[str]] = Query(default=None),
     sort: Optional[str] = None,
     order: Optional[str] = None,
     seed: Optional[str] = Query(default=None),
@@ -500,22 +501,13 @@ async def get_media_list(
         query = db.query(Media).options(selectinload(Media.tags))
         
         if rating:
-            rating_lower = rating.lower()
-            if rating_mode == "exact":
-                exact_rating = {
-                    "safe": RatingEnum.safe,
-                    "questionable": RatingEnum.questionable,
-                    "explicit": RatingEnum.explicit
-                }.get(rating_lower)
-                query = query.filter(Media.rating == exact_rating)
-            else:
-                if rating_lower == "explicit":
-                    pass
-                elif rating_lower == "questionable":
-                    query = query.filter(Media.rating.in_([RatingEnum.safe, RatingEnum.questionable]))
-                else:
-                    # "safe" or any invalid rating fails closed to safe
-                    query = query.filter(Media.rating == RatingEnum.safe)
+            ratings_list = [r.strip().lower() for r in rating.split(",") if r.strip()]
+            valid_ratings = [RatingEnum[r] for r in ratings_list if r in RatingEnum.__members__]
+            if valid_ratings:
+                query = query.filter(Media.rating.in_(valid_ratings))
+
+        if custom_filter:
+            query = apply_custom_filters_or(query, custom_filter, db)
         
         # Sorting
         sort_by = sort if sort else settings.get_default_sort()
@@ -575,10 +567,19 @@ async def get_related_media(
     media_id: int,
     limit: int = Query(12, ge=1, le=100),
     album_id: Optional[int] = Query(None),
+    rating: Optional[str] = Query(default=None),
+    custom_filter: Optional[List[str]] = Query(default=None),
     db: Session = Depends(get_db)
 ):
     """Get related media items using category-weighted TF-IDF similarity."""
     from ..services.similarity import similarity_index
+
+    if not isinstance(limit, int) or limit <= 0:
+        limit = 12
+    if not isinstance(rating, str):
+        rating = None
+    if not isinstance(custom_filter, (list, tuple, str, set)):
+        custom_filter = None
 
     if similarity_index.rebuild_pending:
         await similarity_index.wait_for_build(timeout=10.0)
@@ -587,12 +588,15 @@ async def get_related_media(
         return {"items": [], "status": "building"}
 
     album_media_ids = None
-    if album_id is not None:
+    if isinstance(album_id, int):
         album_media_ids = set(get_flattened_media_ids(db, album_id))
+
+    has_filters = bool(rating or custom_filter)
+    fetch_limit = max(limit * 5, 50) if has_filters else limit
 
     similar_pairs = similarity_index.get_similar_media(
         media_id=media_id,
-        limit=limit,
+        limit=fetch_limit,
         album_media_ids=album_media_ids
     )
 
@@ -600,13 +604,26 @@ async def get_related_media(
         return {"items": [], "status": "ready"}
 
     similar_ids = [mid for mid, _ in similar_pairs]
-    media_records = db.query(Media).options(selectinload(Media.tags)).filter(Media.id.in_(similar_ids)).all()
+    media_query = db.query(Media).options(selectinload(Media.tags)).filter(Media.id.in_(similar_ids))
+
+    if rating:
+        ratings_list = [r.strip().lower() for r in rating.split(",") if r.strip()]
+        valid_ratings = [RatingEnum[r] for r in ratings_list if r in RatingEnum.__members__]
+        if valid_ratings:
+            media_query = media_query.filter(Media.rating.in_(valid_ratings))
+
+    if custom_filter:
+        media_query = apply_custom_filters_or(media_query, custom_filter, db)
+
+    media_records = media_query.all()
     media_dict = {m.id: m for m in media_records}
 
     items = []
     for mid in similar_ids:
         if mid in media_dict:
             items.append(MediaResponse.model_validate(media_dict[mid]))
+            if len(items) >= limit:
+                break
 
     return {"items": items, "status": "ready"}
 
@@ -617,7 +634,7 @@ async def get_adjacent_media(
     album_id: Optional[int] = None,
     q: Optional[str] = None,
     rating: Optional[str] = None,
-    rating_mode: Optional[str] = None,
+    custom_filter: Optional[List[str]] = Query(default=None),
     sort: Optional[str] = None,
     order: Optional[str] = None,
     seed: Optional[str] = None,
@@ -636,34 +653,17 @@ async def get_adjacent_media(
             if q:
                 parsed = parse_search_query(q)
                 if rating and 'rating' not in parsed['meta']:
-                    rating_lower = rating.lower()
-                    if rating_mode == "exact":
-                        parsed['meta']['rating'] = [{'value': rating_lower, 'negated': False}]
-                    else:
-                        if rating_lower == "explicit":
-                            pass
-                        elif rating_lower == "questionable":
-                            parsed['meta']['rating'] = [{'value': "safe,questionable", 'negated': False}]
-                        else:
-                            parsed['meta']['rating'] = [{'value': "safe", 'negated': False}]
+                    parsed['meta']['rating'] = [{'value': rating.lower(), 'negated': False}]
                 media_query = apply_search_criteria(media_query, parsed, db)
             else:
                 if rating:
-                    rating_lower = rating.lower()
-                    if rating_mode == "exact":
-                        exact_rating = {
-                            "safe": RatingEnum.safe,
-                            "questionable": RatingEnum.questionable,
-                            "explicit": RatingEnum.explicit
-                        }.get(rating_lower)
-                        media_query = media_query.filter(Media.rating == exact_rating)
-                    else:
-                        if rating_lower == "explicit":
-                            pass
-                        elif rating_lower == "questionable":
-                            media_query = media_query.filter(Media.rating.in_([RatingEnum.safe, RatingEnum.questionable]))
-                        else:
-                            media_query = media_query.filter(Media.rating == RatingEnum.safe)
+                    ratings_list = [r.strip().lower() for r in rating.split(",") if r.strip()]
+                    valid_ratings = [RatingEnum[r] for r in ratings_list if r in RatingEnum.__members__]
+                    if valid_ratings:
+                        media_query = media_query.filter(Media.rating.in_(valid_ratings))
+
+            if custom_filter:
+                media_query = apply_custom_filters_or(media_query, custom_filter, db)
 
             if not q or ('order' not in parsed['meta'] and 'sort' not in parsed['meta']):
                 sort_by = sort if sort else settings.get_default_sort()
@@ -686,18 +686,11 @@ async def get_adjacent_media(
 
             parsed = parse_search_query(q or "")
             if rating and 'rating' not in parsed['meta']:
-                rating_lower = rating.lower()
-                if rating_mode == "exact":
-                    parsed['meta']['rating'] = [{'value': rating_lower, 'negated': False}]
-                else:
-                    if rating_lower == "explicit":
-                        pass
-                    elif rating_lower == "questionable":
-                        parsed['meta']['rating'] = [{'value': "safe,questionable", 'negated': False}]
-                    else:
-                        parsed['meta']['rating'] = [{'value': "safe", 'negated': False}]
+                parsed['meta']['rating'] = [{'value': rating.lower(), 'negated': False}]
 
             media_query = apply_search_criteria(media_query, parsed, db)
+            if custom_filter:
+                media_query = apply_custom_filters_or(media_query, custom_filter, db)
 
             if 'order' not in parsed['meta'] and 'sort' not in parsed['meta']:
                 sort_by = sort if sort else settings.get_default_sort()

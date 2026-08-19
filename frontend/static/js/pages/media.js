@@ -350,12 +350,39 @@ class MediaViewer extends MediaViewerBase {
 
         try {
             const currentMediaId = parseInt(this.mediaId);
-            let url = `/api/media/${currentMediaId}/related?limit=12`;
+            const params = new URLSearchParams({ limit: '12' });
             if (this.albumId) {
-                url += `&album_id=${encodeURIComponent(this.albumId)}`;
+                params.set('album_id', this.albumId);
             }
 
-            const res = await fetch(url, {
+            const urlParams = new URLSearchParams(window.location.search);
+            const sidebarMode = document.body.dataset.sidebarMode || window.SIDEBAR_FILTER_MODE || 'rating';
+
+            if (sidebarMode !== 'custom' && sidebarMode !== 'off') {
+                let rating = urlParams.get('rating');
+                if (rating === null) {
+                    rating = localStorage.getItem('selectedRating') || 'safe';
+                }
+                if (rating) {
+                    params.set('rating', rating);
+                }
+            }
+
+            if (sidebarMode === 'custom' || sidebarMode === 'both') {
+                const rawCustomFilter = localStorage.getItem('selectedCustomFilter') || '';
+                try {
+                    const parsed = JSON.parse(rawCustomFilter);
+                    if (Array.isArray(parsed)) {
+                        parsed.forEach(cf => { if (cf) params.append('custom_filter', cf); });
+                    } else if (parsed) {
+                        params.append('custom_filter', parsed);
+                    }
+                } catch {
+                    if (rawCustomFilter) params.append('custom_filter', rawCustomFilter);
+                }
+            }
+
+            const res = await fetch(`/api/media/${currentMediaId}/related?${params.toString()}`, {
                 credentials: 'include'
             });
 
@@ -723,39 +750,32 @@ class MediaViewer extends MediaViewerBase {
         if (albumId) queryParams.set('album_id', albumId);
 
         let q = urlParams.get('q') || '';
-        const sidebarMode = document.body.dataset.sidebarMode || window.SIDEBAR_FILTER_MODE || 'rating';
-        if (sidebarMode === 'custom' || sidebarMode === 'both') {
-            const customFilter = localStorage.getItem('selectedCustomFilter') || '';
-            if (customFilter) {
-                if (!q) {
-                    q = customFilter;
-                } else if (!q.includes(customFilter)) {
-                    q = `${q} ${customFilter}`;
-                }
-            }
-        }
         if (q) queryParams.set('q', q);
 
-        let rating = urlParams.get('rating');
-        let ratingMode = urlParams.get('rating_mode');
-
-        if (sidebarMode === 'custom' || sidebarMode === 'off') {
-            rating = 'explicit';
-            ratingMode = null;
-        } else {
-            if (rating === null) {
-                rating = localStorage.getItem('selectedRating');
+        const sidebarMode = document.body.dataset.sidebarMode || window.SIDEBAR_FILTER_MODE || 'rating';
+        if (sidebarMode === 'custom' || sidebarMode === 'both') {
+            const rawCustomFilter = localStorage.getItem('selectedCustomFilter') || '';
+            try {
+                const parsed = JSON.parse(rawCustomFilter);
+                if (Array.isArray(parsed)) {
+                    parsed.forEach(cf => { if (cf) queryParams.append('custom_filter', cf); });
+                } else if (parsed) {
+                    queryParams.append('custom_filter', parsed);
+                }
+            } catch {
+                if (rawCustomFilter) queryParams.append('custom_filter', rawCustomFilter);
             }
-            if (!ratingMode) {
-                ratingMode = document.body.dataset.sidebarRatingMode || window.SIDEBAR_RATING_FILTER_MODE || 'inclusive';
+        }
+
+        let rating = urlParams.get('rating');
+        if (sidebarMode !== 'custom' && sidebarMode !== 'off') {
+            if (rating === null) {
+                rating = localStorage.getItem('selectedRating') || 'safe';
             }
         }
 
         if (rating) {
             queryParams.set('rating', rating);
-            if (ratingMode === 'exact') {
-                queryParams.set('rating_mode', 'exact');
-            }
         }
 
         const sort = urlParams.get('sort');

@@ -11,7 +11,8 @@ from ..models import Media
 from ..schemas import MediaResponse
 from ..utils.cache import cache_response
 from ..utils.media_sort import apply_media_sort
-from ..utils.search_parser import (apply_search_criteria, canonicalize_query,
+from ..utils.search_parser import (apply_custom_filters_or,
+                                   apply_search_criteria, canonicalize_query,
                                    parse_search_query)
 
 router = APIRouter(prefix="/api/search", tags=["search"])
@@ -23,7 +24,7 @@ async def search_media(
     request: Request,
     q: str = Query("", description="Search query"),
     rating: Optional[str] = None,
-    rating_mode: Optional[str] = None,
+    custom_filter: Optional[List[str]] = Query(default=None),
     page: int = 1,
     limit: int = Query(None),
     sort: Optional[str] = None,
@@ -40,20 +41,12 @@ async def search_media(
     parsed = parse_search_query(q)
     
     if rating and 'rating' not in parsed['meta']:
-        rating_lower = rating.lower()
-        if rating_mode == "exact":
-            parsed['meta']['rating'] = [{'value': rating_lower, 'negated': False}]
-        else:
-            if rating_lower == "explicit":
-                pass
-            elif rating_lower == "questionable":
-                parsed['meta']['rating'] = [{'value': "safe,questionable", 'negated': False}]
-            else:
-                # "safe" or any invalid rating fails closed to safe
-                parsed['meta']['rating'] = [{'value': "safe", 'negated': False}]
+        parsed['meta']['rating'] = [{'value': rating.lower(), 'negated': False}]
 
     # Apply all criteria
     query = apply_search_criteria(query, parsed, db)
+    if custom_filter:
+        query = apply_custom_filters_or(query, custom_filter, db)
 
     # Apply UI sort/order unless the search query specifies its own ordering
     if 'order' not in parsed['meta'] and 'sort' not in parsed['meta']:
@@ -81,7 +74,7 @@ async def search_media(
 async def get_random_media(
     q: str = Query("", description="Search query"),
     rating: Optional[str] = None,
-    rating_mode: Optional[str] = None,
+    custom_filter: Optional[List[str]] = Query(default=None),
     db: Session = Depends(get_db)
 ):
     """Get a random media ID matching the search criteria"""
@@ -91,19 +84,12 @@ async def get_random_media(
     parsed = parse_search_query(q)
     
     if rating and 'rating' not in parsed['meta']:
-        rating_lower = rating.lower()
-        if rating_mode == "exact":
-            parsed['meta']['rating'] = [{'value': rating_lower, 'negated': False}]
-        else:
-            if rating_lower == "explicit":
-                pass
-            elif rating_lower == "questionable":
-                parsed['meta']['rating'] = [{'value': "safe,questionable", 'negated': False}]
-            else:
-                # "safe" or any invalid rating fails closed to safe
-                parsed['meta']['rating'] = [{'value': "safe", 'negated': False}]
+        parsed['meta']['rating'] = [{'value': rating.lower(), 'negated': False}]
 
     query = apply_search_criteria(query, parsed, db)
+    if custom_filter:
+        query = apply_custom_filters_or(query, custom_filter, db)
+
     total = query.count()
     
     if total == 0:

@@ -87,14 +87,11 @@ class AlbumViewer extends BaseGallery {
             });
             if (this.currentRating) {
                 params.set('rating', this.currentRating);
-                if ((this.sidebarMode === 'rating' || this.sidebarMode === 'both') && this.sidebarRatingFilterMode === 'exact') {
-                    params.set('rating_mode', 'exact');
-                }
             }
             this.appendSortParams(params);
 
-            if (this.currentCustomFilter) {
-                params.set('q', this.currentCustomFilter);
+            if (this.selectedCustomFilters && this.selectedCustomFilters.size > 0) {
+                this.selectedCustomFilters.forEach(cf => params.append('custom_filter', cf));
             }
 
             const response = await fetch(`/api/albums/${this.albumId}/contents?${params}`);

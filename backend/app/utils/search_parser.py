@@ -928,13 +928,14 @@ def apply_sort_ordering(query: Query, order_val: str, db: Session, parsed_meta: 
     col = Media.uploaded_at
     return query.order_by(col.desc(), Media.id.desc())
 
-def apply_search_criteria(query: Query, parsed_query: Dict[str, Any], db: Session) -> Query:
+def build_search_criteria_conditions(parsed_query: Dict[str, Any], db: Session) -> List[Any]:
     """
-    Applies the parsed search criteria to a SQLAlchemy query.
+    Builds a list of SQLAlchemy filter conditions for the given parsed search query.
     """
-    tags = parsed_query['tags']
+    conditions = []
+    tags = parsed_query.get('tags', {})
 
-    include_names = [name.lower() for name in tags['include']]
+    include_names = [name.lower() for name in tags.get('include', [])]
     if include_names:
         found_tags = db.query(Tag).filter(Tag.name.in_(include_names)).all()
         # Use lowercase keys for robust lookup
@@ -943,20 +944,19 @@ def apply_search_criteria(query: Query, parsed_query: Dict[str, Any], db: Sessio
         # If any included tag is missing, result is empty (AND logic)
         for name in include_names:
             if name not in found_map:
-                from sqlalchemy import literal
-                return query.filter(literal(False))
+                return [literal(False)]
             
         # Apply filters for found tags
         for tag in found_tags:
-            query = query.filter(Media.tags.contains(tag))
+            conditions.append(Media.tags.any(Tag.id == tag.id))
 
-    exclude_names = [name.lower() for name in tags['exclude']]
+    exclude_names = [name.lower() for name in tags.get('exclude', [])]
     if exclude_names:
         found_excluded = db.query(Tag).filter(Tag.name.in_(exclude_names)).all()
         for tag in found_excluded:
-             query = query.filter(~Media.tags.contains(tag))
+            conditions.append(~Media.tags.any(Tag.id == tag.id))
 
-    for wildcard_type, pattern in tags['wildcards']:
+    for wildcard_type, pattern in tags.get('wildcards', []):
         regex_pattern = wildcard_to_regex(pattern)
         subquery = exists().where(
             and_(
@@ -966,54 +966,43 @@ def apply_search_criteria(query: Query, parsed_query: Dict[str, Any], db: Sessio
             )
         )
         if wildcard_type == 'include':
-            query = query.filter(subquery)
+            conditions.append(subquery)
         else:
-            query = query.filter(~subquery)
+            conditions.append(~subquery)
             
-    meta = parsed_query['meta']
+    meta = parsed_query.get('meta', {})
     
-    def apply_numeric_multi_filter(query, key, column, converter=int):
+    def get_numeric_multi_conditions(key, column, converter=int):
+        conds = []
         if key in meta:
             for item in meta[key]:
                 cond = build_range_condition(column, item['value'], converter=converter)
                 if cond is not None:
-                    if item['negated']:
-                        query = query.filter(not_(cond))
-                    else:
-                        query = query.filter(cond)
-        return query
+                    conds.append(not_(cond) if item['negated'] else cond)
+        return conds
 
-    query = apply_numeric_multi_filter(query, 'id', Media.id)
-    query = apply_numeric_multi_filter(query, 'width', Media.width)
-    query = apply_numeric_multi_filter(query, 'height', Media.height)
-    query = apply_numeric_multi_filter(query, 'duration', Media.duration, converter=float)
+    conditions.extend(get_numeric_multi_conditions('id', Media.id))
+    conditions.extend(get_numeric_multi_conditions('width', Media.width))
+    conditions.extend(get_numeric_multi_conditions('height', Media.height))
+    conditions.extend(get_numeric_multi_conditions('duration', Media.duration, converter=float))
 
     if 'filesize' in meta:
         for item in meta['filesize']:
             cond = build_filesize_condition(Media.file_size, item['value'])
             if cond is not None:
-                if item['negated']:
-                    query = query.filter(not_(cond))
-                else:
-                    query = query.filter(cond)
+                conditions.append(not_(cond) if item['negated'] else cond)
 
     if 'date' in meta:
         for item in meta['date']:
             cond = build_date_condition(Media.uploaded_at, item['value'])
             if cond is not None:
-                if item['negated']:
-                    query = query.filter(not_(cond))
-                else:
-                    query = query.filter(cond)
+                conditions.append(not_(cond) if item['negated'] else cond)
 
     if 'age' in meta:
         for item in meta['age']:
             cond = build_age_condition(Media.uploaded_at, item['value'])
             if cond is not None:
-                if item['negated']:
-                    query = query.filter(not_(cond))
-                else:
-                    query = query.filter(cond)
+                conditions.append(not_(cond) if item['negated'] else cond)
 
     if 'rating' in meta:
         for item in meta['rating']:
@@ -1027,9 +1016,9 @@ def apply_search_criteria(query: Query, parsed_query: Dict[str, Any], db: Sessio
 
             if ratings:
                 if item['negated']:
-                    query = query.filter(~Media.rating.in_(ratings))
+                    conditions.append(~Media.rating.in_(ratings))
                 else:
-                    query = query.filter(Media.rating.in_(ratings))
+                    conditions.append(Media.rating.in_(ratings))
 
     if 'source' in meta:
         for item in meta['source']:
@@ -1050,18 +1039,18 @@ def apply_search_criteria(query: Query, parsed_query: Dict[str, Any], db: Sessio
             if conds:
                 combined_cond = or_(*conds) if len(conds) > 1 else conds[0]
                 if item['negated']:
-                    query = query.filter(not_(combined_cond))
+                    conditions.append(not_(combined_cond))
                 else:
-                    query = query.filter(combined_cond)
+                    conditions.append(combined_cond)
 
     if 'md5' in meta:
         for item in meta['md5']:
             hashes = [h.strip() for h in item['value'].split(',') if h.strip()]
             if hashes:
                 if item['negated']:
-                    query = query.filter(~Media.hash.in_(hashes))
+                    conditions.append(~Media.hash.in_(hashes))
                 else:
-                    query = query.filter(Media.hash.in_(hashes))
+                    conditions.append(Media.hash.in_(hashes))
 
     if 'filetype' in meta:
         for item in meta['filetype']:
@@ -1078,9 +1067,9 @@ def apply_search_criteria(query: Query, parsed_query: Dict[str, Any], db: Sessio
             if conds:
                 combined_cond = or_(*conds) if len(conds) > 1 else conds[0]
                 if item['negated']:
-                    query = query.filter(not_(combined_cond))
+                    conditions.append(not_(combined_cond))
                 else:
-                    query = query.filter(combined_cond)
+                    conditions.append(combined_cond)
 
     if 'pool' in meta or 'album' in meta:
         items = meta.get('pool', []) + meta.get('album', [])
@@ -1102,9 +1091,9 @@ def apply_search_criteria(query: Query, parsed_query: Dict[str, Any], db: Sessio
             if conds:
                 combined_cond = or_(*conds) if len(conds) > 1 else conds[0]
                 if item['negated']:
-                    query = query.filter(not_(combined_cond))
+                    conditions.append(not_(combined_cond))
                 else:
-                    query = query.filter(combined_cond)
+                    conditions.append(combined_cond)
 
     if 'parent' in meta:
         for item in meta['parent']:
@@ -1123,9 +1112,9 @@ def apply_search_criteria(query: Query, parsed_query: Dict[str, Any], db: Sessio
             if conds:
                 combined_cond = or_(*conds) if len(conds) > 1 else conds[0]
                 if item['negated']:
-                    query = query.filter(not_(combined_cond))
+                    conditions.append(not_(combined_cond))
                 else:
-                    query = query.filter(combined_cond)
+                    conditions.append(combined_cond)
 
     if 'child' in meta:
         for item in meta['child']:
@@ -1145,9 +1134,9 @@ def apply_search_criteria(query: Query, parsed_query: Dict[str, Any], db: Sessio
             if conds:
                 combined_cond = or_(*conds) if len(conds) > 1 else conds[0]
                 if item['negated']:
-                    query = query.filter(not_(combined_cond))
+                    conditions.append(not_(combined_cond))
                 else:
-                    query = query.filter(combined_cond)
+                    conditions.append(combined_cond)
 
     tag_counts_map = {
         'tagcount': None,
@@ -1180,11 +1169,22 @@ def apply_search_criteria(query: Query, parsed_query: Dict[str, Any], db: Sessio
                 cond = build_range_condition(subq, item['value'], converter=int)
                 if cond is not None:
                     if item['negated']:
-                        query = query.filter(not_(cond))
+                        conditions.append(not_(cond))
                     else:
-                        query = query.filter(cond)
+                        conditions.append(cond)
+
+    return conditions
+
+def apply_search_criteria(query: Query, parsed_query: Dict[str, Any], db: Session) -> Query:
+    """
+    Applies the parsed search criteria to a SQLAlchemy query.
+    """
+    conditions = build_search_criteria_conditions(parsed_query, db)
+    for cond in conditions:
+        query = query.filter(cond)
 
     order_val = None
+    meta = parsed_query.get('meta', {})
     if 'order' in meta:
         order_val = meta['order'][-1]['value']
     elif 'sort' in meta:
@@ -1192,5 +1192,42 @@ def apply_search_criteria(query: Query, parsed_query: Dict[str, Any], db: Sessio
         
     if order_val:
         query = apply_sort_ordering(query, order_val, db, meta)
+
+    return query
+
+def apply_custom_filters_or(query: Query, custom_filters: Any, db: Session) -> Query:
+    """
+    Applies multiple custom filter query strings combined with OR logic.
+    Each individual custom filter string has its internal tokens ANDed together.
+    """
+    if not custom_filters or not isinstance(custom_filters, (list, tuple, str, set)):
+        return query
+
+    if isinstance(custom_filters, str):
+        filters_list = [custom_filters]
+    else:
+        filters_list = list(custom_filters)
+
+    clean_filters = [cf.strip() for cf in filters_list if isinstance(cf, str) and cf.strip()]
+    if not clean_filters:
+        return query
+
+    branch_conditions = []
+    for cf in clean_filters:
+        cf_parsed = parse_search_query(cf)
+        conds = build_search_criteria_conditions(cf_parsed, db)
+        if conds:
+            if len(conds) == 1:
+                branch_conditions.append(conds[0])
+            else:
+                branch_conditions.append(and_(*conds))
+        else:
+            branch_conditions.append(literal(True))
+
+    if branch_conditions:
+        if len(branch_conditions) == 1:
+            query = query.filter(branch_conditions[0])
+        else:
+            query = query.filter(or_(*branch_conditions))
 
     return query

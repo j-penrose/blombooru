@@ -40,9 +40,6 @@ class Gallery extends BaseGallery {
             apiParams.set('page', this.currentPage);
             if (this.currentRating) {
                 apiParams.set('rating', this.currentRating);
-                if ((this.sidebarMode === 'rating' || this.sidebarMode === 'both') && this.sidebarRatingFilterMode === 'exact') {
-                    apiParams.set('rating_mode', 'exact');
-                }
             }
             this.appendSortParams(apiParams);
 
@@ -52,16 +49,13 @@ class Gallery extends BaseGallery {
 
             let endpoint = '/api/media/';
 
-            // Combine URL search query with custom filter
-            let combinedQuery = '';
-            if (searchQuery) combinedQuery = searchQuery;
-            if (this.currentCustomFilter) {
-                combinedQuery = combinedQuery ? `${combinedQuery} ${this.currentCustomFilter}` : this.currentCustomFilter;
+            if (searchQuery) {
+                endpoint = '/api/search';
+                apiParams.set('q', searchQuery);
             }
 
-            if (combinedQuery) {
-                endpoint = '/api/search';
-                apiParams.set('q', combinedQuery);
+            if (this.selectedCustomFilters && this.selectedCustomFilters.size > 0) {
+                this.selectedCustomFilters.forEach(cf => apiParams.append('custom_filter', cf));
             }
 
             console.log('Loading gallery:', endpoint, apiParams.toString());
