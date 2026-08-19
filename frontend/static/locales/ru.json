@@ -409,7 +409,6 @@
             "danger_zone": "Опасная зона",
             "apply_aliases_to_all": "",
             "apply_aliases_confirm_1_msg": "",
-            "apply_aliases_confirm_2_msg": "",
             "apply_aliases_processing": "",
             "apply_aliases_no_affected": "",
             "delete_all_tags": "Удалить все теги",
@@ -449,7 +448,6 @@
             "description": "Связки тегов позволяют определять взаимосвязи между тегами. Когда целевой тег применяется к медиафайлу, связанные с ним теги также применяются автоматически. Если целевых тегов несколько, связанные теги добавятся только в том случае, если все целевые теги присутствуют в медиафайле.",
             "apply_all": "",
             "apply_all_confirm_1_msg": "",
-            "apply_all_confirm_2_msg": "",
             "apply_all_processing": "",
             "apply_all_no_affected": ""
         },

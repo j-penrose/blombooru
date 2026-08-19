@@ -235,17 +235,8 @@ class TagImplicationManager {
             message: window.i18n.t('admin.tags_implications.apply_all_confirm_1_msg'),
             confirmText: window.i18n.t('common.yes'),
             cancelText: window.i18n.t('common.no'),
-            onConfirm: () => {
-                new ModalHelper({
-                    type: 'danger',
-                    title: window.i18n.t('common.confirm_2_title'),
-                    message: window.i18n.t('admin.tags_implications.apply_all_confirm_2_msg'),
-                    confirmText: window.i18n.t('common.yes'),
-                    cancelText: window.i18n.t('common.no'),
-                    onConfirm: async () => {
-                        this.executeApplyAll();
-                    }
-                }).show();
+            onConfirm: async () => {
+                this.executeApplyAll();
             }
         }).show();
     }
