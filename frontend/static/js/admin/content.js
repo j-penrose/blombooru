@@ -852,7 +852,7 @@ class AdminContent {
                 }
 
                 return `
-                <div class="bg p-3 ${i === arr.length - 1 ? '' : 'border-b'} flex flex-wrap items-center gap-2">
+                <div class="bg px-2 py-1.5 ${i === arr.length - 1 ? '' : 'border-b'} flex flex-wrap items-center gap-2">
                     <div class="flex items-center gap-2 min-w-0">
                         <button class="manage-tag-btn flex-shrink-0 flex items-center justify-center w-7 h-7 bg-primary hover:bg-primary border-primary hover:border-primary transition-colors"
                             data-tag-id="${tag.id}"
