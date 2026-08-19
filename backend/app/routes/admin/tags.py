@@ -12,6 +12,7 @@ from ...config import settings
 from ...utils.request_helpers import safe_error_detail
 from ...database import get_db
 from ...models import Media, Tag, TagAlias, User
+from ...utils.cache import invalidate_tag_cache
 from ...utils.logger import logger
 
 router = APIRouter()
@@ -214,6 +215,8 @@ def import_tags_csv_logic(csv_text: str, db: Session):
     
     logger.info(f"Pass 2 complete: {aliases_created} aliases created, {skipped_long_aliases} skipped")
     
+    invalidate_tag_cache()
+
     return {
         "message_key": "notifications.admin.tags_imported",
         "tags_created": tags_created,
@@ -288,6 +291,7 @@ async def clear_all_tags(
         db.query(Tag).delete()
         
         db.commit()
+        invalidate_tag_cache()
         
         return {"message_key": "notifications.admin.tags_cleared"}
     except Exception as e:
@@ -311,6 +315,7 @@ async def delete_tag(
         
         db.delete(tag)
         db.commit()
+        invalidate_tag_cache()
         
         if settings.SHARED_TAGS_ENABLED:
             from ...database import get_shared_db, is_shared_db_available
@@ -365,7 +370,6 @@ async def update_tag(
 ):
     """Rename a tag, change its category, and update its aliases"""
     from ...models import TagAlias
-    from ...utils.cache import invalidate_tag_cache
 
     try:
         tag = db.query(Tag).filter(Tag.id == tag_id).first()
@@ -495,6 +499,8 @@ async def bulk_create_tags(
             
     try:
         db.commit()
+        if created > 0:
+            invalidate_tag_cache()
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=safe_error_detail("Database error", e))
@@ -519,6 +525,7 @@ def cleanup_aliased_tags_logic(db: Session):
             for t in tags_to_delete:
                 db.delete(t)
             db.commit()
+            invalidate_tag_cache()
             return count
     return 0
 
@@ -661,7 +668,6 @@ async def merge_tag(
         db.rollback()
         raise HTTPException(status_code=500, detail=safe_error_detail("Failed to merge tag", e))
         
-    from ...utils.cache import invalidate_tag_cache
     invalidate_tag_cache()
 
     return {

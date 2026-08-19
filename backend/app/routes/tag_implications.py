@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, joinedload
 from ..auth import require_admin_mode
 from ..database import get_db
 from ..models import Media, Tag, TagImplication, User
+from ..utils.cache import invalidate_tag_cache
 from ..utils.tag_utils import expand_implications
 
 router = APIRouter(prefix="/api/tag-implications", tags=["tag-implications"])
@@ -116,6 +117,7 @@ async def create_implication(
     db.add(implication)
     db.commit()
     db.refresh(implication)
+    invalidate_tag_cache()
 
     if implication.target_tag_patterns is None:
         implication.target_tag_patterns = []
@@ -153,6 +155,7 @@ async def update_implication(
 
     db.commit()
     db.refresh(implication)
+    invalidate_tag_cache()
 
     if implication.target_tag_patterns is None:
         implication.target_tag_patterns = []
@@ -172,6 +175,7 @@ async def delete_implication(
 
     db.delete(implication)
     db.commit()
+    invalidate_tag_cache()
 
     return {"status": "success"}
 
