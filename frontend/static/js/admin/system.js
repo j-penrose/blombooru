@@ -1,6 +1,7 @@
 class AdminSystem {
     constructor(adminPanel) {
         this.app = adminPanel;
+        this._currentThemeId = null;
     }
 
     setupCustomSelects() {
@@ -160,6 +161,9 @@ class AdminSystem {
             bgEnabled.addEventListener('change', () => {
                 bgOptions.style.display = bgEnabled.checked ? '' : 'none';
                 this._applyBgPreview();
+                if (!bgEnabled.checked) {
+                    this.saveCustomBackground();
+                }
             });
         }
 
@@ -883,25 +887,28 @@ class AdminSystem {
             }
             window._appName = appName;
 
-            let themes = this._themes || [];
-            let targetTheme = themes.find(t => t.id === theme);
-            if (!targetTheme) {
-                try {
-                    const themeResp = await fetch('/api/admin/themes');
-                    if (themeResp.ok) {
-                        const themeData = await themeResp.json();
-                        this._themes = themeData.themes || [];
-                        targetTheme = this._themes.find(t => t.id === theme);
+            if (this._currentThemeId !== theme) {
+                let themes = this._themes || [];
+                let targetTheme = themes.find(t => t.id === theme);
+                if (!targetTheme) {
+                    try {
+                        const themeResp = await fetch('/api/admin/themes');
+                        if (themeResp.ok) {
+                            const themeData = await themeResp.json();
+                            this._themes = themeData.themes || [];
+                            targetTheme = this._themes.find(t => t.id === theme);
+                        }
+                    } catch (e) {
+                        console.error('Error fetching themes for on-the-fly update:', e);
                     }
-                } catch (e) {
-                    console.error('Error fetching themes for on-the-fly update:', e);
                 }
-            }
-            if (targetTheme && targetTheme.css_path) {
-                const themeLink = document.getElementById('theme-stylesheet');
-                if (themeLink) {
-                    themeLink.href = `${targetTheme.css_path}?v=${Date.now()}`;
+                if (targetTheme && targetTheme.css_path) {
+                    const themeLink = document.getElementById('theme-stylesheet');
+                    if (themeLink) {
+                        themeLink.href = `${targetTheme.css_path}?v=${Date.now()}`;
+                    }
                 }
+                this._currentThemeId = theme;
             }
             await this.loadThemes();
 
@@ -912,6 +919,16 @@ class AdminSystem {
     }
 
     async saveCustomBackground() {
+        const bgEnabled = document.getElementById('custom-bg-enabled');
+        const isChecked = bgEnabled ? bgEnabled.checked : false;
+
+        if (isChecked && !this._customBgMediaId) {
+            if (bgEnabled) bgEnabled.checked = false;
+            const bgOptions = document.getElementById('custom-bg-options');
+            if (bgOptions) bgOptions.style.display = 'none';
+            this._applyBgPreview();
+        }
+
         const bgSettings = {
             enabled: document.getElementById('custom-bg-enabled')?.checked || false,
             media_id: this._customBgMediaId || null,
@@ -993,6 +1010,9 @@ class AdminSystem {
             const response = await fetch('/api/admin/themes');
             const data = await response.json();
             this._themes = data.themes || [];
+            if (data.current_theme) {
+                this._currentThemeId = data.current_theme;
+            }
 
             if (!this.themeSelect) {
                 console.error('themeSelect is not initialized!');
