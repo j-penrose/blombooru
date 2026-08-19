@@ -105,16 +105,19 @@ class SharedTagService:
     
     def autocomplete_merged(self, query: str, limit: int = 50) -> List[Dict[str, Any]]:
         """Get autocomplete suggestions from both databases"""
-        from sqlalchemy import case
+        from sqlalchemy import case, desc, func
 
         from ..models import Tag, TagAlias
         
         results = []
         seen_names = set()
+        q_lower = query.strip().lower()
+        if not q_lower:
+            return []
         
         # Check local alias first
         alias = self.local_db.query(TagAlias).filter(
-            TagAlias.alias_name.ilike(query)
+            TagAlias.alias_name.ilike(q_lower)
         ).first()
         
         if alias:
@@ -125,20 +128,26 @@ class SharedTagService:
                     "category": target_tag.category,
                     "count": target_tag.post_count,
                     "is_alias": True,
-                    "alias_name": query.lower(),
+                    "alias_name": q_lower,
                     "source": "local"
                 })
                 seen_names.add(target_tag.name)
         
         # Query local tags
         priority = case(
-            (Tag.name.ilike(f"{query}%"), 1),
-            else_=2
+            (func.lower(Tag.name) == q_lower, 1),
+            (Tag.name.ilike(f"{q_lower}%"), 2),
+            else_=3
         )
         
         local_tags = self.local_db.query(Tag).filter(
-            Tag.name.ilike(f"%{query}%")
-        ).order_by(priority, desc(Tag.post_count)).limit(limit).all()
+            Tag.name.ilike(f"%{q_lower}%")
+        ).order_by(
+            priority,
+            desc(Tag.post_count),
+            func.length(Tag.name),
+            Tag.name
+        ).limit(limit).all()
         
         for tag in local_tags:
             if tag.name not in seen_names:
@@ -157,9 +166,9 @@ class SharedTagService:
             remaining = limit - len(results)
             
             # Check shared aliases
-            if query.lower() not in [r.get("alias_name", "") for r in results]:
+            if q_lower not in [r.get("alias_name", "") for r in results]:
                 shared_alias = self.shared_db.query(SharedTagAlias).filter(
-                    SharedTagAlias.alias_name.ilike(query)
+                    SharedTagAlias.alias_name.ilike(q_lower)
                 ).first()
                 
                 if shared_alias:
@@ -172,14 +181,24 @@ class SharedTagService:
                             "category": shared_target.category.value if hasattr(shared_target.category, 'value') else shared_target.category,
                             "count": 0,
                             "is_alias": True,
-                            "alias_name": query.lower(),
+                            "alias_name": q_lower,
                             "source": "shared"
                         })
                         seen_names.add(shared_target.name)
             
+            shared_priority = case(
+                (func.lower(SharedTag.name) == q_lower, 1),
+                (SharedTag.name.ilike(f"{q_lower}%"), 2),
+                else_=3
+            )
+            
             shared_tags = self.shared_db.query(SharedTag).filter(
-                SharedTag.name.ilike(f"%{query}%"),
+                SharedTag.name.ilike(f"%{q_lower}%"),
                 ~SharedTag.name.in_(seen_names) if seen_names else True
+            ).order_by(
+                shared_priority,
+                func.length(SharedTag.name),
+                SharedTag.name
             ).limit(remaining).all()
             
             for st in shared_tags:

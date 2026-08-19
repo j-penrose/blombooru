@@ -136,14 +136,24 @@ async def autocomplete_tags(
                 except StopIteration:
                     pass
     
+    q_lower = q.strip().lower()
+    if not q_lower:
+        return []
+    
     priority = case(
-        (Tag.name.ilike(f"{q}%"), 1),
-        else_=2
+        (func.lower(Tag.name) == q_lower, 1),
+        (Tag.name.ilike(f"{q_lower}%"), 2),
+        else_=3
     )
     
     tags = db.query(Tag).filter(
-        Tag.name.ilike(f"%{q}%")
-    ).order_by(priority, desc(Tag.post_count)).limit(50).all()
+        Tag.name.ilike(f"%{q_lower}%")
+    ).order_by(
+        priority,
+        desc(Tag.post_count),
+        func.length(Tag.name),
+        Tag.name
+    ).limit(50).all()
     
     seen_tags = {tag.name for tag in tags}
     results = [
@@ -154,7 +164,7 @@ async def autocomplete_tags(
     if len(results) < 50:
         aliases = (
             db.query(TagAlias)
-            .filter(TagAlias.alias_name.ilike(f"{q}%"))
+            .filter(TagAlias.alias_name.ilike(f"{q_lower}%"))
             .limit(50 - len(results))
             .all()
         )

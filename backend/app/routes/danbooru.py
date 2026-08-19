@@ -683,16 +683,26 @@ async def get_autocomplete_json(
     limit: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db)
 ):
-    if not query:
+    if not query or not query.strip():
         return []
+
+    q_lower = query.strip().lower()
+
+    priority = case(
+        (func.lower(Tag.name) == q_lower, 1),
+        (Tag.name.ilike(f"{q_lower}%"), 2),
+        else_=3
+    )
 
     tags = db.query(Tag).options(
         load_only(Tag.id, Tag.name, Tag.post_count, Tag.category)
     ).filter(
-        Tag.name.ilike(f"%{query}%")
+        Tag.name.ilike(f"%{q_lower}%")
     ).order_by(
-        case((Tag.name.ilike(f"{query}%"), 1), else_=2),
-        desc(Tag.post_count)
+        priority,
+        desc(Tag.post_count),
+        func.length(Tag.name),
+        Tag.name
     ).limit(limit).all()
 
     response_type = type or "tag_query"
