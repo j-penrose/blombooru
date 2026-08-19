@@ -39,6 +39,8 @@
 }
 
 input[type="radio"]:checked+span,
+.rating-filter-input:checked+.rating-filter-label,
+.custom-filter-input:checked+.custom-filter-label,
 span.checked {
     border-color: var(--primary-color);
     background-color: var(--primary-color);
@@ -46,8 +48,20 @@ span.checked {
 }
 
 input[type="radio"]:checked+span:hover,
+.rating-filter-input:checked+.rating-filter-label:hover,
+.custom-filter-input:checked+.custom-filter-label:hover,
 span.checked:hover {
     background-color: var(--primary-hover);
+}
+
+.filter-check-icon {
+    display: none;
+}
+
+.rating-filter-input:checked+.rating-filter-label .filter-check-icon,
+.custom-filter-input:checked+.custom-filter-label .filter-check-icon,
+span.checked .filter-check-icon {
+    display: block;
 }
 
 /* Header logo and title styling

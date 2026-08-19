@@ -107,10 +107,15 @@
 {% macro _rating_options(padding='py-1') %}
 {% for rating in ['safe', 'questionable', 'explicit'] %}
 <label class="flex-1">
-    <input type="radio" name="rating" value="{{ rating }}" class="hidden rating-filter-input">
+    <input type="checkbox" name="rating" value="{{ rating }}" class="hidden rating-filter-input">
     <span
-        class="block text-center px-3 {{ padding }} border-1 cursor-pointer bg hover:border-primary transition-colors rating-filter-label">
-        {{ t('common.' + rating) }}
+        class="relative block text-center px-3 {{ padding }} border-1 cursor-pointer bg hover:border-primary transition-colors rating-filter-label">
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"
+            class="absolute left-2 top-1/2 -translate-y-1/2 filter-check-icon">
+            <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+        <span>{{ t('common.' + rating) }}</span>
     </span>
 </label>
 {% endfor %}
@@ -119,10 +124,15 @@
 {% macro _custom_buttons(buttons, padding='py-1') %}
 {% for button in buttons %}
 <label class="flex-1">
-    <input type="radio" name="custom_filter" value="{{ button.tags }}" class="hidden custom-filter-input">
+    <input type="checkbox" name="custom_filter" value="{{ button.tags }}" class="hidden custom-filter-input">
     <span
-        class="block text-center px-3 {{ padding }} border-1 cursor-pointer bg hover:border-primary transition-colors custom-filter-label">
-        {{ button.title }}
+        class="relative block text-center px-3 {{ padding }} border-1 cursor-pointer bg hover:border-primary transition-colors custom-filter-label">
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"
+            class="absolute left-2 top-1/2 -translate-y-1/2 filter-check-icon">
+            <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+        <span>{{ button.title }}</span>
     </span>
 </label>
 {% endfor %}

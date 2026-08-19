@@ -33,9 +33,6 @@ class AlbumsOverview extends BaseGallery {
             });
             if (this.currentRating) {
                 params.set('rating', this.currentRating);
-                if ((this.sidebarMode === 'rating' || this.sidebarMode === 'both') && this.sidebarRatingFilterMode === 'exact') {
-                    params.set('rating_mode', 'exact');
-                }
             }
             this.appendSortParams(params);
 

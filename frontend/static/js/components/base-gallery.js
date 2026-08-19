@@ -52,18 +52,48 @@ class BaseGallery {
 
         const sidebarMode = document.body.dataset.sidebarMode || window.SIDEBAR_FILTER_MODE || 'rating';
         this.sidebarMode = sidebarMode;
-        this.sidebarRatingFilterMode = document.body.dataset.sidebarRatingMode || window.SIDEBAR_RATING_FILTER_MODE || 'inclusive';
+
+        // Rating initialization
+        const rawStoredRating = localStorage.getItem('selectedRating') || cookieRating;
+        let initialRatings = [];
 
         if (sidebarMode === 'custom' || sidebarMode === 'off') {
-            this.currentRating = 'explicit';
-            this.currentCustomFilter = sidebarMode === 'custom' ? (localStorage.getItem('selectedCustomFilter') || '') : '';
-        } else if (sidebarMode === 'both') {
-            this.currentCustomFilter = localStorage.getItem('selectedCustomFilter') || '';
-            this.currentRating = localStorage.getItem('selectedRating') || cookieRating || (this.sidebarRatingFilterMode === 'exact' ? '' : this.options.defaultRating);
-        } else {
-            this.currentCustomFilter = '';
-            this.currentRating = localStorage.getItem('selectedRating') || cookieRating || (this.sidebarRatingFilterMode === 'exact' ? '' : this.options.defaultRating);
+            initialRatings = ['safe', 'questionable', 'explicit'];
+        } else if (rawStoredRating) {
+            initialRatings = rawStoredRating
+                .split(',')
+                .map(r => r.trim().toLowerCase())
+                .filter(r => ['safe', 'questionable', 'explicit'].includes(r));
         }
+
+        if (initialRatings.length === 0) {
+            initialRatings = ['safe'];
+        }
+
+        this.selectedRatings = new Set(initialRatings);
+        this.currentRating = Array.from(this.selectedRatings).join(',');
+
+        // Custom filters initialization
+        const rawCustomFilter = localStorage.getItem('selectedCustomFilter') || '';
+        let initialCustomFilters = [];
+        if (sidebarMode === 'custom' || sidebarMode === 'both') {
+            if (rawCustomFilter) {
+                try {
+                    const parsed = JSON.parse(rawCustomFilter);
+                    if (Array.isArray(parsed)) {
+                        initialCustomFilters = parsed;
+                    } else if (typeof parsed === 'string' && parsed) {
+                        initialCustomFilters = [parsed];
+                    }
+                } catch {
+                    if (typeof rawCustomFilter === 'string' && rawCustomFilter) {
+                        initialCustomFilters = [rawCustomFilter];
+                    }
+                }
+            }
+        }
+        this.selectedCustomFilters = new Set(initialCustomFilters);
+        this.currentCustomFilter = Array.from(this.selectedCustomFilters).join(' ');
 
         const urlParams = new URLSearchParams(window.location.search);
         const sortControls = document.querySelector('.js-sort-controls');
@@ -115,108 +145,96 @@ class BaseGallery {
     // ==================== Rating Filter ====================
 
     setupRatingFilter() {
-        document.querySelectorAll('.rating-filter-input').forEach(radio => {
-            // In exact mode, allow deselecting by clicking already-selected button
-            radio.addEventListener('click', (e) => {
-                if (this.sidebarRatingFilterMode === 'exact' && radio.checked && radio.dataset.wasChecked === 'true') {
-                    // Deselect
-                    radio.checked = false;
-                    radio.dataset.wasChecked = 'false';
-                    this.currentRating = '';
-                    this.updateRatingFilterLabels('');
-                    localStorage.setItem('selectedRating', '');
-                    document.cookie = "rating_filter=; path=/; max-age=0";
-                    this.onRatingChange();
+        document.querySelectorAll('.rating-filter-input').forEach(checkbox => {
+            // Prevent unchecking the last selected rating
+            checkbox.addEventListener('click', (e) => {
+                const val = checkbox.value;
+                if (this.selectedRatings.has(val) && this.selectedRatings.size === 1) {
                     e.preventDefault();
-                } else {
-                    radio.dataset.wasChecked = 'true';
-                    document.querySelectorAll('.rating-filter-input').forEach(r => {
-                        if (r !== radio) r.dataset.wasChecked = 'false';
-                    });
+                    checkbox.checked = true;
+                    return;
                 }
             });
 
-            radio.addEventListener('change', (e) => {
-                this.currentRating = e.target.value;
-                this.updateRatingFilterLabels(this.currentRating);
-                localStorage.setItem('selectedRating', this.currentRating);
-                document.cookie = "rating_filter=" + this.currentRating + "; path=/; max-age=31536000";
+            checkbox.addEventListener('change', (e) => {
+                const val = e.target.value;
+                if (e.target.checked) {
+                    this.selectedRatings.add(val);
+                } else {
+                    if (this.selectedRatings.size > 1) {
+                        this.selectedRatings.delete(val);
+                    } else {
+                        e.target.checked = true;
+                        return;
+                    }
+                }
+                const ratingStr = Array.from(this.selectedRatings).join(',');
+                this.currentRating = ratingStr;
+                this.updateRatingFilterLabels();
+                localStorage.setItem('selectedRating', ratingStr);
+                document.cookie = "rating_filter=" + ratingStr + "; path=/; max-age=31536000";
                 this.onRatingChange();
             });
         });
 
         // Set initial state
-        if (this.currentRating) {
-            const savedRadio = document.querySelector(`.rating-filter-input[value="${this.currentRating}"]`);
-            if (savedRadio) {
-                savedRadio.checked = true;
-                savedRadio.dataset.wasChecked = 'true';
-                this.updateRatingFilterLabels(this.currentRating);
-            }
-        } else {
-            this.updateRatingFilterLabels('');
-        }
+        const ratingStr = Array.from(this.selectedRatings).join(',');
+        this.currentRating = ratingStr;
+        localStorage.setItem('selectedRating', ratingStr);
+        document.cookie = "rating_filter=" + ratingStr + "; path=/; max-age=31536000";
+        this.updateRatingFilterLabels();
 
         this.setupCustomFilterButtons();
     }
 
     setupCustomFilterButtons() {
-        document.querySelectorAll('.custom-filter-input').forEach(radio => {
-            // Allow deselecting by clicking already-selected buttons
-            radio.addEventListener('click', (e) => {
-                if (radio.checked && radio.dataset.wasChecked === 'true') {
-                    // Deselect
-                    radio.checked = false;
-                    radio.dataset.wasChecked = 'false';
-                    this.currentCustomFilter = '';
-                    this.updateCustomFilterLabels('');
-                    localStorage.setItem('selectedCustomFilter', '');
-                    this.onCustomFilterChange();
-                    e.preventDefault();
+        document.querySelectorAll('.custom-filter-input').forEach(checkbox => {
+            checkbox.addEventListener('change', (e) => {
+                const val = e.target.value;
+                if (e.target.checked) {
+                    this.selectedCustomFilters.add(val);
                 } else {
-                    radio.dataset.wasChecked = 'true';
-                    // Clear wasChecked from other radios
-                    document.querySelectorAll('.custom-filter-input').forEach(r => {
-                        if (r !== radio) r.dataset.wasChecked = 'false';
-                    });
+                    this.selectedCustomFilters.delete(val);
                 }
-            });
-
-            radio.addEventListener('change', (e) => {
-                this.currentCustomFilter = e.target.value;
-                this.updateCustomFilterLabels(this.currentCustomFilter);
-                localStorage.setItem('selectedCustomFilter', this.currentCustomFilter);
+                const filterArray = Array.from(this.selectedCustomFilters);
+                this.currentCustomFilter = filterArray.join(' ');
+                this.updateCustomFilterLabels();
+                localStorage.setItem('selectedCustomFilter', JSON.stringify(filterArray));
                 this.onCustomFilterChange();
             });
         });
 
-        // Set initial state - validate whether button for currentCustomFilter exists
-        let savedRadio = null;
-        if (this.currentCustomFilter) {
-            savedRadio = document.querySelector(`.custom-filter-input[value="${CSS.escape ? CSS.escape(this.currentCustomFilter) : this.currentCustomFilter}"]`);
+        // Set initial state - validate whether buttons for selectedCustomFilters exist
+        const availableInputs = document.querySelectorAll('.custom-filter-input');
+        if (availableInputs.length > 0) {
+            const availableValues = new Set(Array.from(availableInputs).map(input => input.value));
+            for (const val of Array.from(this.selectedCustomFilters)) {
+                if (!availableValues.has(val)) {
+                    this.selectedCustomFilters.delete(val);
+                }
+            }
         }
-        if (savedRadio) {
-            savedRadio.checked = true;
-            savedRadio.dataset.wasChecked = 'true';
-            this.updateCustomFilterLabels(this.currentCustomFilter);
-        } else if (this.currentCustomFilter) {
-            // Stored custom filter button no longer exists, clear it
-            this.currentCustomFilter = '';
-            localStorage.setItem('selectedCustomFilter', '');
-            this.updateCustomFilterLabels('');
-        }
+        const filterArray = Array.from(this.selectedCustomFilters);
+        this.currentCustomFilter = filterArray.join(' ');
+        localStorage.setItem('selectedCustomFilter', JSON.stringify(filterArray));
+        this.updateCustomFilterLabels();
     }
 
-    updateCustomFilterLabels(selectedValue) {
+    updateCustomFilterLabels() {
         document.querySelectorAll('.custom-filter-label').forEach(label => {
             label.classList.remove('checked');
         });
 
-        document.querySelectorAll(`.custom-filter-input[value="${selectedValue}"]`).forEach(radio => {
-            radio.checked = true;
-            const label = radio.nextElementSibling;
+        document.querySelectorAll('.custom-filter-input').forEach(checkbox => {
+            const isChecked = this.selectedCustomFilters.has(checkbox.value);
+            checkbox.checked = isChecked;
+            const label = checkbox.nextElementSibling;
             if (label) {
-                label.classList.add('checked');
+                if (isChecked) {
+                    label.classList.add('checked');
+                } else {
+                    label.classList.remove('checked');
+                }
             }
         });
     }
@@ -225,21 +243,23 @@ class BaseGallery {
         this.loadContent();
     }
 
-    updateRatingFilterLabels(selectedValue) {
+    updateRatingFilterLabels() {
         document.querySelectorAll('.rating-filter-label').forEach(label => {
             label.classList.remove('checked');
         });
 
-        if (selectedValue) {
-            document.querySelectorAll(`.rating-filter-input[value="${selectedValue}"]`).forEach(radio => {
-                radio.checked = true;
-                radio.dataset.wasChecked = 'true';
-                const label = radio.nextElementSibling;
-                if (label) {
+        document.querySelectorAll('.rating-filter-input').forEach(checkbox => {
+            const isChecked = this.selectedRatings.has(checkbox.value);
+            checkbox.checked = isChecked;
+            const label = checkbox.nextElementSibling;
+            if (label) {
+                if (isChecked) {
                     label.classList.add('checked');
+                } else {
+                    label.classList.remove('checked');
                 }
-            });
-        }
+            }
+        });
     }
 
     onRatingChange() {
@@ -1385,9 +1405,9 @@ class BaseGallery {
             });
             if (this.currentRating) {
                 params.set('rating', this.currentRating);
-                if ((this.sidebarMode === 'rating' || this.sidebarMode === 'both') && this.sidebarRatingFilterMode === 'exact') {
-                    params.set('rating_mode', 'exact');
-                }
+            }
+            if (this.selectedCustomFilters && this.selectedCustomFilters.size > 0) {
+                this.selectedCustomFilters.forEach(cf => params.append('custom_filter', cf));
             }
             const res = await fetch(`/api/tags/search-related?${params.toString()}`, {
                 credentials: 'include'

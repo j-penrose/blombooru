@@ -21,7 +21,8 @@ from ..utils.album_utils import (get_album_popular_tags, get_album_rating,
 from ..utils.cache import cache_response, invalidate_album_cache
 from ..utils.logger import logger
 from ..utils.media_sort import apply_album_sort, apply_media_sort
-from ..utils.search_parser import apply_search_criteria, parse_search_query
+from ..utils.search_parser import (apply_custom_filters_or,
+                                   apply_search_criteria, parse_search_query)
 
 router = APIRouter(prefix="/api/albums", tags=["albums"])
 
@@ -42,12 +43,13 @@ async def get_albums(
     order: Optional[str] = Query(default="desc"),
     seed: Optional[str] = Query(default=None),
     rating: Optional[str] = None,
-    rating_mode: Optional[str] = None,
     root_only: bool = Query(default=False),
     db: Session = Depends(get_db)
 ):
     """Get paginated album list"""
     limit = get_effective_limit(limit)
+    if not isinstance(page, int) or page <= 0:
+        page = 1
     
     # Build query
     query = db.query(Album)
@@ -78,25 +80,10 @@ async def get_albums(
         
         # Apply rating filter
         if rating:
-            rating_lower = rating.lower()
-            if rating_mode == "exact":
-                target_enum = {
-                    "safe": RatingEnum.safe,
-                    "questionable": RatingEnum.questionable,
-                    "explicit": RatingEnum.explicit
-                }.get(rating_lower)
-                if album_rating != target_enum:
-                    continue
-            else:
-                if rating_lower == "explicit":
-                    pass
-                elif rating_lower == "questionable":
-                    if album_rating == RatingEnum.explicit:
-                        continue
-                else:
-                    # "safe" or any invalid rating fails closed to safe
-                    if album_rating != RatingEnum.safe:
-                        continue
+            ratings_list = [r.strip().lower() for r in rating.split(",") if r.strip()]
+            valid_ratings = [RatingEnum[r] for r in ratings_list if r in RatingEnum.__members__]
+            if valid_ratings and album_rating not in valid_ratings:
+                continue
         
         filtered_albums.append((album, album_rating, metrics['count']))
     
@@ -373,8 +360,8 @@ async def get_album_contents(
     page: int = Query(default=1, ge=1),
     limit: Optional[int] = Query(default=None),
     rating: Optional[str] = Query(default=None),
-    rating_mode: Optional[str] = Query(default=None),
     q: Optional[str] = Query(default=None),
+    custom_filter: Optional[List[str]] = Query(default=None),
     sort: str = Query(default="uploaded_at"),
     order: str = Query(default="desc"),
     seed: Optional[str] = Query(default=None),
@@ -417,37 +404,20 @@ async def get_album_contents(
         
         # Merge rating filter into parsed query if provided and not already in query
         if rating and 'rating' not in parsed['meta']:
-            rating_lower = rating.lower()
-            if rating_mode == "exact":
-                parsed['meta']['rating'] = [{'value': rating_lower, 'negated': False}]
-            else:
-                if rating_lower == "explicit":
-                    pass
-                elif rating_lower == "questionable":
-                    parsed['meta']['rating'] = [{'value': "safe,questionable", 'negated': False}]
-                else:
-                    parsed['meta']['rating'] = [{'value': "safe", 'negated': False}]
+            parsed['meta']['rating'] = [{'value': rating.lower(), 'negated': False}]
         
         # Apply search criteria to media query
         media_query = apply_search_criteria(media_query, parsed, db)
     else:
         # Filter Rating (only if no tag query provided)
         if rating:
-            rating_lower = rating.lower()
-            if rating_mode == "exact":
-                exact_rating = {
-                    "safe": RatingEnum.safe,
-                    "questionable": RatingEnum.questionable,
-                    "explicit": RatingEnum.explicit
-                }.get(rating_lower)
-                media_query = media_query.filter(Media.rating == exact_rating)
-            else:
-                if rating_lower == "explicit":
-                    pass
-                elif rating_lower == "questionable":
-                    media_query = media_query.filter(Media.rating.in_([RatingEnum.safe, RatingEnum.questionable]))
-                else:
-                    media_query = media_query.filter(Media.rating == RatingEnum.safe)
+            ratings_list = [r.strip().lower() for r in rating.split(",") if r.strip()]
+            valid_ratings = [RatingEnum[r] for r in ratings_list if r in RatingEnum.__members__]
+            if valid_ratings:
+                media_query = media_query.filter(Media.rating.in_(valid_ratings))
+    
+    if custom_filter:
+        media_query = apply_custom_filters_or(media_query, custom_filter, db)
     
     # Sort Media
     if not q or not isinstance(q, str) or ('order' not in parsed['meta'] and 'sort' not in parsed['meta']):
@@ -490,28 +460,16 @@ async def get_album_contents(
         child_ids = [c.id for c in child_albums]
         all_metrics = get_bulk_album_metrics(child_ids, db)
         
-        rating_priority = {RatingEnum.explicit: 3, RatingEnum.questionable: 2, RatingEnum.safe: 1}
-        
         for child in child_albums:
             metrics = all_metrics.get(child.id, {'rating': RatingEnum.safe, 'count': 0})
             child_rating = metrics['rating']
             
             # Skip if rating does not match current filter
             if rating:
-                rating_lower = rating.lower()
-                if rating_mode == "exact":
-                    target_enum = {
-                        "safe": RatingEnum.safe,
-                        "questionable": RatingEnum.questionable,
-                        "explicit": RatingEnum.explicit
-                    }.get(rating_lower)
-                    if child_rating != target_enum:
-                        continue
-                else:
-                    target_rating = RatingEnum(rating_lower) if rating_lower in [r.value for r in RatingEnum] else RatingEnum.safe
-                    max_rating_val = rating_priority.get(target_rating, 1)
-                    if rating_priority.get(child_rating, 1) > max_rating_val:
-                        continue
+                ratings_list = [r.strip().lower() for r in rating.split(",") if r.strip()]
+                valid_ratings = [RatingEnum[r] for r in ratings_list if r in RatingEnum.__members__]
+                if valid_ratings and child_rating not in valid_ratings:
+                    continue
                 
             thumbnails = get_random_thumbnails(child.id, db, count=4)
             media_count = metrics['count']

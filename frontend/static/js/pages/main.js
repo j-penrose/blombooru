@@ -155,16 +155,6 @@ class Blombooru {
             });
         }
 
-        // Rating filter
-        const ratingInputs = document.querySelectorAll('input[name="rating"]');
-        ratingInputs.forEach(input => {
-            input.addEventListener('change', (e) => {
-                this.setRatingFilter(e.target.value);
-                localStorage.setItem('selectedRating', e.target.value);
-                this.setCookie('rating_filter', e.target.value, 365);
-            });
-        });
-
         // Search form (desktop)
         const searchForm = document.getElementById('search-form');
         if (searchForm) {
@@ -334,14 +324,18 @@ class Blombooru {
         return JSON.stringify(error);
     }
 
-    setRatingFilter(rating) {
+    setRatingFilter(ratings) {
         document.querySelectorAll('.rating-filter-label').forEach(label => {
             label.classList.remove('checked');
         });
 
-        document.querySelectorAll(`input[name="rating"][value="${rating}"]`).forEach(input => {
-            input.checked = true;
-            input.nextElementSibling.classList.add('checked');
+        const ratingList = Array.isArray(ratings) ? ratings : (ratings ? ratings.split(',').map(r => r.trim()) : []);
+        ratingList.forEach(rating => {
+            document.querySelectorAll(`input[name="rating"][value="${rating}"]`).forEach(input => {
+                input.checked = true;
+                const label = input.nextElementSibling;
+                if (label) label.classList.add('checked');
+            });
         });
     }
 
@@ -368,32 +362,40 @@ class Blombooru {
 
     async performRandomSearch() {
         const sidebarMode = document.body.dataset.sidebarMode || window.SIDEBAR_FILTER_MODE || 'rating';
-        let rating = 'explicit';
-        let ratingMode = null;
+        let rating = '';
 
         if (sidebarMode === 'rating' || sidebarMode === 'both') {
-            const ratingInput = document.querySelector('input[name="rating"]:checked');
-            rating = ratingInput ? ratingInput.value : null;
-            ratingMode = document.body.dataset.sidebarRatingMode || window.SIDEBAR_RATING_FILTER_MODE || 'inclusive';
+            const checkedRatings = Array.from(document.querySelectorAll('input[name="rating"]:checked')).map(i => i.value);
+            if (checkedRatings.length > 0) {
+                rating = Array.from(new Set(checkedRatings)).join(',');
+            } else {
+                rating = localStorage.getItem('selectedRating') || 'safe';
+            }
         }
 
-        let q = '';
+        let customFilters = [];
         if (sidebarMode === 'custom' || sidebarMode === 'both') {
-            const customFilter = localStorage.getItem('selectedCustomFilter') || '';
-            if (customFilter) {
-                q = customFilter;
+            const rawCustomFilter = localStorage.getItem('selectedCustomFilter') || '';
+            try {
+                const parsed = JSON.parse(rawCustomFilter);
+                if (Array.isArray(parsed)) customFilters = parsed;
+                else if (typeof parsed === 'string' && parsed) customFilters = [parsed];
+            } catch {
+                if (rawCustomFilter) customFilters = [rawCustomFilter];
             }
         }
 
         try {
-            let url = `/api/search/random?q=${encodeURIComponent(q)}`;
+            const params = new URLSearchParams();
             if (rating) {
-                url += `&rating=${encodeURIComponent(rating)}`;
-                if ((sidebarMode === 'rating' || sidebarMode === 'both') && ratingMode === 'exact') {
-                    url += '&rating_mode=exact';
-                }
+                params.set('rating', rating);
             }
+            customFilters.forEach(cf => {
+                if (cf) params.append('custom_filter', cf);
+            });
 
+            const queryStr = params.toString();
+            const url = `/api/search/random${queryStr ? '?' + queryStr : ''}`;
             const response = await this.apiCall(url);
 
             if (response && response.id) {
@@ -403,6 +405,7 @@ class Blombooru {
             }
         } catch (error) {
             console.error('Random search error:', error);
+            this.showNotification(window.i18n.t('gallery.errors.loading_random_media'), 'error');
         }
     }
 
