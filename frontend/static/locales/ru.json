@@ -416,6 +416,7 @@
             "drop_csv": "Перетащите CSV файл сюда или нажмите, чтобы выбрать",
             "import_csv": "Импорт тегов из CSV",
             "search_manage_tags": "Поиск и управление тегами",
+            "search_manage_tags_description": "",
             "manage_tag": "Управление тегом",
             "edit_tag": "Редактировать тег",
             "merge_tag": "",

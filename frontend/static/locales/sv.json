@@ -416,6 +416,7 @@
             "drop_csv": "Släpp CSV-fil här eller klicka för att bläddra",
             "import_csv": "Importera taggar från CSV",
             "search_manage_tags": "Sök & Hantera Taggar",
+            "search_manage_tags_description": "Använd detta för att snabbt hitta och redigera taggar, hantera dess alias eller för att slå ihop med andra taggar.",
             "manage_tag": "Hantera Taggar",
             "edit_tag": "Redigera Taggar",
             "merge_tag": "Slå Ihop Tagg",
