@@ -1,0 +1,28 @@
+:root {
+    --primary-color: #2563eb;
+    --primary-hover: #1d4ed8;
+    --background: #eef2f7;
+    --surface: #ffffff;
+    --surface-hover: #f1f5f9;
+    --surface-light: #e2e8f0;
+    --surface-light-hover: #cbd5e1;
+    --text: #0f172a;
+    --text-secondary: #475569;
+    --text-tertiary: #64748b;
+    --tag-text: #ffffff;
+    --primary-text: #ffffff;
+    --border: #cbd5e1;
+
+    --white: #ffffff;
+    --black: #000000;
+    --green: #10b981;
+    --orange: #f59e0b;
+    --red: #ef4444;
+    --blue: #2563eb;
+
+    --tag-artist: #ab2c41;
+    --tag-character: #107452;
+    --tag-copyright: #672e9d;
+    --tag-general: #2559ab;
+    --tag-meta: #a46800;
+}

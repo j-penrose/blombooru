@@ -68,6 +68,14 @@ class ThemeRegistry:
             background_color="#0f172a"
         ))
         self.register_theme(Theme(
+            id="default_light", 
+            name="Default Light", 
+            css_path="/static/css/themes/default_light.css", 
+            is_dark=False,
+            primary_color="#2563eb",
+            background_color="#eef2f7"
+        ))
+        self.register_theme(Theme(
             id="oled", 
             name="OLED", 
             css_path="/static/css/themes/oled.css", 
