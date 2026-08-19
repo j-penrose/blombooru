@@ -148,6 +148,16 @@ span.checked .filter-check-icon {
     width: 100%;
 }
 
+.bulk-tag-item:focus-within,
+.bulk-manual-item:focus-within,
+.bulk-ai-tags-item:focus-within,
+.bulk-wd-tagger-item:focus-within {
+    content-visibility: visible !important;
+    contain: none !important;
+    position: relative;
+    z-index: 40;
+}
+
 .tag-suggestion {
     padding: 0.5rem;
     cursor: pointer;
