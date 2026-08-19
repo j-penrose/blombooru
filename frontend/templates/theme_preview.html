@@ -2,436 +2,304 @@
 
 {% block title %}Theme Preview - Blombooru{% endblock %}
 
-{#
-    Theme preview page.
-    Shows the user's current theme's color palette and metadata.
-    The app name is always "Blombooru" for privacy.
-    The custom background is suppressed via the context override.
-    Designed to fit a 1920x1080 (16:9) display without scrolling.
-#}
-
 {% block head_extra %}
 <style>
-    /* Lock the main scroll container for this page only */
-    #main-scroll {
-        overflow: hidden !important;
-    }
-
-    .tp-root {
-        display: grid;
-        grid-template-columns: 320px 1fr;
-        grid-template-rows: 1fr;
-        gap: 0;
-        height: 100%;
-        width: 100%;
-        overflow: hidden;
-    }
-
-    /* Left panel */
-    .tp-left {
-        display: flex;
-        flex-direction: column;
-        gap: 0;
-        border-right: 1px solid var(--border);
-        overflow: hidden;
-    }
-
-    /* Right panel */
-    .tp-right {
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        padding: 1rem 1.25rem;
-        gap: 0.75rem;
-    }
-
-    /* Section label */
-    .tp-label {
-        font-size: 0.6rem;
-        text-transform: uppercase;
-        letter-spacing: 0.07em;
-        color: var(--text-secondary);
-        margin-bottom: 0.35rem;
-        font-weight: 600;
-    }
-
-    /* Swatch row */
-    .tp-swatch-row {
-        display: flex;
-        gap: 0.25rem;
-        align-items: flex-start;
-    }
-
-    .tp-swatch {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 2px;
-        flex: 1 1 0;
-        min-width: 0;
-    }
-
-    .tp-swatch-block {
-        width: 100%;
-        height: 2rem;
+    .tp-swatch-box {
+        height: 2.25rem;
         border: 1px solid var(--border);
-        flex-shrink: 0;
     }
 
-    /* Tag swatch is slightly taller so the in-swatch label fits */
-    .tp-swatch-block.tag-block {
+    .tp-tag-swatch {
         height: 2.25rem;
         display: flex;
-        align-items: flex-end;
-        justify-content: center;
-        padding-bottom: 2px;
-    }
-
-    .tp-swatch-name {
-        font-size: 0.55rem;
-        color: var(--text-secondary);
-        text-align: center;
-        line-height: 1.2;
-        word-break: break-word;
-        width: 100%;
-    }
-
-    .tp-section {
-        display: flex;
-        flex-direction: column;
-    }
-
-    /* Identity block */
-    .tp-identity {
-        padding: 0.875rem 1rem;
-        border-bottom: 1px solid var(--border);
-        flex-shrink: 0;
-    }
-
-    /* UI Samples */
-    .tp-samples {
-        padding: 0.75rem 1rem;
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 0.6rem;
-        overflow: hidden;
-    }
-
-    /* Privacy note at the very bottom of the left panel */
-    .tp-note {
-        padding: 0.5rem 1rem;
-        border-top: 1px solid var(--border);
-        flex-shrink: 0;
-    }
-
-    /* Sample header strip */
-    .tp-header-sample {
-        background-color: var(--surface);
-        border: 1px solid var(--border);
-        display: flex;
         align-items: center;
-        justify-content: space-between;
-        padding: 0.35rem 0.75rem;
+        justify-content: center;
+        color: var(--tag-text);
+        font-size: 0.65rem;
+        font-weight: 600;
+        border: 1px solid var(--border);
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="tp-root">
-
-    {# ======================================================
-       LEFT PANEL — identity + UI samples
-    ====================================================== #}
-    <div class="tp-left">
-
-        {# ---- Theme identity ---- #}
-        <div class="tp-identity">
-            <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
-                {# Primary colour swatch #}
-                <div style="
-                    width: 2.5rem; height: 2.5rem; flex-shrink: 0; border: 1px solid var(--border);
-                    background-color: {{ current_theme.primary_color if current_theme else 'var(--primary-color)' }};
-                "></div>
-
-                <div style="flex: 1; min-width: 0;">
-                    <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.25rem;">
-                        <span style="font-weight: 700; font-size: 0.8rem;">
-                            {{ current_theme.name if current_theme else 'Unknown' }}
-                        </span>
-                        {% if current_theme and current_theme.is_custom %}
-                        <span style="font-size: 0.6rem; padding: 1px 5px; border: 1px solid var(--primary-color); color: var(--primary-color);">
-                            Custom
-                        </span>
-                        {% endif %}
-                        {% if current_theme %}
-                        <span class="text-secondary" style="font-size: 0.6rem; padding: 1px 5px; border: 1px solid var(--border);">
-                            {{ 'Dark' if current_theme.is_dark else 'Light' }}
-                        </span>
-                        {% endif %}
+<div class="container mx-auto px-4 py-4 max-w-7xl">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <div class="lg:col-span-6 flex flex-col gap-4">
+            <div class="surface border p-4">
+                <div class="flex items-center justify-between gap-4 border-b pb-3 mb-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded border border-border flex-shrink-0"
+                            style="background-color: var(--primary-color);"></div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h1 class="text-base font-bold">
+                                    {{ current_theme.name if current_theme else 'Default Theme' }}
+                                </h1>
+                                <span
+                                    class="px-1.5 py-0.5 text-[10px] uppercase font-bold border border-border text-secondary">
+                                    {{ 'Dark' if current_theme and current_theme.is_dark else 'Light' }}
+                                </span>
+                                {% if current_theme and current_theme.is_custom %}
+                                <span
+                                    class="px-1.5 py-0.5 text-[10px] uppercase font-bold border border-primary text-primary">
+                                    Custom
+                                </span>
+                                {% endif %}
+                            </div>
+                            {% if current_theme and current_theme.is_custom and backup_theme %}
+                            <p class="text-xs text-secondary mt-0.5">
+                                Backup theme: <span class="text font-medium">{{ backup_theme.name }}</span>
+                            </p>
+                            {% endif %}
+                        </div>
                     </div>
-
-                    {% if current_theme and current_theme.is_custom and backup_theme %}
-                    <div class="text-secondary" style="font-size: 0.65rem; margin-bottom: 0.2rem;">
-                        Backup: <span style="color: var(--text); font-weight: 500;">{{ backup_theme.name }}</span>
-                    </div>
-                    {% endif %}
-
-                    <div style="display: flex; gap: 0.75rem;">
-                        <div style="display: flex; align-items: center; gap: 0.3rem;">
-                            <span style="
-                                display: inline-block; width: 0.6rem; height: 0.6rem;
-                                border-radius: 50%; border: 1px solid var(--border);
-                                background-color: {{ current_theme.primary_color if current_theme else '#3b82f6' }};
-                            "></span>
-                            <code class="text-secondary" style="font-size: 0.6rem;">
-                                {{ current_theme.primary_color if current_theme else '—' }}
+                    <div class="flex flex-col items-end gap-1 text-[11px] font-mono text-secondary">
+                        <div>
+                            Primary:
+                            <code class="text">
+                                {{ current_theme.primary_color if current_theme else 'var(--primary-color)' }}
                             </code>
                         </div>
-                        <div style="display: flex; align-items: center; gap: 0.3rem;">
-                            <span style="
-                                display: inline-block; width: 0.6rem; height: 0.6rem;
-                                border-radius: 50%; border: 1px solid var(--border);
-                                background-color: {{ current_theme.background_color if current_theme else '#0f172a' }};
-                            "></span>
-                            <code class="text-secondary" style="font-size: 0.6rem;">
-                                {{ current_theme.background_color if current_theme else '—' }}
+                        <div>
+                            Background:
+                            <code class="text">
+                                {{ current_theme.background_color if current_theme else 'var(--background)' }}
                             </code>
                         </div>
                     </div>
                 </div>
+
+                <div class="space-y-1 text-xs">
+                    <p class="font-bold text-sm">
+                        Primary Heading: The quick brown fox jumps over the lazy dog
+                    </p>
+                    <p class="text">
+                        Standard body text used for descriptions, filenames, and general reading.
+                    </p>
+                    <p class="text-secondary">
+                        Secondary text used for labels, timestamps, and supplementary hints.
+                    </p>
+                    <p class="text-tertiary">
+                        Tertiary metadata text used for subtle counters, dimensions, and quieter info.
+                    </p>
+                    <p>
+                        <a href="#" class="text-primary hover:underline" onclick="return false;">
+                            Interactive link text
+                        </a>
+                        <span class="text-tertiary mx-1">&bull;</span>
+                        <code>inline code snippet</code>
+                    </p>
+                </div>
             </div>
+
+            <div class="surface border p-4">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-secondary mb-3 border-b pb-1">
+                    Surfaces &amp; Canvas
+                </h2>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {% set surface_swatches = [
+                    ('Background', '--background'),
+                    ('Surface', '--surface'),
+                    ('Surface Hover', '--surface-hover'),
+                    ('Surface Light', '--surface-light'),
+                    ('Surf. Light Hover', '--surface-light-hover'),
+                    ('Border', '--border'),
+                    ('Primary', '--primary-color'),
+                    ('Primary Hover', '--primary-hover')
+                    ] %}
+                    {% for label, var_name in surface_swatches %}
+                    <div class="flex flex-col gap-1">
+                        <div class="tp-swatch-box" style="background-color: var({{ var_name }});"></div>
+                        <div class="flex justify-between items-center text-[10px]">
+                            <span class="font-medium text-secondary truncate">{{ label }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="surface border p-4">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-secondary mb-3 border-b pb-1">
+                    Semantics &amp; Media Outlines
+                </h2>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {% set semantic_swatches = [
+                    ('Green / Safe / Child', '--green'),
+                    ('Orange / Warning / GIF', '--orange'),
+                    ('Red / Danger / Video', '--red'),
+                    ('Blue / Info / Parent', '--blue')
+                    ] %}
+                    {% for label, var_name in semantic_swatches %}
+                    <div class="flex flex-col gap-1">
+                        <div class="tp-swatch-box" style="background-color: var({{ var_name }});"></div>
+                        <div class="flex justify-between items-center text-[10px]">
+                            <span class="font-medium text-secondary truncate">{{ label }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="surface border p-4">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-secondary mb-3 border-b pb-1">
+                    Tag Category Badges
+                </h2>
+                <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                    {% set tag_categories = [
+                    ('Artist', '--tag-artist'),
+                    ('Character', '--tag-character'),
+                    ('Copyright', '--tag-copyright'),
+                    ('General', '--tag-general'),
+                    ('Meta', '--tag-meta')
+                    ] %}
+                    {% for label, var_name in tag_categories %}
+                    <div class="flex flex-col gap-1">
+                        <div class="tp-tag-swatch" style="background-color: var({{ var_name }});">
+                            {{ label }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
         </div>
 
-        {# ---- UI Samples ---- #}
-        <div class="tp-samples">
-
-            {# Page heading #}
-            <div style="border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; margin-bottom: 0.1rem;">
-                <h1 style="font-weight: 700; font-size: 0.8rem; margin-bottom: 0.1rem;">Theme Preview</h1>
-                <p class="text-secondary" style="font-size: 0.65rem;">Active theme colour palette and identity.</p>
-            </div>
-
-            {# Sample header #}
-            <div class="tp-section">
-                <p class="tp-label">Header sample</p>
-                <div class="tp-header-sample">
-                    <span style="font-weight: 700; font-size: 0.75rem; color: var(--primary-color);">Blombooru</span>
-                    <div style="display: flex; gap: 0.4rem;">
-                        <span class="bg" style="border: 1px solid var(--border); padding: 2px 8px; font-size: 0.65rem;">Albums</span>
-                        <span class="bg" style="border: 1px solid var(--border); padding: 2px 8px; font-size: 0.65rem;">Admin</span>
+        <div class="lg:col-span-6 flex flex-col gap-4">
+            <div class="surface border p-3">
+                <p class="text-[10px] font-bold uppercase tracking-wider text-secondary mb-2">Header &amp; Search
+                    Component</p>
+                <div class="surface border p-2 flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-2" id="header-logo">
+                        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 28 28"
+                            id="header-logo-svg">
+                            <path fill="var(--primary-color)"
+                                d="m23.078 3.281 0.279 0.232C26.027 5.807 27.726 9.3 28 12.797c0.226 3.764 -0.823 7.386 -3.281 10.281 -0.077 0.092 -0.153 0.184 -0.232 0.279C22.193 26.027 18.7 27.726 15.203 28c-3.764 0.226 -7.386 -0.823 -10.281 -3.281 -0.092 -0.077 -0.184 -0.153 -0.279 -0.232C1.973 22.193 0.274 18.7 0 15.203c-0.226 -3.764 0.823 -7.386 3.281 -10.281 0.077 -0.092 0.153 -0.184 0.232 -0.279C8.412 -1.059 17.427 -1.517 23.078 3.281" />
+                            <path fill="var(--primary-text)"
+                                d="m11.67 6.257 0.342 0.001q0.357 0.002 0.715 0.01c0.361 0.007 0.722 0.009 1.084 0.01q0.348 0.003 0.697 0.007l0.323 0.002c1.822 0.043 3.614 0.828 4.892 2.13 1.311 1.434 1.903 3.099 1.935 5.036l0.017 0.368c0.021 0.672 -0.04 1.112 -0.345 1.71 -0.076 0.304 -0.076 0.304 -0.109 0.547h-0.219l-0.007 0.369C20.832 17.656 19.645 18.557 18.813 19.359l-0.294 0.31C18.266 19.906 18.266 19.906 17.958 19.94L17.719 19.906v0.219c-0.17 0.089 -0.341 0.175 -0.513 0.26l-0.288 0.146c-1.164 0.408 -2.395 0.39 -3.614 0.381l-0.501 -0.001a352.078 352.078 0 0 1 -1.305 -0.005c-0.446 -0.002 -0.892 -0.003 -1.337 -0.004Q8.853 20.898 7.547 20.891c-0.008 -0.804 -0.014 -1.607 -0.018 -2.411q-0.002 -0.409 -0.007 -0.819c-0.004 -0.394 -0.006 -0.788 -0.007 -1.182 -0.002 -0.121 -0.003 -0.241 -0.005 -0.365 0 -1.728 0.593 -3.106 1.799 -4.334 1.412 -1.319 3.139 -1.572 4.991 -1.513 1.021 0.059 1.946 0.454 2.634 1.221 0.164 0.213 0.316 0.424 0.457 0.653l0.124 0.185c0.149 0.397 0.135 0.788 0.135 1.209l0.008 0.256c0.005 0.94 -0.397 1.618 -1.033 2.287l-0.328 0.109 -0.005 -0.32c-0.037 -0.998 -0.104 -1.884 -0.863 -2.619 -0.912 -0.719 -1.838 -0.779 -2.96 -0.67 -0.828 0.173 -1.556 0.647 -2.078 1.313 -0.638 1.001 -0.632 1.993 -0.636 3.138a187.469 187.469 0 0 1 -0.008 0.521c-0.007 0.421 -0.01 0.842 -0.012 1.263q1.129 -0.011 2.258 -0.029 0.383 -0.005 0.767 -0.009c2.652 0.056 2.652 0.056 4.932 -1.117L17.938 17.391c0.328 -0.328 0.328 -0.328 0.488 -0.47 0.2 -0.221 0.282 -0.421 0.387 -0.699l0.103 -0.268c0.038 -0.103 0.077 -0.207 0.116 -0.313l0.085 -0.193c0.251 -0.594 0.294 -1.12 0.284 -1.762l-0.003 -0.293c-0.016 -0.68 -0.076 -1.285 -0.366 -1.908l-0.117 -0.253c-0.688 -1.347 -1.685 -2.054 -3.106 -2.521 -0.466 -0.119 -0.921 -0.115 -1.399 -0.111l-0.638 -0.006q-0.497 -0.002 -0.993 -0.001c-0.322 0 -0.645 -0.003 -0.967 -0.007l-0.298 0.003C10.867 8.581 10.483 8.472 9.953 8.094c-0.122 -0.231 -0.122 -0.231 -0.144 -0.472l-0.033 -0.238c0.246 -1.008 0.971 -1.152 1.894 -1.127" />
+                        </svg>
+                        <span class="font-bold text-sm text-primary">Blombooru</span>
+                    </div>
+                    <div class="flex-1 max-w-xs">
+                        <input type="text" value="tag:solo highres" readonly
+                            class="w-full bg px-2.5 py-1 border text-xs text focus:outline-none focus:border-primary">
+                    </div>
+                    <div class="flex items-center gap-1 text-xs">
+                        <span class="bg border px-2.5 py-1 text-primary font-medium">Tags</span>
+                        <span class="bg border px-2.5 py-1 text">Albums</span>
+                        <span class="bg border px-2.5 py-1 text">Admin</span>
                     </div>
                 </div>
             </div>
 
-            {# Tags #}
-            <div class="tp-section">
-                <p class="tp-label">Tags</p>
-                <div style="display: flex; flex-wrap: wrap; gap: 0.2rem;">
-                    <span class="tag artist" style="color: var(--tag-text);">artist_name</span>
-                    <span class="tag character" style="color: var(--tag-text);">character_name</span>
-                    <span class="tag copyright" style="color: var(--tag-text);">copyright</span>
-                    <span class="tag general" style="color: var(--tag-text);">general_tag</span>
-                    <span class="tag meta" style="color: var(--tag-text);">meta</span>
-                </div>
-            </div>
-
-            {# Controls #}
-            <div class="tp-section">
-                <p class="tp-label">Controls</p>
-                <div style="display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center;">
-                    <button style="padding: 2px 10px; font-size: 0.65rem; border: 1px solid var(--border); background: var(--background); color: var(--text);">Default</button>
-                    <button style="padding: 2px 10px; font-size: 0.65rem; border: 1px solid var(--primary-color); background: var(--primary-color); color: var(--primary-text);">Primary</button>
-                    <button style="padding: 2px 10px; font-size: 0.65rem; border: 1px solid var(--green); background: var(--green); color: var(--primary-text);">Success</button>
-                    <button style="padding: 2px 10px; font-size: 0.65rem; border: 1px solid var(--red); background: var(--red); color: var(--primary-text);">Danger</button>
-                    <input type="text" placeholder="Input field"
-                           style="padding: 2px 8px; font-size: 0.65rem; border: 1px solid var(--border); background: var(--background); color: var(--text); outline: none; width: 7rem;"
-                           readonly>
-                </div>
-            </div>
-
-            {# Typography #}
-            <div class="tp-section">
-                <p class="tp-label">Typography</p>
-                <div style="display: flex; flex-direction: column; gap: 0.15rem;">
-                    <p style="font-weight: 700; font-size: 0.75rem;">Primary text — bold heading</p>
-                    <p style="font-size: 0.65rem;">Regular body text used throughout the interface.</p>
-                    <p class="text-secondary" style="font-size: 0.65rem;">Secondary text for labels and supplementary info.</p>
-                    <p class="text-tertiary" style="font-size: 0.65rem;">Tertiary text for the quietest metadata.</p>
-                    <a href="#" style="font-size: 0.65rem; color: var(--primary-color);" onclick="return false;">Link / primary accent</a>
-                </div>
-            </div>
-
-        </div>
-
-        {# ---- Privacy note ---- #}
-        <div class="tp-note">
-            <p class="text-tertiary" style="font-size: 0.6rem;">
-                Private page — your instance name is not shown here.
-            </p>
-        </div>
-
-    </div>
-
-    {# ======================================================
-       RIGHT PANEL — full colour palette
-    ====================================================== #}
-    <div class="tp-right">
-
-        <div style="border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; flex-shrink: 0;">
-            <h2 style="font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary);">Colour Palette</h2>
-        </div>
-
-        {# Core #}
-        <div class="tp-section" style="flex-shrink: 0;">
-            <p class="tp-label">Core</p>
-            <div class="tp-swatch-row">
-                {% set core_vars = [
-                    ('--primary-color',      'Primary'),
-                    ('--primary-hover',      'Prim. Hover'),
-                    ('--background',         'Background'),
-                    ('--surface',            'Surface'),
-                    ('--surface-hover',      'Surf. Hover'),
-                    ('--surface-light',      'Surf. Light'),
-                    ('--surface-light-hover','Surf. Lt. Hov'),
-                ] %}
-                {% for var, label in core_vars %}
-                <div class="tp-swatch">
-                    <div class="tp-swatch-block" style="background-color: var({{ var }});"></div>
-                    <span class="tp-swatch-name">{{ label }}</span>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-
-        {# Text #}
-        <div class="tp-section" style="flex-shrink: 0;">
-            <p class="tp-label">Text</p>
-            <div class="tp-swatch-row">
-                {% set text_vars = [
-                    ('--text',           'Text'),
-                    ('--text-secondary', 'Secondary'),
-                    ('--text-tertiary',  'Tertiary'),
-                    ('--primary-text',   'On Primary'),
-                    ('--tag-text',       'Tag Text'),
-                ] %}
-                {% for var, label in text_vars %}
-                <div class="tp-swatch">
-                    <div class="tp-swatch-block" style="background-color: var({{ var }});"></div>
-                    <span class="tp-swatch-name">{{ label }}</span>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-
-        {# Accents & Border #}
-        <div class="tp-section" style="flex-shrink: 0;">
-            <p class="tp-label">Accents &amp; Border</p>
-            <div class="tp-swatch-row">
-                {% set accent_vars = [
-                    ('--border',  'Border'),
-                    ('--green',   'Green'),
-                    ('--orange',  'Orange'),
-                    ('--red',     'Red'),
-                    ('--blue',    'Blue'),
-                    ('--white',   'White'),
-                    ('--black',   'Black'),
-                ] %}
-                {% for var, label in accent_vars %}
-                <div class="tp-swatch">
-                    <div class="tp-swatch-block" style="background-color: var({{ var }});"></div>
-                    <span class="tp-swatch-name">{{ label }}</span>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-
-        {# Semantic (success/warning/danger/info) #}
-        <div class="tp-section" style="flex-shrink: 0;">
-            <p class="tp-label">Semantic</p>
-            <div class="tp-swatch-row">
-                {% set semantic_vars = [
-                    ('--success',       'Success'),
-                    ('--success-hover', 'Succ. Hover'),
-                    ('--info',          'Info'),
-                    ('--info-hover',    'Info Hover'),
-                    ('--warning',       'Warning'),
-                    ('--warning-hover', 'Warn. Hover'),
-                    ('--danger',        'Danger'),
-                    ('--danger-hover',  'Dang. Hover'),
-                ] %}
-                {% for var, label in semantic_vars %}
-                <div class="tp-swatch">
-                    <div class="tp-swatch-block" style="background-color: var({{ var }});"></div>
-                    <span class="tp-swatch-name">{{ label }}</span>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-
-        {# Tag categories #}
-        <div class="tp-section" style="flex-shrink: 0;">
-            <p class="tp-label">Tag Categories</p>
-            <div class="tp-swatch-row">
-                {% set tag_vars = [
-                    ('--tag-artist',    'Artist'),
-                    ('--tag-character', 'Character'),
-                    ('--tag-copyright', 'Copyright'),
-                    ('--tag-general',   'General'),
-                    ('--tag-meta',      'Meta'),
-                ] %}
-                {% for var, label in tag_vars %}
-                <div class="tp-swatch">
-                    <div class="tp-swatch-block tag-block" style="background-color: var({{ var }});">
-                        <span style="color: var(--tag-text); font-size: 0.5rem; font-weight: 600;">{{ label }}</span>
+            <div class="surface border p-3">
+                <p class="text-[10px] font-bold uppercase tracking-wider text-secondary mb-2">
+                    Media &amp; Tag List View
+                </p>
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                    <div class="sm:col-span-5 flex flex-col gap-2">
+                        <div
+                            class="surface border relative aspect-square flex flex-col items-center justify-center p-3 text-center overflow-hidden group">
+                            <div class="absolute top-2 left-2 z-10">
+                                <span class="px-1.5 py-0.5 text-[9px] font-bold text uppercase"
+                                    style="background-color: var(--green);">Safe</span>
+                            </div>
+                            <div class="absolute top-2 right-2 z-10 flex gap-1">
+                                <span class="px-1.5 py-0.5 text-[9px] font-bold text uppercase"
+                                    style="background-color: var(--orange);">GIF</span>
+                            </div>
+                            <div
+                                class="w-16 h-16 rounded-full surface-light border flex items-center justify-center text-secondary mb-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                    <polyline points="21 15 16 10 5 21"></polyline>
+                                </svg>
+                            </div>
+                            <span class="text-xs font-bold">sample_post_#1248</span>
+                            <span class="text-[11px] text-secondary">1920 &times; 1080 &bull; 2.4 MB</span>
+                        </div>
                     </div>
-                    <span class="tp-swatch-name">{{ label }}</span>
+
+                    <div class="sm:col-span-7 flex flex-col text-xs">
+                        <div class="tag-category">
+                            <h4>Artist</h4>
+                            <div class="tag-list">
+                                <span class="tag artist" style="color: var(--tag-text);">
+                                    artist_name <span class="opacity-80 text-[10px]">124</span>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="tag-category">
+                            <h4>Character</h4>
+                            <div class="tag-list">
+                                <span class="tag character" style="color: var(--tag-text);">
+                                    hatsune_miku <span class="opacity-80 text-[10px]">8.2k</span>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="tag-category">
+                            <h4>Copyright</h4>
+                            <div class="tag-list">
+                                <span class="tag copyright" style="color: var(--tag-text);">
+                                    vocaloid <span class="opacity-80 text-[10px]">14k</span>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="tag-category">
+                            <h4>General</h4>
+                            <div class="tag-list">
+                                <span class="tag general" style="color: var(--tag-text);">
+                                    solo <span class="opacity-80 text-[10px]">95k</span>
+                                </span>
+                                <span class="tag general" style="color: var(--tag-text);">
+                                    twintails <span class="opacity-80 text-[10px]">32k</span>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="tag-category">
+                            <h4>Meta</h4>
+                            <div class="tag-list">
+                                <span class="tag meta" style="color: var(--tag-text);">
+                                    highres <span class="opacity-80 text-[10px]">120k</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
-                {% endfor %}
+            </div>
+
+            <div class="surface border p-3">
+                <p class="text-[10px] font-bold uppercase tracking-wider text-secondary mb-2">
+                    Controls &amp; Action Buttons
+                </p>
+                <div class="space-y-3">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button type="button" class="btn">Default (.btn)</button>
+                        <button type="button" class="btn-dark">Dark (.btn-dark)</button>
+                        <button type="button" class="btn-primary">Primary Action</button>
+                        <button type="button" class="btn-danger">Danger Action</button>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <div
+                            class="flex items-center justify-center px-3 py-1.5 border border-primary bg-primary text-primary-text text-xs font-bold cursor-pointer">
+                            <span>Safe</span>
+                        </div>
+                        <div
+                            class="flex items-center justify-center px-3 py-1.5 border bg text hover:border-primary text-xs cursor-pointer">
+                            <span>Questionable</span>
+                        </div>
+                        <div
+                            class="flex items-center justify-center px-3 py-1.5 border bg text hover:border-primary text-xs cursor-pointer">
+                            <span>Explicit</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-
-        {# Media outlines #}
-        <div class="tp-section" style="flex-shrink: 0;">
-            <p class="tp-label">Media Outlines</p>
-            <div class="tp-swatch-row">
-                {% set outline_vars = [
-                    ('--video-outline',  'Video'),
-                    ('--gif-outline',    'GIF'),
-                    ('--parent-outline', 'Parent'),
-                    ('--child-outline',  'Child'),
-                ] %}
-                {% for var, label in outline_vars %}
-                <div class="tp-swatch">
-                    <div class="tp-swatch-block" style="background-color: var({{ var }});"></div>
-                    <span class="tp-swatch-name">{{ label }}</span>
-                </div>
-                {% endfor %}
-                {# fill remaining flex space so swatch row doesn't stretch #}
-                <div style="flex: 3 1 0;"></div>
-            </div>
-        </div>
-
-        {# Rating #}
-        <div class="tp-section" style="flex-shrink: 0;">
-            <p class="tp-label">Ratings</p>
-            <div class="tp-swatch-row">
-                {% set rating_vars = [
-                    ('--rating-safe',         'Safe'),
-                    ('--rating-questionable', 'Questionable'),
-                    ('--rating-explicit',     'Explicit'),
-                ] %}
-                {% for var, label in rating_vars %}
-                <div class="tp-swatch">
-                    <div class="tp-swatch-block" style="background-color: var({{ var }});"></div>
-                    <span class="tp-swatch-name">{{ label }}</span>
-                </div>
-                {% endfor %}
-                <div style="flex: 4 1 0;"></div>
-            </div>
-        </div>
-
     </div>
-
 </div>
 {% endblock %}
