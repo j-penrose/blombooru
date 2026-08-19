@@ -44,12 +44,26 @@ async def get_tags(
             return [name_map[n] for n in tag_names if n in name_map]
     
     if search:
-        query = query.filter(Tag.name.ilike(f"%{search}%"))
+        search_lower = search.strip().lower()
+        priority = case(
+            (func.lower(Tag.name) == search_lower, 1),
+            (Tag.name.ilike(f"{search_lower}%"), 2),
+            else_=3
+        )
+        query = query.filter(Tag.name.ilike(f"%{search_lower}%"))
+        if category:
+            query = query.filter(Tag.category == category)
+        query = query.order_by(
+            priority,
+            desc(Tag.post_count),
+            func.length(Tag.name),
+            Tag.name
+        )
+    else:
+        if category:
+            query = query.filter(Tag.category == category)
+        query = query.order_by(desc(Tag.post_count), func.length(Tag.name), Tag.name)
     
-    if category:
-        query = query.filter(Tag.category == category)
-    
-    query = query.order_by(desc(Tag.post_count))
     tags = query.limit(limit).all()
     
     return tags

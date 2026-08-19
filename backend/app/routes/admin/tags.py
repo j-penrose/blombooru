@@ -4,6 +4,7 @@ import io
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from pydantic import BaseModel
+from sqlalchemy import case, desc, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
@@ -274,9 +275,24 @@ async def search_tags(
     db: Session = Depends(get_db)
 ):
     """Search tags"""
+    q_lower = q.strip().lower() if q else ""
+    if not q_lower:
+        return {"tags": []}
+
+    priority = case(
+        (func.lower(Tag.name) == q_lower, 1),
+        (Tag.name.ilike(f"{q_lower}%"), 2),
+        else_=3
+    )
+
     tags = db.query(Tag).filter(
-        Tag.name.ilike(f"%{q}%")
-    ).order_by(Tag.post_count.desc()).limit(50).all()
+        Tag.name.ilike(f"%{q_lower}%")
+    ).order_by(
+        priority,
+        desc(Tag.post_count),
+        func.length(Tag.name),
+        Tag.name
+    ).limit(50).all()
     
     return {"tags": tags}
 
