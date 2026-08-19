@@ -159,7 +159,6 @@ class SettingsUpdate(BaseModel):
     redis: Optional[RedisSettings] = None
     shared_tags: Optional[SharedTagSettings] = None
     sidebar_filter_mode: Optional[Literal["rating", "custom", "both", "off"]] = None
-    sidebar_rating_filter_mode: Optional[Literal["inclusive", "exact"]] = None
     sidebar_custom_buttons: Optional[List[dict]] = None
     media_type_tags: Optional[dict] = None
     custom_background: Optional[CustomBackgroundSettings] = None

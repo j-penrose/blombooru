@@ -45,11 +45,6 @@ class AdminSystem {
             });
         }
 
-        const sidebarRatingFilterModeElement = document.getElementById('sidebar-rating-filter-mode');
-        if (sidebarRatingFilterModeElement) {
-            this.sidebarRatingFilterModeSelect = new CustomSelect(sidebarRatingFilterModeElement);
-        }
-
         this.updateSidebarFilterState();
 
         const addCustomButtonBtn = document.getElementById('add-custom-button-btn');
@@ -349,28 +344,15 @@ class AdminSystem {
     }
 
     updateSidebarFilterState() {
-        if (!this.sidebarFilterModeSelect || !this.sidebarRatingFilterModeSelect) return;
+        if (!this.sidebarFilterModeSelect) return;
 
         const mode = this.sidebarFilterModeSelect.getValue();
-        const isRating = mode === 'rating' || mode === 'both';
         const isCustom = mode === 'custom' || mode === 'both';
 
         const customContainer = document.getElementById('custom-buttons-container');
         if (customContainer) {
             customContainer.style.display = isCustom ? 'block' : 'none';
         }
-
-        const ratingContainer = document.getElementById('rating-filter-settings-container');
-        if (ratingContainer) {
-            ratingContainer.style.display = '';
-            if (isRating) {
-                ratingContainer.classList.remove('hidden', 'sm:block');
-            } else {
-                ratingContainer.classList.add('hidden', 'sm:block');
-            }
-        }
-
-        this.sidebarRatingFilterModeSelect.setDisabled(!isRating);
     }
 
     cleanupCustomButtons() {
@@ -696,10 +678,6 @@ class AdminSystem {
                 this.sidebarFilterModeSelect.setValue(settings.sidebar_filter_mode);
             }
 
-            if (settings.sidebar_rating_filter_mode && this.sidebarRatingFilterModeSelect) {
-                this.sidebarRatingFilterModeSelect.setValue(settings.sidebar_rating_filter_mode);
-            }
-
             this.updateSidebarFilterState();
 
             if (settings.sidebar_custom_buttons) {
@@ -846,7 +824,6 @@ class AdminSystem {
         const requireAuth = document.getElementById('require-auth')?.checked || false;
 
         const sidebarMode = this.sidebarFilterModeSelect ? this.sidebarFilterModeSelect.getValue() : 'rating';
-        const sidebarRatingMode = this.sidebarRatingFilterModeSelect ? this.sidebarRatingFilterModeSelect.getValue() : 'inclusive';
 
         // Filter out empty buttons (must have both title and tags)
         let validButtons = [];
@@ -876,7 +853,6 @@ class AdminSystem {
             external_share_url: externalShareUrl || null,
             require_auth: requireAuth,
             sidebar_filter_mode: sidebarMode,
-            sidebar_rating_filter_mode: sidebarRatingMode,
             sidebar_custom_buttons: validButtons
         };
 

@@ -33,7 +33,6 @@ Content-Type: application/json
   "external_share_url": null,
   "require_auth": false,
   "sidebar_filter_mode": "rating",
-  "sidebar_rating_filter_mode": "inclusive",
   "sidebar_custom_buttons": [],
   "redis": { "enabled": true, "host": "redis", "port": 6379, "db": 0, "password": null },
   "shared_tags": { "enabled": false, "host": "shared-tag-db", "port": 5432, "name": "shared_tags", "user": "postgres", "password": null }

@@ -38,7 +38,6 @@
     <script>
         window.CURRENT_LANGUAGE = '{{ current_language() }}';
         window.SIDEBAR_FILTER_MODE = '{{ sidebar_filter_mode if sidebar_filter_mode is defined else "" }}';
-        window.SIDEBAR_RATING_FILTER_MODE = '{{ sidebar_rating_filter_mode if sidebar_rating_filter_mode is defined else "inclusive" }}';
         window._appName = '{{ app_name | e }}';
     </script>
     <script id="translations-data" type="application/json">
@@ -75,8 +74,7 @@
 </head>
 
 <body class="bg text text-xs flex flex-col h-screen overflow-hidden"
-    data-sidebar-mode="{{ sidebar_filter_mode if sidebar_filter_mode is defined else 'rating' }}"
-    data-sidebar-rating-mode="{{ sidebar_rating_filter_mode if sidebar_rating_filter_mode is defined else 'inclusive' }}">
+    data-sidebar-mode="{{ sidebar_filter_mode if sidebar_filter_mode is defined else 'rating' }}">
     {% set bg = custom_background() %}
     {% set _is_login = is_login_page if is_login_page is defined else false %}
     {% set _is_shared = is_shared_page if is_shared_page is defined else false %}
@@ -303,7 +301,8 @@
                 <div class="container mx-auto px-4 py-6">
                     <div class="flex flex-col md:flex-row justify-between items-center gap-4">
                         <div class="text-secondary text-xs">
-                            <p>&copy; <span id="footer-app-name">{{ app_name }}</span> {{ get_current_year() }}. Powered by
+                            <p>&copy; <span id="footer-app-name">{{ app_name }}</span> {{ get_current_year() }}. Powered
+                                by
                                 <a href="https://github.com/mrblomblo/blombooru"
                                     class="text-primary transition-colors hover:text-primary" target="_blank"
                                     rel="noopener noreferrer" referrerPolicy="no-referrer">Blombooru</a>
