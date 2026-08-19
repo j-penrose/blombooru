@@ -17,7 +17,7 @@ class BulkManualTagEditorModal extends BulkTagModalBase {
         return `
             <div class="${prefix}-content flex-1 flex flex-col min-h-0" style="display: none;">
                 <p class="text-secondary mb-3 text-xs sm:text-sm flex-shrink-0">${window.i18n.t('bulk_modal.messages.review_tags')}</p>
-                <div class="flex gap-2 mb-3 flex-shrink-0 items-start">
+                <div class="flex gap-2 mb-3 flex-shrink-0 items-start relative z-20">
                     <div class="relative flex-1 min-w-0">
                         <div id="${prefix}-quick-input"
                             contenteditable="true"
@@ -36,9 +36,9 @@ class BulkManualTagEditorModal extends BulkTagModalBase {
     setupAdditionalEventListeners() {
         const prefix = this.options.classPrefix;
 
-        const quickInput = this.modalElement.querySelector(`#${prefix}-quick-input`);
-        const addBtn = this.modalElement.querySelector(`#${prefix}-quick-add`);
-        const removeBtn = this.modalElement.querySelector(`#${prefix}-quick-remove`);
+        const quickInput = this.modalElement?.querySelector(`#${prefix}-quick-input`);
+        const addBtn = this.modalElement?.querySelector(`#${prefix}-quick-add`);
+        const removeBtn = this.modalElement?.querySelector(`#${prefix}-quick-remove`);
 
         if (!quickInput || !addBtn || !removeBtn) return;
 
@@ -66,7 +66,7 @@ class BulkManualTagEditorModal extends BulkTagModalBase {
 
     async _applyQuickTags(action) {
         const prefix = this.options.classPrefix;
-        const quickInput = this.modalElement.querySelector(`#${prefix}-quick-input`);
+        const quickInput = this.modalElement?.querySelector(`#${prefix}-quick-input`);
         if (!quickInput) return;
 
         let resolvedTags;
@@ -79,30 +79,22 @@ class BulkManualTagEditorModal extends BulkTagModalBase {
 
         if (resolvedTags.length === 0) return;
 
-        // Apply to every item input
-        const inputs = this.modalElement.querySelectorAll(`.${prefix}-input`);
-        inputs.forEach(input => {
-            let currentTags;
-            if (this.tagInputHelper) {
-                currentTags = this.tagInputHelper.getValidTagsFromInput(input);
-            } else {
-                currentTags = input.innerText.trim().split(/\s+/).filter(t => t.length > 0);
-            }
-
+        // Apply in-memory to every item in this.itemsData
+        this.itemsData.forEach(item => {
+            const currentTags = item.newTags || [];
             const currentSet = new Set(currentTags.map(t => t.toLowerCase()));
 
-            let nextTags;
             if (action === 'add') {
                 const toAdd = resolvedTags.filter(t => !currentSet.has(t.toLowerCase()));
-                nextTags = [...currentTags, ...toAdd];
+                item.newTags = [...currentTags, ...toAdd];
             } else {
                 const toRemoveSet = new Set(resolvedTags.map(t => t.toLowerCase()));
-                nextTags = currentTags.filter(t => !toRemoveSet.has(t.toLowerCase()));
+                item.newTags = currentTags.filter(t => !toRemoveSet.has(t.toLowerCase()));
             }
-
-            input.textContent = nextTags.join(' ');
-            this.triggerValidation(input);
         });
+
+        // Re-render items in DOM
+        this.renderItems();
 
         quickInput.textContent = '';
         this.triggerValidation(quickInput);
@@ -111,7 +103,7 @@ class BulkManualTagEditorModal extends BulkTagModalBase {
     reset() {
         super.reset();
         const prefix = this.options.classPrefix;
-        const quickInput = this.modalElement.querySelector(`#${prefix}-quick-input`);
+        const quickInput = this.modalElement?.querySelector(`#${prefix}-quick-input`);
         if (quickInput) {
             quickInput.textContent = '';
             this.triggerValidation(quickInput);
@@ -123,6 +115,7 @@ class BulkManualTagEditorModal extends BulkTagModalBase {
             ${this.getLoadingHTML(window.i18n.t('bulk_modal.progress.fetching_metadata'))}
             ${this.getContentHTML()}
             ${this.getEmptyHTML()}
+            ${this.getErrorHTML()}
             ${this.getCancelledHTML()}
         `;
     }
@@ -131,24 +124,21 @@ class BulkManualTagEditorModal extends BulkTagModalBase {
         if (this.isCancelled) return;
 
         this.showState('loading');
-        const prefix = this.options.classPrefix;
-        const itemsContainer = this.modalElement.querySelector(`.${prefix}-items`);
-
         const selectedArray = Array.from(this.selectedItems);
 
-        // Fetch media data in batch
-        this.updateProgress(0, selectedArray.length, window.i18n.t('bulk_modal.progress.fetching_metadata'), window.i18n.t('bulk_modal.progress.items_fetched'));
-
         try {
-            const idsParam = selectedArray.join(',');
-            const res = await this.fetchWithAbort(`/api/media/batch?ids=${idsParam}`);
+            // Concurrent chunked fetching with live progress updates
+            const items = await this.fetchMediaInChunks(selectedArray, {
+                chunkSize: 50,
+                concurrency: 3,
+                projection: 'tags_only',
+                statusText: window.i18n.t('bulk_modal.progress.fetching_metadata'),
+                phaseText: window.i18n.t('bulk_modal.progress.items_fetched')
+            });
 
-            if (!res.ok) throw new Error('Failed to fetch media');
+            if (this.isCancelled) return;
 
-            const data = await res.json();
-            const items = data.items || [];
-
-            if (items.length === 0) {
+            if (!items || items.length === 0) {
                 this.showState('empty');
                 return;
             }
@@ -215,7 +205,6 @@ class BulkManualTagEditorModal extends BulkTagModalBase {
             }
 
             this.renderItems();
-            await this.initializeInputHelpers(itemsContainer);
 
             if (this.isCancelled) return;
 
@@ -229,49 +218,55 @@ class BulkManualTagEditorModal extends BulkTagModalBase {
         }
     }
 
-    // Override saveTags to replace tags instead of merging
+    // Atomic bulk save
     async saveTags() {
+        this.isCancelled = true;
+        if (this.abortController) {
+            this.abortController.abort();
+            this.abortController = null;
+        }
+
         const prefix = this.options.classPrefix;
-        const saveBtn = this.modalElement.querySelector(`.${prefix}-save`);
+        const saveBtn = this.modalElement?.querySelector(`.${prefix}-save`);
 
         if (saveBtn) {
             saveBtn.disabled = true;
             saveBtn.textContent = window.i18n.t('modal.buttons.saving');
         }
 
+        // Build list of items to update from authoritative itemsData
+        const updateItems = [];
+        for (let i = 0; i < this.itemsData.length; i++) {
+            const item = this.itemsData[i];
+            const tags = item.newTags || [];
+            updateItems.push({
+                id: item.mediaId,
+                tags: tags
+            });
+        }
+
         let successCount = 0;
         let errorCount = 0;
 
-        const saveItem = async (index) => {
-            const item = this.itemsData[index];
-            const input = this.modalElement.querySelector(`.${prefix}-input[data-index="${index}"]`);
-
-            if (!input) return;
-
-            let finalTags = [];
-            if (this.tagInputHelper) {
-                finalTags = this.tagInputHelper.getValidTagsFromInput(input);
-            } else {
-                finalTags = input.innerText.trim().split(/\s+/).filter(t => t.length > 0);
-            }
-
+        if (updateItems.length > 0) {
             try {
-                const response = await fetch(`/api/media/${item.mediaId}`, {
-                    method: 'PATCH',
+                const response = await fetch('/api/media/bulk-update-tags', {
+                    method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ tags: finalTags })
+                    body: JSON.stringify({ items: updateItems })
                 });
 
-                if (response.ok) successCount++;
-                else errorCount++;
+                if (response.ok) {
+                    const data = await response.json();
+                    successCount = data.updated_count || updateItems.length;
+                } else {
+                    errorCount = updateItems.length;
+                }
             } catch (e) {
-                console.error(`Error saving tags for media ${item.mediaId}:`, e);
-                errorCount++;
+                console.error('Error saving tags in bulk:', e);
+                errorCount = updateItems.length;
             }
-        };
-
-        const indices = this.itemsData.map((_, i) => i);
-        await this.processBatch(indices, saveItem, 5);
+        }
 
         if (saveBtn) {
             saveBtn.disabled = false;
@@ -329,7 +324,7 @@ class BulkManualTagEditorModal extends BulkTagModalBase {
 
                 tagObjects = mergedTags.map(tagName => {
                     const tagObj = resolvedMap[tagName.toLowerCase()];
-                    return tagObj ? tagObj : { name: tagName, category: 'general' }; // Default to general if unknown
+                    return tagObj ? tagObj : { name: tagName, category: 'general' };
                 });
             } else {
                 // Likely not needed, but just in case
@@ -382,8 +377,8 @@ class BulkManualTagEditorModal extends BulkTagModalBase {
             }
 
             if (changed) {
-                const newValue = sortedTagNames.join(' ');
-                inputElement.textContent = newValue;
+                item.newTags = sortedTagNames;
+                inputElement.textContent = sortedTagNames.join(' ');
                 this.triggerValidation(inputElement);
                 this.flashButton(index, 'var(--primary)');
             } else {

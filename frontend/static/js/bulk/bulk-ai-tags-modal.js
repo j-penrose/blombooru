@@ -17,6 +17,7 @@ class BulkAITagsModal extends BulkTagModalBase {
             ${this.getLoadingHTML(window.i18n.t('bulk_modal.progress.fetching_metadata'))}
             ${this.getContentHTML()}
             ${this.getEmptyHTML()}
+            ${this.getErrorHTML()}
             ${this.getCancelledHTML()}
         `;
     }
@@ -25,79 +26,40 @@ class BulkAITagsModal extends BulkTagModalBase {
         if (this.isCancelled) return;
 
         this.showState('loading');
-        const prefix = this.options.classPrefix;
-        const itemsContainer = this.modalElement.querySelector(`.${prefix}-items`);
-
         const selectedArray = Array.from(this.selectedItems);
 
-        // Phase 1: Fetch metadata and media info
-        this.updateProgress(0, selectedArray.length, window.i18n.t('bulk_modal.progress.fetching_metadata'), window.i18n.t('bulk_modal.progress.items_fetched'));
+        // Phase 1: Fetch media info and AI metadata in one concurrent chunked pass
+        let batchItems = [];
 
-        const rawData = [];
-        const mediaDataMap = new Map();
-
-        // 1a. Batch fetch media data
         try {
-            const idsParam = selectedArray.join(',');
-            const res = await this.fetchWithAbort(`/api/media/batch?ids=${idsParam}`);
-            if (res.ok) {
-                const data = await res.json();
-                if (data.items) {
-                    data.items.forEach(item => mediaDataMap.set(item.id, item));
-                }
-            }
-        } catch (e) {
-            console.error('Error fetching media batch:', e);
-        }
+            batchItems = await this.fetchMediaInChunks(selectedArray, {
+                chunkSize: 50,
+                concurrency: 3,
+                projection: 'ai_metadata',
+                statusText: window.i18n.t('bulk_modal.progress.fetching_metadata'),
+                phaseText: window.i18n.t('bulk_modal.progress.items_fetched')
+            });
 
-        // 1b. Fetch metadata individuals (and media data fallback)
-        let fetchProgress = 0;
-        const fetchMediaData = async (mediaId) => {
             if (this.isCancelled) return;
-            try {
-                let mediaData = mediaDataMap.get(mediaId);
-
-                const fetchTasks = [this.fetchWithAbort(`/api/media/${mediaId}/metadata`)];
-                if (!mediaData) {
-                    fetchTasks.push(this.fetchWithAbort(`/api/media/${mediaId}`));
-                }
-
-                const results = await Promise.all(fetchTasks);
-                const metaRes = results[0];
-                const mediaRes = results[1];
-
-                const metadata = metaRes.ok ? await metaRes.json() : null;
-                if (mediaRes && mediaRes.ok) {
-                    mediaData = await mediaRes.json();
-                }
-
-                if (metadata) {
-                    rawData.push({ mediaId, metadata, mediaData: mediaData || { tags: [] } });
-                }
-            } catch (e) {
-                if (e.name === 'AbortError') throw e;
-                console.error(`Error fetching media ${mediaId}:`, e);
-            } finally {
-                fetchProgress++;
-                if (!this.isCancelled) {
-                    this.updateProgress(fetchProgress, selectedArray.length, window.i18n.t('bulk_modal.progress.fetching_metadata'), window.i18n.t('bulk_modal.progress.items_fetched'));
-                }
-            }
-        };
-
-        try {
-            await this.processBatch(selectedArray, fetchMediaData, 10);
         } catch (e) {
             if (e.name === 'AbortError') return;
-            throw e;
+            console.error('Error fetching media batch or metadata:', e);
+            this.showError(window.i18n.t('bulk_modal.messages.error_occurred'));
+            return;
         }
         if (this.isCancelled) return;
+
+        if (!batchItems || batchItems.length === 0) {
+            this.showState('empty');
+            return;
+        }
 
         // Phase 2: Extract prompts and collect tags
         const allUniqueTags = new Set();
         const itemsWithPrompts = [];
 
-        for (const { mediaId, metadata, mediaData } of rawData) {
+        for (const item of batchItems) {
+            const metadata = item.metadata;
             if (!metadata) continue;
 
             const aiPrompt = AITagUtils.extractAIPrompt(metadata);
@@ -110,8 +72,8 @@ class BulkAITagsModal extends BulkTagModalBase {
             promptTags.forEach(tag => allUniqueTags.add(tag));
 
             itemsWithPrompts.push({
-                mediaId,
-                mediaData,
+                mediaId: item.id,
+                mediaData: item,
                 promptTags: [...new Set(promptTags)]
             });
         }
@@ -166,7 +128,6 @@ class BulkAITagsModal extends BulkTagModalBase {
         }
 
         this.renderItems();
-        await this.initializeInputHelpers(itemsContainer);
 
         if (this.isCancelled) return;
 

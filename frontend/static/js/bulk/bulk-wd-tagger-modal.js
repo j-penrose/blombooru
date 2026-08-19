@@ -139,51 +139,28 @@ class BulkWDTaggerModal extends BulkTagModalBase {
         if (this.isCancelled) return;
 
         this.showState('loading');
-        const prefix = this.options.classPrefix;
-        const itemsContainer = this.modalElement.querySelector(`.${prefix}-items`);
-        if (itemsContainer) itemsContainer.innerHTML = '';
         this.displayedMediaIds = new Set();
 
         const selectedArray = Array.from(this.selectedItems);
 
-        // Phase 1: Fetch media info in batch
+        // Phase 1: Fetch media info in concurrent chunks
         const mediaInfoMap = new Map();
-        this.updateProgress(0, selectedArray.length, window.i18n.t('bulk_modal.progress.fetching_media'), window.i18n.t('bulk_modal.progress.items_fetched'));
-
         try {
-            const idsParam = selectedArray.join(',');
-            const res = await this.fetchWithAbort(`/api/media/batch?ids=${idsParam}`);
-            if (res.ok) {
-                const data = await res.json();
-                if (data.items) {
-                    data.items.forEach(item => mediaInfoMap.set(item.id, item));
-                }
-            } else {
-                throw new Error('Failed to fetch media info batch');
+            const batchItems = await this.fetchMediaInChunks(selectedArray, {
+                chunkSize: 50,
+                concurrency: 3,
+                projection: 'tags_only',
+                statusText: window.i18n.t('bulk_modal.progress.fetching_media'),
+                phaseText: window.i18n.t('bulk_modal.progress.items_fetched')
+            });
+            if (batchItems) {
+                batchItems.forEach(item => mediaInfoMap.set(item.id, item));
             }
         } catch (e) {
             if (e.name === 'AbortError') return;
             console.error('Error fetching media info batch:', e);
-            // Fallback to individual fetching if batch fails
-            let fetchProgress = 0;
-            const fetchMediaInfo = async (mediaId) => {
-                if (this.isCancelled) return;
-                try {
-                    const res = await this.fetchWithAbort(`/api/media/${mediaId}`);
-                    if (res.ok) {
-                        const data = await res.json();
-                        mediaInfoMap.set(mediaId, data);
-                    }
-                } catch (err) {
-                    console.error(`Error fetching media ${mediaId}:`, err);
-                } finally {
-                    fetchProgress++;
-                    if (!this.isCancelled) {
-                        this.updateProgress(fetchProgress, selectedArray.length, window.i18n.t('bulk_modal.progress.fetching_media'), window.i18n.t('bulk_modal.progress.items_fetched'));
-                    }
-                }
-            };
-            await this.processBatch(selectedArray, fetchMediaInfo, 20);
+            this.showError(window.i18n.t('bulk_modal.messages.error_occurred'));
+            return;
         }
 
         if (this.isCancelled) return;
@@ -372,7 +349,7 @@ class BulkWDTaggerModal extends BulkTagModalBase {
         const unvalidatedTags = predictedTags.filter(t => !this.tagResolutionCache.has(t.toLowerCase().trim()));
         if (unvalidatedTags.length > 0) {
             try {
-                await this.validateTags(unvalidatedTags, 20, false);
+                await this.validateTags(unvalidatedTags, 2, false);
             } catch (e) {
                 if (e.name === 'AbortError' || this.isCancelled) return;
                 console.error('Error validating tags for item:', e);
@@ -412,10 +389,7 @@ class BulkWDTaggerModal extends BulkTagModalBase {
             const itemHTML = this.renderItem(item, index);
             itemsContainer.insertAdjacentHTML('beforeend', itemHTML);
 
-            const input = itemsContainer.querySelector(`.${prefix}-input[data-index="${index}"]`);
-            if (input) {
-                await this.initializeSingleInput(input);
-            }
+            await new Promise(resolve => setTimeout(resolve, 0));
         }
 
         this.showSaveButton();

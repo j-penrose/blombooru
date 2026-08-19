@@ -29,15 +29,12 @@ class BulkTagModalBase {
         this.tagInputHelper = typeof TagInputHelper !== 'undefined' ? new TagInputHelper() : null;
 
         this.fullscreenViewer = new FullscreenMediaViewer();
-
-        // Resize observer for dynamic button layout
-        this.resizeObserver = null;
     }
 
     // ==================== Abstract Methods ====================
 
     getStates() {
-        return ['loading', 'content', 'empty', 'cancelled'];
+        return ['loading', 'content', 'empty', 'error', 'cancelled'];
     }
 
     getBodyHTML() {
@@ -94,7 +91,7 @@ class BulkTagModalBase {
                 </div>
                 
                 <!-- Body -->
-                <div class="flex-1 overflow-hidden p-4 flex flex-col">
+                <div class="flex-1 overflow-hidden p-4 flex flex-col min-h-0">
                     ${this.getBodyHTML()}
                 </div>
                 
@@ -180,6 +177,216 @@ class BulkTagModalBase {
         `;
     }
 
+    // ==================== Progress Tracking ====================
+
+    updateProgress(current, total, status, phase) {
+        const prefix = this.options.classPrefix;
+
+        const progress = this.modalElement?.querySelector(`.${prefix}-progress`);
+        const totalEl = this.modalElement?.querySelector(`.${prefix}-total`);
+        const statusEl = this.modalElement?.querySelector(`.${prefix}-status`);
+        const phaseEl = this.modalElement?.querySelector(`.${prefix}-phase`);
+
+        if (progress) progress.textContent = current;
+        if (totalEl) totalEl.textContent = total;
+        if (statusEl && status) statusEl.textContent = status;
+        if (phaseEl && phase) phaseEl.textContent = phase;
+    }
+
+    // ==================== Chunked Fetchers ====================
+
+    async fetchWithAbort(url, options = {}) {
+        if (this.isCancelled) throw new DOMException('Cancelled', 'AbortError');
+
+        return fetch(url, {
+            ...options,
+            signal: this.abortController?.signal
+        });
+    }
+
+    async fetchMediaInChunks(mediaIds, options = {}) {
+        const {
+            chunkSize = 50,
+            concurrency = 1,
+            projection = 'tags_only',
+            statusText = window.i18n.t('bulk_modal.progress.fetching_metadata'),
+            phaseText = window.i18n.t('bulk_modal.progress.items_fetched')
+        } = options;
+
+        if (!mediaIds || mediaIds.length === 0) return [];
+
+        this.updateProgress(0, mediaIds.length, statusText, phaseText);
+
+        const chunks = [];
+        for (let i = 0; i < mediaIds.length; i += chunkSize) {
+            chunks.push(mediaIds.slice(i, i + chunkSize));
+        }
+
+        let fetchedCount = 0;
+        const resultsMap = new Map();
+        const failedIds = [];
+
+        const maxRetries = 2;
+        const fetchChunkWithRetry = async (chunk, retryCount = maxRetries) => {
+            if (this.isCancelled) return;
+            try {
+                const response = await this.fetchWithAbort('/api/media/batch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        ids: chunk,
+                        projection: projection
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: Failed to fetch media batch`);
+                }
+
+                const data = await response.json();
+                const items = data.items || [];
+
+                for (const item of items) {
+                    resultsMap.set(item.id, item);
+                    if (item.tags && Array.isArray(item.tags)) {
+                        for (const t of item.tags) {
+                            const tagName = (t.name || t).toLowerCase().trim();
+                            if (tagName) {
+                                this.tagResolutionCache.set(tagName, t.name || t);
+                                if (this.tagInputHelper) {
+                                    this.tagInputHelper.tagValidationCache.set(tagName, true);
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (err) {
+                if (err.name === 'AbortError' || this.isCancelled) throw err;
+                if (retryCount > 0) {
+                    const delay = 200 * Math.pow(2, maxRetries - retryCount);
+                    await new Promise(r => setTimeout(r, delay));
+                    return fetchChunkWithRetry(chunk, retryCount - 1);
+                }
+                console.error('Error fetching media chunk:', err);
+                failedIds.push(...chunk);
+            } finally {
+                fetchedCount += chunk.length;
+                if (!this.isCancelled) {
+                    this.updateProgress(Math.min(fetchedCount, mediaIds.length), mediaIds.length, statusText, phaseText);
+                }
+            }
+        };
+
+        let chunkIndex = 0;
+        const worker = async () => {
+            while (chunkIndex < chunks.length && !this.isCancelled) {
+                const currentChunk = chunks[chunkIndex++];
+                await fetchChunkWithRetry(currentChunk);
+            }
+        };
+
+        const workers = Array.from({ length: Math.min(concurrency, chunks.length) }, () => worker());
+        await Promise.all(workers);
+
+        if (this.isCancelled) return [];
+
+        const successfulItems = mediaIds.map(id => resultsMap.get(id)).filter(Boolean);
+
+        if (successfulItems.length === 0 && failedIds.length > 0) {
+            throw new Error('Failed to fetch media items');
+        }
+
+        if (failedIds.length > 0 && successfulItems.length > 0) {
+            if (typeof app !== 'undefined' && app.showNotification) {
+                app.showNotification(window.i18n.t('bulk_modal.messages.error_occurred'), 'warning');
+            }
+        }
+
+        return successfulItems;
+    }
+
+    async fetchMetadataInChunks(mediaIds, options = {}) {
+        const {
+            chunkSize = 50,
+            concurrency = 3,
+            statusText = window.i18n.t('bulk_modal.progress.fetching_metadata'),
+            phaseText = window.i18n.t('bulk_modal.progress.items_fetched')
+        } = options;
+
+        if (!mediaIds || mediaIds.length === 0) return new Map();
+
+        this.updateProgress(0, mediaIds.length, statusText, phaseText);
+
+        const chunks = [];
+        for (let i = 0; i < mediaIds.length; i += chunkSize) {
+            chunks.push(mediaIds.slice(i, i + chunkSize));
+        }
+
+        let fetchedCount = 0;
+        const metadataMap = new Map();
+        const failedIds = [];
+
+        const maxRetries = 2;
+        const fetchChunkWithRetry = async (chunk, retryCount = maxRetries) => {
+            if (this.isCancelled) return;
+            try {
+                const response = await this.fetchWithAbort('/api/media/batch-metadata', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ids: chunk })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: Failed to fetch metadata batch`);
+                }
+
+                const data = await response.json();
+                const items = data.items || {};
+
+                for (const [mid, meta] of Object.entries(items)) {
+                    metadataMap.set(parseInt(mid), meta);
+                }
+            } catch (err) {
+                if (err.name === 'AbortError' || this.isCancelled) throw err;
+                if (retryCount > 0) {
+                    const delay = 200 * Math.pow(2, maxRetries - retryCount);
+                    await new Promise(r => setTimeout(r, delay));
+                    return fetchChunkWithRetry(chunk, retryCount - 1);
+                }
+                console.error('Error fetching metadata chunk:', err);
+                failedIds.push(...chunk);
+            } finally {
+                fetchedCount += chunk.length;
+                if (!this.isCancelled) {
+                    this.updateProgress(Math.min(fetchedCount, mediaIds.length), mediaIds.length, statusText, phaseText);
+                }
+            }
+        };
+
+        let chunkIndex = 0;
+        const worker = async () => {
+            while (chunkIndex < chunks.length && !this.isCancelled) {
+                const currentChunk = chunks[chunkIndex++];
+                await fetchChunkWithRetry(currentChunk);
+            }
+        };
+
+        const workers = Array.from({ length: Math.min(concurrency, chunks.length) }, () => worker());
+        await Promise.all(workers);
+
+        if (metadataMap.size === 0 && failedIds.length > 0) {
+            throw new Error('Failed to fetch metadata');
+        }
+
+        if (failedIds.length > 0 && metadataMap.size > 0) {
+            if (typeof app !== 'undefined' && app.showNotification) {
+                app.showNotification(window.i18n.t('bulk_modal.messages.error_occurred'), 'warning');
+            }
+        }
+
+        return metadataMap;
+    }
+
     // ==================== Event Listeners ====================
 
     setupEventListeners() {
@@ -193,33 +400,64 @@ class BulkTagModalBase {
         const saveBtn = this.modalElement.querySelector(`.${prefix}-save`);
         if (saveBtn) saveBtn.addEventListener('click', () => this.saveTags());
 
-        // Item action buttons (delegation)
-        const itemsContainer = this.modalElement.querySelector(`.${prefix}-items`);
-        if (itemsContainer) {
-            itemsContainer.addEventListener('click', (e) => {
+        const container = this.modalElement.querySelector(`.${prefix}-items`);
+        if (container) {
+            // Lazy input initialization on focus
+            container.addEventListener('focusin', (e) => {
+                const input = e.target.closest(`.${prefix}-input`);
+                if (!input) return;
+                this.initializeSingleInput(input);
+            });
+
+            container.addEventListener('focusout', (e) => {
+                const input = e.target.closest(`.${prefix}-input`);
+                if (!input) return;
+
+                const index = parseInt(input.dataset.index);
+                this.flushInputState(input, index);
+            });
+
+            container.addEventListener('input', (e) => {
+                const input = e.target.closest(`.${prefix}-input`);
+                if (!input) return;
+
+                const index = parseInt(input.dataset.index);
+                this.syncInputState(input, index);
+            });
+
+            // Action buttons (Clear & Refresh)
+            container.addEventListener('click', (e) => {
                 const btn = e.target.closest('button');
                 if (!btn) return;
 
                 const index = parseInt(btn.dataset.index);
-                const input = this.modalElement.querySelector(`.${prefix}-input[data-index="${index}"]`);
-                if (!input) return;
+                if (isNaN(index)) return;
+
+                const input = container.querySelector(`.${prefix}-input[data-index="${index}"]`);
 
                 if (btn.classList.contains(`${prefix}-clear`)) {
-                    input.textContent = '';
-                    this.triggerValidation(input);
+                    if (this.itemsData[index]) {
+                        this.itemsData[index].newTags = [];
+                    }
+                    if (input) {
+                        input.textContent = '';
+                        this.triggerValidation(input);
+                    }
                 }
 
                 if (btn.classList.contains(`${prefix}-refresh`)) {
-                    this.refreshSingleItem(index, input);
+                    if (input) {
+                        this.refreshSingleItem(index, input);
+                    }
                 }
             });
 
-            // Thumbnail click listener
-            itemsContainer.addEventListener('click', (e) => {
+            // Thumbnail click listener for Fullscreen viewer
+            container.addEventListener('click', (e) => {
                 if (e.target.classList.contains('item-thumbnail')) {
-                    const itemDiv = e.target.closest(`.${prefix}-item`);
-                    if (itemDiv) {
-                        const index = parseInt(itemDiv.dataset.index);
+                    const row = e.target.closest(`.${prefix}-item`);
+                    if (row) {
+                        const index = parseInt(row.dataset.index);
                         const item = this.itemsData[index];
                         if (item && item.mediaId) {
                             // Detect if video based on filename extension
@@ -253,6 +491,25 @@ class BulkTagModalBase {
         });
 
         this.setupAdditionalEventListeners();
+    }
+
+    syncInputState(input, index) {
+        if (!this.itemsData[index]) return;
+        const text = input.innerText || input.textContent || '';
+        const tags = text.trim().split(/\s+/).filter(t => t.length > 0);
+        this.itemsData[index].newTags = tags;
+    }
+
+    flushInputState(input, index) {
+        if (!this.itemsData[index]) return;
+        let tags = [];
+        if (this.tagInputHelper) {
+            tags = this.tagInputHelper.getValidTagsFromInput(input);
+        } else {
+            const text = input.innerText || input.textContent || '';
+            tags = text.trim().split(/\s+/).filter(t => t.length > 0);
+        }
+        this.itemsData[index].newTags = tags;
     }
 
     handleUnload() {
@@ -332,19 +589,13 @@ class BulkTagModalBase {
     reset() {
         const prefix = this.options.classPrefix;
 
-        // Clean up observer
-        if (this.resizeObserver) {
-            this.resizeObserver.disconnect();
-            this.resizeObserver = null;
-        }
-
         this.getStates().forEach(state => {
-            const el = this.modalElement.querySelector(`.${prefix}-${state}`);
+            const el = this.modalElement?.querySelector(`.${prefix}-${state}`);
             if (el) el.style.display = 'none';
         });
 
-        const saveBtn = this.modalElement.querySelector(`.${prefix}-save`);
-        const itemsContainer = this.modalElement.querySelector(`.${prefix}-items`);
+        const saveBtn = this.modalElement?.querySelector(`.${prefix}-save`);
+        const itemsContainer = this.modalElement?.querySelector(`.${prefix}-items`);
 
         if (saveBtn) saveBtn.style.display = 'none';
         if (itemsContainer) itemsContainer.innerHTML = '';
@@ -356,60 +607,25 @@ class BulkTagModalBase {
         const prefix = this.options.classPrefix;
 
         this.getStates().forEach(s => {
-            const el = this.modalElement.querySelector(`.${prefix}-${s}`);
-            if (el) el.style.display = s === state ? 'flex' : 'none';
+            const el = this.modalElement?.querySelector(`.${prefix}-${s}`);
+            if (el) el.style.display = (s === state) ? 'flex' : 'none';
         });
     }
 
     showError(message) {
         this.showState('error');
         const prefix = this.options.classPrefix;
-        const errorMsg = this.modalElement.querySelector(`.${prefix}-error-message`);
+        const errorMsg = this.modalElement?.querySelector(`.${prefix}-error-message`);
         if (errorMsg) errorMsg.textContent = message;
     }
 
     showSaveButton() {
         const prefix = this.options.classPrefix;
-        const saveBtn = this.modalElement.querySelector(`.${prefix}-save`);
+        const saveBtn = this.modalElement?.querySelector(`.${prefix}-save`);
         if (saveBtn) saveBtn.style.display = 'block';
     }
 
-    // ==================== Progress Tracking ====================
-
-    updateProgress(current, total, status, phase) {
-        const prefix = this.options.classPrefix;
-
-        const progress = this.modalElement.querySelector(`.${prefix}-progress`);
-        const totalEl = this.modalElement.querySelector(`.${prefix}-total`);
-        const statusEl = this.modalElement.querySelector(`.${prefix}-status`);
-        const phaseEl = this.modalElement.querySelector(`.${prefix}-phase`);
-
-        if (progress) progress.textContent = current;
-        if (totalEl) totalEl.textContent = total;
-        if (statusEl) statusEl.textContent = status;
-        if (phaseEl) phaseEl.textContent = phase;
-    }
-
-    // ==================== Fetch Utilities ====================
-
-    async fetchWithAbort(url, options = {}) {
-        if (this.isCancelled) throw new DOMException('Cancelled', 'AbortError');
-
-        return fetch(url, {
-            ...options,
-            signal: this.abortController?.signal
-        });
-    }
-
-    async processBatch(items, processor, concurrency = 10) {
-        for (let i = 0; i < items.length; i += concurrency) {
-            if (this.isCancelled) return;
-            const chunk = items.slice(i, i + concurrency);
-            await Promise.all(chunk.map(item => processor(item)));
-        }
-    }
-
-    // ==================== Tag Validation ====================
+    // ==================== Batch Tag Validation ====================
 
     async validateAndCacheTag(tag) {
         const normalized = tag?.toLowerCase().trim();
@@ -418,30 +634,27 @@ class BulkTagModalBase {
         if (this.isCancelled) return;
 
         try {
-            const response = await this.fetchWithAbort(`/api/tags/autocomplete?q=${encodeURIComponent(normalized)}`);
-            let result = null;
+            const response = await this.fetchWithAbort('/api/tags/batch-validate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ names: [normalized] })
+            });
 
             if (response.ok) {
-                const results = await response.json();
-                if (results && results.length > 0) {
-                    const aliasMatch = results.find(t => t.is_alias && t.alias_name?.toLowerCase() === normalized);
-                    if (aliasMatch) {
-                        result = aliasMatch.name;
-                    } else {
-                        const exactMatch = results.find(t => t.name?.toLowerCase() === normalized);
-                        if (exactMatch) result = exactMatch.name;
-                    }
+                const data = await response.json();
+                const resolved = (data.resolved && data.resolved[normalized]) || null;
+                this.tagResolutionCache.set(normalized, resolved);
+                if (this.tagInputHelper) {
+                    this.tagInputHelper.tagValidationCache.set(normalized, !!resolved);
                 }
             }
-
-            this.tagResolutionCache.set(normalized, result);
         } catch (e) {
             if (e.name === 'AbortError') throw e;
-            this.tagResolutionCache.set(normalized, null);
+            console.error('Error validating tag:', e);
         }
     }
 
-    async validateTags(tags, concurrency = 20, updateModalProgress = true) {
+    async validateTags(tags, concurrency = 2, updateModalProgress = true) {
         const tagsToValidate = tags
             .map(t => t?.toLowerCase().trim())
             .filter(tag => tag && !this.tagResolutionCache.has(tag));
@@ -452,62 +665,65 @@ class BulkTagModalBase {
             this.updateProgress(0, tagsToValidate.length, window.i18n.t('bulk_modal.progress.validating_tags'), window.i18n.t('bulk_modal.progress.tags_checked'));
         }
 
-        try {
-            // Use the batch endpoint for multiple tags
-            const namesParam = tagsToValidate.map(n => encodeURIComponent(n)).join(',');
-            const response = await this.fetchWithAbort(`/api/tags?names=${namesParam}`);
+        const chunkSize = 100;
+        const chunks = [];
+        for (let i = 0; i < tagsToValidate.length; i += chunkSize) {
+            chunks.push(tagsToValidate.slice(i, i + chunkSize));
+        }
 
-            if (response.ok) {
-                const results = await response.json();
-                const foundMap = new Map();
-                results.forEach(t => {
-                    const norm = t.name.toLowerCase().trim();
-                    foundMap.set(norm, t.name);
-                    if (this.tagInputHelper) {
-                        this.tagInputHelper.tagValidationCache.set(norm, true);
-                    }
+        let processedCount = 0;
+
+        const maxRetries = 2;
+        const processChunkWithRetry = async (chunk, retryCount = maxRetries) => {
+            if (this.isCancelled) return;
+            try {
+                const response = await this.fetchWithAbort('/api/tags/batch-validate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ names: chunk })
                 });
 
-                tagsToValidate.forEach(tag => {
-                    const norm = tag.toLowerCase().trim();
-                    const resolved = foundMap.get(norm) || null;
-                    this.tagResolutionCache.set(norm, resolved);
-                    if (this.tagInputHelper && !resolved) {
-                        this.tagInputHelper.tagValidationCache.set(norm, false);
-                    }
-                });
-            } else {
-                // Fallback to one-by-one if batch fails or is too large
-                let progress = 0;
-                const validateTag = async (tag) => {
-                    if (this.isCancelled) return;
-                    await this.validateAndCacheTag(tag);
-                    progress++;
-                    if (!this.isCancelled && updateModalProgress) {
-                        this.updateProgress(progress, tagsToValidate.length, window.i18n.t('bulk_modal.progress.validating_tags'), window.i18n.t('bulk_modal.progress.tags_checked'));
-                    }
-                };
-                await this.processBatch(tagsToValidate, validateTag, concurrency);
-            }
-        } catch (e) {
-            if (e.name === 'AbortError') throw e;
-            console.error('Error validating tags in batch:', e);
-            // Fallback
-            let progress = 0;
-            const validateTag = async (tag) => {
-                if (this.isCancelled) return;
-                await this.validateAndCacheTag(tag);
-                progress++;
-                if (updateModalProgress) {
-                    this.updateProgress(progress, tagsToValidate.length, window.i18n.t('bulk_modal.progress.validating_tags'), window.i18n.t('bulk_modal.progress.tags_checked'));
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: Failed to validate tags`);
                 }
-            };
-            await this.processBatch(tagsToValidate, validateTag, concurrency);
-        }
 
-        if (updateModalProgress) {
-            this.updateProgress(tagsToValidate.length, tagsToValidate.length, window.i18n.t('bulk_modal.progress.validating_tags'), window.i18n.t('bulk_modal.progress.tags_checked'));
-        }
+                const data = await response.json();
+                const resolvedMap = data.resolved || {};
+
+                chunk.forEach(tag => {
+                    const resolved = resolvedMap[tag] || null;
+                    this.tagResolutionCache.set(tag, resolved);
+                    if (this.tagInputHelper) {
+                        this.tagInputHelper.tagValidationCache.set(tag, !!resolved);
+                    }
+                });
+            } catch (e) {
+                if (e.name === 'AbortError' || this.isCancelled) throw e;
+                if (retryCount > 0) {
+                    const delay = 200 * Math.pow(2, maxRetries - retryCount);
+                    await new Promise(r => setTimeout(r, delay));
+                    return processChunkWithRetry(chunk, retryCount - 1);
+                }
+                console.error('Error validating tags batch:', e);
+                // Do not poison cache with null on network/server errors
+            } finally {
+                processedCount += chunk.length;
+                if (updateModalProgress && !this.isCancelled) {
+                    this.updateProgress(Math.min(processedCount, tagsToValidate.length), tagsToValidate.length, window.i18n.t('bulk_modal.progress.validating_tags'), window.i18n.t('bulk_modal.progress.tags_checked'));
+                }
+            }
+        };
+
+        let chunkIndex = 0;
+        const worker = async () => {
+            while (chunkIndex < chunks.length && !this.isCancelled) {
+                const currentChunk = chunks[chunkIndex++];
+                await processChunkWithRetry(currentChunk);
+            }
+        };
+
+        const workers = Array.from({ length: Math.min(concurrency, chunks.length) }, () => worker());
+        await Promise.all(workers);
     }
 
     getResolvedTag(tag) {
@@ -541,48 +757,25 @@ class BulkTagModalBase {
         }
     }
 
-    // ==================== Input Helpers ====================
+    // ==================== Lazy Input Helpers ====================
 
-    async initializeSingleInput(input) {
+    initializeSingleInput(input) {
         if (!this.tagInputHelper || this.isCancelled || !input) return;
+        if (input.dataset.initialized === 'true') return;
 
+        input.dataset.initialized = 'true';
         const prefix = this.options.classPrefix;
-
-        if (!this.resizeObserver) {
-            this.resizeObserver = new ResizeObserver(entries => {
-                for (const entry of entries) {
-                    const inp = entry.target;
-                    const wrapper = inp.parentElement;
-                    const actions = wrapper ? wrapper.nextElementSibling : null;
-
-                    if (!actions || !actions.classList.contains(`${prefix}-actions`)) continue;
-
-                    // Compute line count
-                    const style = window.getComputedStyle(inp);
-                    const lineHeight = parseFloat(style.lineHeight) || 20;
-                    const paddingTop = parseFloat(style.paddingTop);
-                    const paddingBottom = parseFloat(style.paddingBottom);
-
-                    const contentHeight = inp.clientHeight - paddingTop - paddingBottom;
-                    const lines = contentHeight / lineHeight;
-
-                    if (lines > 2.5) {
-                        actions.classList.add('flex-col');
-                    } else if (lines < 1.5) {
-                        actions.classList.remove('flex-col');
-                    }
-                }
-            });
-        }
-
-        this.resizeObserver.observe(input);
 
         if (typeof TagAutocomplete !== 'undefined') {
             new TagAutocomplete(input, {
                 multipleValues: true,
                 allowCreate: true,
                 containerClasses: 'surface border border-color shadow-lg z-50',
-                onSelect: () => this.triggerValidation(input)
+                onSelect: () => {
+                    this.triggerValidation(input);
+                    const idx = parseInt(input.dataset.index);
+                    if (!isNaN(idx)) this.syncInputState(input, idx);
+                }
             });
         }
 
@@ -614,20 +807,7 @@ class BulkTagModalBase {
             }
         });
 
-        await new Promise(r => setTimeout(r, 0));
         this.triggerValidation(input);
-    }
-
-    async initializeInputHelpers(container) {
-        if (!this.tagInputHelper || this.isCancelled || !container) return;
-
-        const prefix = this.options.classPrefix;
-        const inputs = container.querySelectorAll(`.${prefix}-input`);
-
-        for (const input of inputs) {
-            if (this.isCancelled) return;
-            await this.initializeSingleInput(input);
-        }
     }
 
     // ==================== Rendering ====================
@@ -641,11 +821,11 @@ class BulkTagModalBase {
         const tagsToShow = item.newTags || [];
 
         return `
-            <div class="${prefix}-item surface-light p-3 border" data-index="${index}">
+            <div class="${prefix}-item surface-light p-3 border mb-3" data-index="${index}" style="content-visibility: auto; contain-intrinsic-size: auto 120px;">
                 <!-- Mobile: Stacked layout, Desktop: Side-by-side -->
                 <div class="flex flex-col sm:flex-row gap-3">
                     <!-- Thumbnail -->
-                    <div class="flex gap-3 sm:block">
+                    <div class="flex gap-3 sm:block flex-shrink-0">
                         <img src="/api/media/${item.mediaId}/thumbnail" 
                              alt="" 
                              class="w-16 h-16 sm:w-20 sm:h-20 object-cover flex-shrink-0 item-thumbnail cursor-pointer"
@@ -675,7 +855,7 @@ class BulkTagModalBase {
                                      style="white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere;">${tagsToShow.join(' ')}</div>
                             </div>
                             
-                            <!-- Action buttons - Default Row, JS handles Col switch -->
+                            <!-- Action buttons -->
                             <div class="${prefix}-actions flex gap-1.5 flex-shrink-0 transition-all">
                                 <button type="button" 
                                         class="${prefix}-refresh w-11 h-11 sm:w-9 sm:h-9 surface hover:surface-light text-secondary hover:text flex items-center justify-center transition-colors"
@@ -703,20 +883,20 @@ class BulkTagModalBase {
     }
 
     renderItems() {
+        if (!this.modalElement || !this.itemsData) return;
         const prefix = this.options.classPrefix;
-        const itemsContainer = this.modalElement.querySelector(`.${prefix}-items`);
+        const container = this.modalElement.querySelector(`.${prefix}-items`);
+        if (!container) return;
 
-        if (itemsContainer) {
-            itemsContainer.innerHTML = this.itemsData.map((item, index) =>
-                this.renderItem(item, index)
-            ).join('');
-        }
+        container.scrollTop = 0;
+        const html = this.itemsData.map((item, index) => this.renderItem(item, index)).join('');
+        container.innerHTML = html;
     }
 
     // ==================== Button Feedback ====================
     flashButton(index, color, buttonType = 'refresh') {
         const prefix = this.options.classPrefix;
-        const btn = this.modalElement.querySelector(`.${prefix}-${buttonType}[data-index="${index}"]`);
+        const btn = this.modalElement?.querySelector(`.${prefix}-${buttonType}[data-index="${index}"]`);
         if (btn) {
             const originalColor = btn.style.color;
             btn.style.color = color;
@@ -724,7 +904,7 @@ class BulkTagModalBase {
         }
     }
 
-    // ==================== Save ====================
+    // ==================== Atomic Bulk Save ====================
 
     async saveTags() {
         // Cancel any pending streaming/background fetch
@@ -735,55 +915,50 @@ class BulkTagModalBase {
         }
 
         const prefix = this.options.classPrefix;
-        const saveBtn = this.modalElement.querySelector(`.${prefix}-save`);
+        const saveBtn = this.modalElement?.querySelector(`.${prefix}-save`);
 
         if (saveBtn) {
             saveBtn.disabled = true;
             saveBtn.textContent = window.i18n.t('modal.buttons.saving');
         }
 
-        let successCount = 0;
-        let errorCount = 0;
-
-        const saveItem = async (index) => {
-            const item = this.itemsData[index];
-            const input = this.modalElement.querySelector(`.${prefix}-input[data-index="${index}"]`);
-
-            if (!input) return;
-
-            let newTags = [];
-            if (this.tagInputHelper) {
-                newTags = this.tagInputHelper.getValidTagsFromInput(input);
-            } else {
-                newTags = input.innerText.trim().split(/\s+/).filter(t => t.length > 0);
-            }
-
-            if (newTags.length === 0) return;
-
+        const updateItems = [];
+        for (const item of this.itemsData) {
+            const newTags = item.newTags || [];
             const existingSet = new Set(item.currentTags.map(t => t.toLowerCase()));
             const uniqueNewTags = newTags.filter(t => !existingSet.has(t.toLowerCase()));
 
-            if (uniqueNewTags.length === 0) return;
+            if (uniqueNewTags.length > 0) {
+                const allTags = [...item.currentTags, ...uniqueNewTags];
+                updateItems.push({
+                    id: item.mediaId,
+                    tags: allTags
+                });
+            }
+        }
 
-            const allTags = [...item.currentTags, ...uniqueNewTags];
+        let successCount = 0;
+        let errorCount = 0;
 
+        if (updateItems.length > 0) {
             try {
-                const response = await fetch(`/api/media/${item.mediaId}`, {
-                    method: 'PATCH',
+                const response = await fetch('/api/media/bulk-update-tags', {
+                    method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ tags: allTags })
+                    body: JSON.stringify({ items: updateItems })
                 });
 
-                if (response.ok) successCount++;
-                else errorCount++;
+                if (response.ok) {
+                    const data = await response.json();
+                    successCount = data.updated_count || updateItems.length;
+                } else {
+                    errorCount = updateItems.length;
+                }
             } catch (e) {
-                console.error(`Error saving tags for media ${item.mediaId}:`, e);
-                errorCount++;
+                console.error('Error in atomic bulk save:', e);
+                errorCount = updateItems.length;
             }
-        };
-
-        const indices = this.itemsData.map((_, i) => i);
-        await this.processBatch(indices, saveItem, 5);
+        }
 
         if (saveBtn) {
             saveBtn.disabled = false;
