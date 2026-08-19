@@ -233,3 +233,25 @@ class KeybindingsUpdate(BaseModel):
 
 class KeybindingsResetRequest(BaseModel):
     action_id: Optional[str] = None # Omit to reset all
+
+class BatchMediaRequest(BaseModel):
+    ids: List[int]
+    projection: Optional[str] = None
+
+class BatchMetadataRequest(BaseModel):
+    ids: List[int]
+
+class BatchTagValidateRequest(BaseModel):
+    names: List[str]
+
+class BulkTagUpdateItem(BaseModel):
+    id: int
+    tags: List[str]
+
+class BulkTagUpdateRequest(BaseModel):
+    items: List[BulkTagUpdateItem]
+
+class BulkTagUpdateResponse(BaseModel):
+    status: str = "success"
+    updated_count: int
+    updated_media_ids: List[int]

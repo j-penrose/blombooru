@@ -1,14 +1,14 @@
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from sqlalchemy import and_, asc, case, desc, func, or_
+from sqlalchemy import and_, asc, case, desc, func
 from sqlalchemy.orm import Session
 
 from ..auth import require_admin_mode
 from ..config import settings
 from ..database import get_db
 from ..models import Media, RatingEnum, Tag, TagAlias, User, blombooru_media_tags
-from ..schemas import TagCategoryEnum, TagCreate, TagResponse
+from ..schemas import BatchTagValidateRequest, TagCategoryEnum, TagCreate, TagResponse
 from ..utils.cache import cache_response, invalidate_tag_cache
 from ..utils.search_parser import (apply_custom_filters_or,
                                    apply_search_criteria, parse_search_query)
@@ -19,6 +19,52 @@ def get_effective_limit(limit: Optional[int]) -> int:
     if limit is None or not isinstance(limit, int) or limit <= 0:
         return settings.get_items_per_page()
     return limit
+
+@router.post("/batch-validate")
+async def batch_validate_tags(
+    payload: BatchTagValidateRequest,
+    db: Session = Depends(get_db)
+):
+    """Validate a batch of tag names, resolving aliases and checking existence."""
+    from ..utils.tag_utils import resolve_aliases
+
+    raw_names = [n.strip().lower() for n in payload.names if n and n.strip()]
+    if not raw_names:
+        return {"resolved": {}}
+
+    unique_names = list(set(raw_names))
+    alias_map = resolve_aliases(db, unique_names)
+
+    resolved_names_to_check = set()
+    for name in unique_names:
+        if name in alias_map:
+            resolved_names_to_check.add(alias_map[name][0].lower())
+        else:
+            resolved_names_to_check.add(name)
+
+    existing_tags = {}
+    CHUNK_SIZE = 500
+    chk_list = list(resolved_names_to_check)
+    for i in range(0, len(chk_list), CHUNK_SIZE):
+        chunk = chk_list[i:i + CHUNK_SIZE]
+        tags = db.query(Tag.name).filter(Tag.name.in_(chunk)).all()
+        for t in tags:
+            existing_tags[t[0].lower()] = t[0]
+
+    results = {}
+    for name in unique_names:
+        if name in alias_map:
+            target_name = alias_map[name][0]
+            if target_name.lower() in existing_tags:
+                results[name] = existing_tags[target_name.lower()]
+            else:
+                results[name] = target_name
+        elif name in existing_tags:
+            results[name] = existing_tags[name]
+        else:
+            results[name] = None
+
+    return {"resolved": results}
 
 @router.get("/", response_model=List[TagResponse])
 @router.get("", response_model=List[TagResponse])

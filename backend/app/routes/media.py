@@ -17,8 +17,9 @@ from ..utils.request_helpers import safe_error_detail
 from ..database import get_db
 from ..models import (Album, Media, Tag, User, blombooru_album_media,
                       blombooru_media_tags)
-from ..schemas import (AlbumListResponse, MediaCreate, MediaResponse,
-                       MediaUpdate, RatingEnum, ShareSettingsUpdate)
+from ..schemas import (AlbumListResponse, BatchMediaRequest, BatchMetadataRequest,
+                       BulkTagUpdateRequest, BulkTagUpdateResponse, MediaCreate,
+                       MediaResponse, MediaUpdate, RatingEnum, ShareSettingsUpdate)
 from ..utils.album_utils import (get_bulk_album_metrics, get_flattened_media_ids,
                                 update_album_last_modified)
 from ..utils.cache import (cache_response, invalidate_album_cache,
@@ -36,6 +37,9 @@ from ..utils.search_parser import (apply_custom_filters_or,
 from ..utils.thumbnail_generator import generate_thumbnail
 
 router = APIRouter(prefix="/api/media", tags=["media"])
+
+# Maximum number of IDs per SQL IN-clause to avoid parameter limits
+BATCH_CHUNK_SIZE = 500
 
 class PostUpdateRequest(BaseModel):
     """Request body for the Update Post (from-source) endpoint.
@@ -541,9 +545,87 @@ async def get_media_list(
         logger.error(f"Error in get_media_list: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=safe_error_detail("Failed to retrieve media list", e))
 
+def _fetch_media_batch_tags_only(db: Session, media_ids: List[int], include_metadata: bool = False) -> List[dict]:
+    """Fast projection query returning only id, filename, file_type, tags (name, category), and optional metadata."""
+    results = []
+    
+    for i in range(0, len(media_ids), BATCH_CHUNK_SIZE):
+        chunk_ids = media_ids[i:i + BATCH_CHUNK_SIZE]
+        query_cols = [
+            Media.id,
+            Media.filename,
+            Media.file_type,
+            Tag.name,
+            Tag.category,
+        ]
+        if include_metadata:
+            query_cols.append(Media.path)
+
+        query = (
+            db.query(*query_cols)
+            .filter(Media.id.in_(chunk_ids))
+            .outerjoin(blombooru_media_tags, Media.id == blombooru_media_tags.c.media_id)
+            .outerjoin(Tag, blombooru_media_tags.c.tag_id == Tag.id)
+            .order_by(Media.id)
+        )
+        rows = query.all()
+        media_map = {}
+        for row in rows:
+            m_id = row[0]
+            filename = row[1]
+            file_type = row[2]
+            tag_name = row[3]
+            tag_cat = row[4]
+            rel_path = row[5] if include_metadata else None
+
+            if m_id not in media_map:
+                ft_val = file_type.value if hasattr(file_type, 'value') else file_type
+                item_dict = {
+                    "id": m_id,
+                    "filename": filename,
+                    "file_type": ft_val,
+                    "tags": []
+                }
+                if include_metadata:
+                    meta = None
+                    if rel_path:
+                        fpath = settings.BASE_DIR / rel_path
+                        if fpath.exists():
+                            try:
+                                meta = extract_image_metadata(fpath)
+                            except Exception:
+                                pass
+                    item_dict["metadata"] = meta
+                media_map[m_id] = item_dict
+
+            if tag_name:
+                cat_val = tag_cat.value if hasattr(tag_cat, 'value') else tag_cat
+                media_map[m_id]["tags"].append({
+                    "name": tag_name,
+                    "category": cat_val
+                })
+
+        for m_id in chunk_ids:
+            if m_id in media_map:
+                results.append(media_map[m_id])
+    return results
+
+def _fetch_media_batch_full(db: Session, media_ids: List[int]) -> List[dict]:
+    """Full MediaResponse batch serialization in chunks to respect parameter limits."""
+    results = []
+    for i in range(0, len(media_ids), BATCH_CHUNK_SIZE):
+        chunk_ids = media_ids[i:i + BATCH_CHUNK_SIZE]
+        media_list = db.query(Media).options(selectinload(Media.tags)).filter(Media.id.in_(chunk_ids)).all()
+        media_dict = {m.id: m for m in media_list}
+        for m_id in chunk_ids:
+            if m_id in media_dict:
+                results.append(MediaResponse.model_validate(media_dict[m_id]))
+    return results
+
 @router.get("/batch")
 async def get_media_batch(
     ids: str = Query(..., description="Comma-separated list of media IDs"),
+    projection: Optional[str] = Query(None, description="Optional projection, e.g. 'tags_only' or 'ai_metadata'"),
     db: Session = Depends(get_db)
 ):
     """Get multiple media items by their IDs in a single request"""
@@ -552,13 +634,205 @@ async def get_media_batch(
         if not media_ids:
             return {"items": []}
             
-        media_list = db.query(Media).options(selectinload(Media.tags)).filter(Media.id.in_(media_ids)).all()
-        items = [MediaResponse.model_validate(m) for m in media_list]
-        
+        if projection == "tags_only":
+            items = _fetch_media_batch_tags_only(db, media_ids, include_metadata=False)
+        elif projection in ("ai_metadata", "tags_and_metadata"):
+            items = _fetch_media_batch_tags_only(db, media_ids, include_metadata=True)
+        else:
+            items = _fetch_media_batch_full(db, media_ids)
+            
         return {"items": items}
     except Exception as e:
         logger.error(f"Error in get_media_batch: {e}")
         raise HTTPException(status_code=500, detail=safe_error_detail("Failed to retrieve media batch", e))
+
+@router.post("/batch")
+async def post_media_batch(
+    payload: BatchMediaRequest,
+    db: Session = Depends(get_db)
+):
+    """Get multiple media items by their IDs via POST body."""
+    try:
+        if not payload.ids:
+            return {"items": []}
+            
+        if payload.projection == "tags_only":
+            items = _fetch_media_batch_tags_only(db, payload.ids, include_metadata=False)
+        elif payload.projection in ("ai_metadata", "tags_and_metadata"):
+            items = _fetch_media_batch_tags_only(db, payload.ids, include_metadata=True)
+        else:
+            items = _fetch_media_batch_full(db, payload.ids)
+            
+        return {"items": items}
+    except Exception as e:
+        logger.error(f"Error in post_media_batch: {e}")
+        raise HTTPException(status_code=500, detail=safe_error_detail("Failed to retrieve media batch", e))
+
+@router.post("/batch-metadata")
+async def post_media_batch_metadata(
+    payload: BatchMetadataRequest,
+    db: Session = Depends(get_db)
+):
+    """Get metadata for multiple media items by their IDs."""
+    try:
+        if not payload.ids:
+            return {"items": {}}
+
+        results = {}
+        for i in range(0, len(payload.ids), BATCH_CHUNK_SIZE):
+            chunk = payload.ids[i:i + BATCH_CHUNK_SIZE]
+            rows = db.query(Media.id, Media.path).filter(Media.id.in_(chunk)).all()
+            for mid, rel_path in rows:
+                if rel_path:
+                    file_path = settings.BASE_DIR / rel_path
+                    if file_path.exists():
+                        try:
+                            meta = extract_image_metadata(file_path)
+                            if meta:
+                                results[str(mid)] = meta
+                        except Exception:
+                            pass
+        return {"items": results}
+    except Exception as e:
+        logger.error(f"Error in post_media_batch_metadata: {e}")
+        raise HTTPException(status_code=500, detail=safe_error_detail("Failed to retrieve media metadata batch", e))
+
+@router.post("/bulk-update-tags", response_model=BulkTagUpdateResponse)
+async def bulk_update_tags(
+    payload: BulkTagUpdateRequest,
+    current_user: User = Depends(require_admin_mode),
+    db: Session = Depends(get_db)
+):
+    """Atomically update tags across multiple media items with pre-validation and conflict-safe tag creation."""
+    if not payload.items:
+        return BulkTagUpdateResponse(status="success", updated_count=0, updated_media_ids=[])
+
+    # 1. Pre-validation
+    requested_ids = [item.id for item in payload.items]
+    if len(requested_ids) != len(set(requested_ids)):
+        raise HTTPException(status_code=400, detail="Duplicate media IDs in update request")
+
+    existing_media_ids = set()
+    for i in range(0, len(requested_ids), BATCH_CHUNK_SIZE):
+        chunk = requested_ids[i:i + BATCH_CHUNK_SIZE]
+        found_ids = [r[0] for r in db.query(Media.id).filter(Media.id.in_(chunk)).all()]
+        existing_media_ids.update(found_ids)
+
+    missing_ids = set(requested_ids) - existing_media_ids
+    if missing_ids:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Media items not found: {sorted(list(missing_ids))[:10]}"
+        )
+
+    for item in payload.items:
+        for tag in item.tags:
+            if not isinstance(tag, str) or not tag.strip():
+                raise HTTPException(status_code=400, detail=f"Invalid empty tag name for media ID {item.id}")
+            if len(tag.strip()) > 255:
+                raise HTTPException(status_code=400, detail=f"Tag name exceeds 255 characters: {tag[:30]}...")
+
+    # 2. Collect unique tag names across entire batch and resolve aliases
+    from ..utils.tag_utils import resolve_aliases, expand_implications
+    from ..models import TagAlias
+
+    all_raw_tags = set()
+    for item in payload.items:
+        for tag in item.tags:
+            norm = tag.strip().lower()
+            if norm:
+                all_raw_tags.add(norm)
+
+    alias_map = resolve_aliases(db, list(all_raw_tags))
+
+    resolved_unique_names = set()
+    for name in all_raw_tags:
+        if name in alias_map:
+            resolved_unique_names.add(alias_map[name][0].lower())
+        else:
+            resolved_unique_names.add(name)
+
+    # 3. Concurrency-safe / upsert tag creation
+    existing_tags_map = {}
+    resolved_list = list(resolved_unique_names)
+    for i in range(0, len(resolved_list), BATCH_CHUNK_SIZE):
+        chunk = resolved_list[i:i + BATCH_CHUNK_SIZE]
+        tags = db.query(Tag).filter(Tag.name.in_(chunk)).all()
+        for t in tags:
+            existing_tags_map[t.name.lower()] = t
+
+    missing_tag_names = [n for n in resolved_unique_names if n not in existing_tags_map]
+
+    if missing_tag_names:
+        from sqlalchemy.dialects.postgresql import insert as pg_insert
+        stmt = pg_insert(Tag).values([
+            {"name": name, "category": "general", "post_count": 0}
+            for name in missing_tag_names
+        ]).on_conflict_do_nothing(index_elements=["name"])
+        db.execute(stmt)
+        db.flush()
+
+        # Re-query all resolved tags to ensure complete map
+        for i in range(0, len(resolved_list), BATCH_CHUNK_SIZE):
+            chunk = resolved_list[i:i + BATCH_CHUNK_SIZE]
+            tags = db.query(Tag).filter(Tag.name.in_(chunk)).all()
+            for t in tags:
+                existing_tags_map[t.name.lower()] = t
+
+    # 4. Fetch old tags to compute affected tag IDs
+    old_tag_ids = set()
+    for i in range(0, len(requested_ids), BATCH_CHUNK_SIZE):
+        chunk = requested_ids[i:i + BATCH_CHUNK_SIZE]
+        rows = db.query(blombooru_media_tags.c.tag_id).filter(blombooru_media_tags.c.media_id.in_(chunk)).all()
+        for r in rows:
+            old_tag_ids.add(r[0])
+
+    # 5. Delete existing media tags for requested_ids
+    for i in range(0, len(requested_ids), BATCH_CHUNK_SIZE):
+        chunk = requested_ids[i:i + BATCH_CHUNK_SIZE]
+        db.execute(
+            blombooru_media_tags.delete().where(blombooru_media_tags.c.media_id.in_(chunk))
+        )
+
+    # 6. Build new associations
+    new_associations = []
+    affected_tag_ids = set(old_tag_ids)
+
+    for item in payload.items:
+        item_tag_ids = set()
+        for raw_tag in item.tags:
+            norm = raw_tag.strip().lower()
+            if not norm:
+                continue
+            resolved_name = alias_map[norm][0].lower() if norm in alias_map else norm
+            tag_obj = existing_tags_map.get(resolved_name)
+            if tag_obj:
+                item_tag_ids.add(tag_obj.id)
+                affected_tag_ids.add(tag_obj.id)
+
+        for tid in item_tag_ids:
+            new_associations.append({"media_id": item.id, "tag_id": tid})
+
+    if new_associations:
+        db.execute(blombooru_media_tags.insert(), new_associations)
+
+    db.commit()
+
+    # 7. Aggregate update tag counts
+    if affected_tag_ids:
+        update_tag_counts(db, list(affected_tag_ids))
+        db.commit()
+
+    try:
+        invalidate_tag_cache()
+    except Exception:
+        pass
+
+    return BulkTagUpdateResponse(
+        status="success",
+        updated_count=len(requested_ids),
+        updated_media_ids=requested_ids
+    )
 
 @router.get("/{media_id}/related")
 @cache_response(expire=600, key_prefix="related_media")
