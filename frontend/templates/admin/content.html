@@ -185,14 +185,10 @@
         <h3 class="text-sm font-bold mb-3">{{ t('admin.tags_management.search_manage_tags') }}</h3>
         <p class="text-xs text-secondary mb-3">{{ t('admin.tags_management.search_manage_tags_description') }}</p>
         <div class="flex flex-col gap-3">
-            <div class="flex gap-2">
-                <div class="relative w-full">
-                    <input type="text" id="tag-search-input" placeholder="{{ t('common.search_tags_placeholder') }}"
-                        class="flex-1 w-full bg px-3 py-2 border text-xs focus:outline-none hover:border-primary transition-colors focus:border-primary">
-                </div>
-                <button id="tag-search-btn" class="btn-primary">
-                    {{ t('common.search') }}
-                </button>
+            <div class="relative w-full">
+                <input type="text" id="tag-search-input" placeholder="{{ t('common.search_tags_placeholder') }}"
+                    autocomplete="off" spellcheck="false"
+                    class="w-full bg px-3 py-2 border text-xs focus:outline-none hover:border-primary transition-colors focus:border-primary">
             </div>
             <div id="tag-search-results" class="border max-h-64 overflow-y-auto empty:hidden"></div>
         </div>

@@ -20,7 +20,6 @@ class AdminPanel {
     async init() {
         await this.checkAuth();
 
-        this.setupTagAutocomplete();
         this.setupEventListeners();
         this.system.loadSettings();
         this.content.loadAITaggerSettings();
@@ -45,16 +44,6 @@ class AdminPanel {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
-    }
-
-    setupTagAutocomplete() {
-        const tagsSearch = document.getElementById('tag-search-input');
-        if (tagsSearch && typeof TagAutocomplete !== 'undefined') {
-            new TagAutocomplete(tagsSearch, {
-                multipleValues: true,
-                appendSpace: false
-            });
-        }
     }
 
     async checkAuth() {

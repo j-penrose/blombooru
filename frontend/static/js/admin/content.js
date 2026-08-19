@@ -610,24 +610,30 @@ class AdminContent {
         });
 
         // Tag search
-        const searchBtn = document.getElementById('tag-search-btn');
         const searchInput = document.getElementById('tag-search-input');
 
         searchInput?.addEventListener('input', (e) => {
-            e.target.value = e.target.value.replace(/\s+/g, '_');
+            const start = e.target.selectionStart;
+            const end = e.target.selectionEnd;
+            const normalized = e.target.value.replace(/\s+/g, '_');
+            if (e.target.value !== normalized) {
+                e.target.value = normalized;
+                if (start !== null && end !== null) {
+                    e.target.setSelectionRange(start, end);
+                }
+            }
+            this.searchTags();
         });
 
         searchInput?.addEventListener('keydown', (e) => {
             if (e.key === ' ') {
                 e.preventDefault();
-                e.target.value += '_';
-            }
-        });
-
-        searchBtn?.addEventListener('click', () => this.searchTags());
-        searchInput?.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.target.value = e.target.value.replace(/\s+/g, '_').trim();
+                const start = e.target.selectionStart;
+                const end = e.target.selectionEnd;
+                e.target.setRangeText('_', start, end, 'end');
+                this.searchTags();
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
                 this.searchTags();
             }
         });
@@ -799,20 +805,40 @@ class AdminContent {
     }
 
     async searchTags() {
-        const query = document.getElementById('tag-search-input').value;
+        const searchInput = document.getElementById('tag-search-input');
+        const query = searchInput ? searchInput.value.trim() : '';
         const resultsDiv = document.getElementById('tag-search-results');
 
+        if (this._tagSearchAbortController) {
+            this._tagSearchAbortController.abort();
+            this._tagSearchAbortController = null;
+        }
+
         if (!query) {
-            resultsDiv.innerHTML = '';
+            if (resultsDiv) resultsDiv.innerHTML = '';
             return;
         }
 
+        const abortController = new AbortController();
+        this._tagSearchAbortController = abortController;
+
         try {
-            const response = await fetch(`/api/admin/search-tags?q=${encodeURIComponent(query)}`);
+            const response = await fetch(`/api/admin/search-tags?q=${encodeURIComponent(query)}`, {
+                signal: abortController.signal
+            });
+            if (!response.ok) return;
             const data = await response.json();
+
+            // Guard against stale response if query changed in the meantime
+            const currentQuery = document.getElementById('tag-search-input')?.value.trim();
+            if (!currentQuery) {
+                if (resultsDiv) resultsDiv.innerHTML = '';
+                return;
+            }
 
             if (data.tags.length === 0) {
                 resultsDiv.innerHTML = '<p class="bg text-xs text-secondary p-3">' + window.i18n.t('gallery.no_tags_found') + '</p>';
+                resultsDiv.scrollTop = 0;
                 return;
             }
 
@@ -849,6 +875,7 @@ class AdminContent {
                 </div>
                 `;
             }).join('');
+            resultsDiv.scrollTop = 0;
 
             resultsDiv.querySelectorAll('.manage-tag-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
@@ -861,6 +888,7 @@ class AdminContent {
             });
 
         } catch (error) {
+            if (error.name === 'AbortError') return;
             console.error('Error searching tags:', error);
             resultsDiv.innerHTML = '<p class="text-xs text-danger p-3">Error searching tags</p>';
         }
