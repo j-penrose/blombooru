@@ -100,7 +100,10 @@
             "shown_once": "仅显示一次",
             "store_securely": "请安全地存储此密钥。刷新或离开此页面后，它将不再显示。",
             "title": "API 访问",
-            "revoke_key": "",
+            "manage_key": "",
+            "level_read": "",
+            "level_write": "",
+            "level_admin": "",
             "created_at": "",
             "last_used": ""
         },
@@ -605,6 +608,7 @@
         "loading": "正在加载...",
         "manage": "管理",
         "network_error": "",
+        "never": "",
         "next": "",
         "no": "否",
         "no_items_found": "未找到项目",
@@ -831,6 +835,18 @@
             "placeholder": "例如：我的手机 App，外部脚本...",
             "title": "为您的 API 密钥命名"
         },
+        "manage_api_key": {
+            "title": "",
+            "level_read_title": "",
+            "level_read_desc": "",
+            "level_write_title": "",
+            "level_write_desc": "",
+            "level_admin_title": "",
+            "level_admin_desc": "",
+            "revoke_btn": "",
+            "active": "",
+            "updating": ""
+        },
         "bulk_delete": {
             "message": "您确定要删除这 {count} 个项目吗？此操作无法撤销。",
             "title": "删除 {count} 个项目",
@@ -947,6 +963,8 @@
             "api_key_copied": "API 密钥已复制到剪贴板！",
             "api_key_generated": "API 密钥生成成功！",
             "api_key_revoked": "API 密钥撤销成功",
+            "api_key_updated": "",
+            "error_updating_api_key": "",
             "app_name_length": "应用程序名称必须介于 1 到 25 个字符之间！",
             "bulk_tag_creation_complete": "批量标签创建完成",
             "enter_album_name": "请输入相册名称！",

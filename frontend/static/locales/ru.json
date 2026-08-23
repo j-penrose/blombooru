@@ -100,7 +100,10 @@
             "shown_once": "ОТОБРАЖАЕТСЯ ТОЛЬКО ОДИН РАЗ",
             "store_securely": "Сохраните этот ключ в безопасном месте. Он больше не будет отображаться",
             "title": "Доступ к API",
-            "revoke_key": "Отозвать ключ",
+            "manage_key": "",
+            "level_read": "",
+            "level_write": "",
+            "level_admin": "",
             "created_at": "Ключ создан:",
             "last_used": "Последнее использование:"
         },
@@ -605,6 +608,7 @@
         "loading": "Загрузка...",
         "manage": "Управление",
         "network_error": "",
+        "never": "",
         "next": "",
         "no": "Нет",
         "no_items_found": "Элементы не найдены",
@@ -831,6 +835,18 @@
             "placeholder": "Пример: мобильное приложение, внешний скрипт...",
             "title": "Название API ключа"
         },
+        "manage_api_key": {
+            "title": "",
+            "level_read_title": "",
+            "level_read_desc": "",
+            "level_write_title": "",
+            "level_write_desc": "",
+            "level_admin_title": "",
+            "level_admin_desc": "",
+            "revoke_btn": "",
+            "active": "",
+            "updating": ""
+        },
         "bulk_delete": {
             "message": "Вы уверены, что хотите удалить {count} элемент(а/ов)? Это действие нельзя отменить",
             "title": "Удалить {count} элементов",
@@ -947,6 +963,8 @@
             "api_key_copied": "API ключ скопирован в буфер обмена!",
             "api_key_generated": "API ключ успешно создан!",
             "api_key_revoked": "API ключ успешно отозван",
+            "api_key_updated": "",
+            "error_updating_api_key": "",
             "app_name_length": "Имя приложения должно быть от 1 до 25 символов!",
             "bulk_tag_creation_complete": "Создание тегов завершено",
             "enter_album_name": "Пожалуйста, введите имя альбома!",

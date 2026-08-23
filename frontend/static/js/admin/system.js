@@ -1058,17 +1058,97 @@ class AdminSystem {
         }
     }
 
+    getApiKeyPermissionIcon(permission, size = 16) {
+        if (permission === 'write') {
+            const title = window.i18n.t('admin.api_access.level_write');
+            return `<span title="${this.app.escapeHtml(title)}" class="inline-flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary shrink-0">
+                    <title>${this.app.escapeHtml(title)}</title>
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+            </span>`;
+        }
+        if (permission === 'admin') {
+            const title = window.i18n.t('admin.api_access.level_admin');
+            return `<span title="${this.app.escapeHtml(title)}" class="inline-flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-danger shrink-0">
+                    <title>${this.app.escapeHtml(title)}</title>
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+            </span>`;
+        }
+        const title = window.i18n.t('admin.api_access.level_read');
+        return `<span title="${this.app.escapeHtml(title)}" class="inline-flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-success shrink-0">
+                <title>${this.app.escapeHtml(title)}</title>
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+        </span>`;
+    }
+
     showApiKeyNameModal() {
         const inputId = 'api-key-name-input';
+        let selectedPermission = 'read';
+
         const modal = new ModalHelper({
             id: 'api-key-name-modal',
             title: window.i18n.t('modal.api_key_name.title'),
             message: `
                 <div class="text-left">
+                    <label class="block text-xs font-bold mb-1 text-secondary">${window.i18n.t('modal.api_key_name.title')}</label>
                     <input type="text" id="${inputId}" 
                         class="w-full bg px-3 py-2 mb-4 border text-xs hover:border-primary transition-colors focus:outline-none focus:border-primary"
                         placeholder="${window.i18n.t('modal.api_key_name.placeholder')}"
+                        maxlength="64"
                         autocomplete="off">
+
+                    <label class="block text-xs font-bold mb-2 text-secondary">${window.i18n.t('modal.manage_api_key.title')}</label>
+                    <div class="flex flex-col gap-2.5 mb-2" id="new-api-key-levels">
+                        <!-- Read-Only -->
+                        <button type="button" class="new-akm-level text-left p-3.5 bg hover:border-primary transition-all border flex items-start gap-3 cursor-pointer border-primary surface" data-level="read">
+                            <div class="mt-0.5 text-success shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <div class="font-bold text-xs text mb-0.5">${window.i18n.t('modal.manage_api_key.level_read_title')}</div>
+                                <div class="text-[11px] text-secondary opacity-80 leading-relaxed">${window.i18n.t('modal.manage_api_key.level_read_desc')}</div>
+                            </div>
+                        </button>
+
+                        <!-- Upload & Edit -->
+                        <button type="button" class="new-akm-level text-left p-3.5 bg hover:border-primary transition-all border flex items-start gap-3 cursor-pointer" data-level="write">
+                            <div class="mt-0.5 text-primary shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <div class="font-bold text-xs text mb-0.5">${window.i18n.t('modal.manage_api_key.level_write_title')}</div>
+                                <div class="text-[11px] text-secondary opacity-80 leading-relaxed">${window.i18n.t('modal.manage_api_key.level_write_desc')}</div>
+                            </div>
+                        </button>
+
+                        <!-- Full Admin -->
+                        <button type="button" class="new-akm-level text-left p-3.5 bg hover:border-primary transition-all border flex items-start gap-3 cursor-pointer" data-level="admin">
+                            <div class="mt-0.5 text-danger shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <div class="font-bold text-xs text mb-0.5">${window.i18n.t('modal.manage_api_key.level_admin_title')}</div>
+                                <div class="text-[11px] text-secondary opacity-80 leading-relaxed">${window.i18n.t('modal.manage_api_key.level_admin_desc')}</div>
+                            </div>
+                        </button>
+                    </div>
                 </div>
             `,
             confirmText: window.i18n.t('modal.api_key_name.confirm'),
@@ -1076,7 +1156,7 @@ class AdminSystem {
             onConfirm: () => {
                 const nameInput = document.getElementById(inputId);
                 const name = nameInput ? nameInput.value.trim() : '';
-                this.generateApiKey(name);
+                this.generateApiKey(name, selectedPermission);
                 modal.destroy();
             },
             onCancel: () => {
@@ -1085,6 +1165,23 @@ class AdminSystem {
         });
 
         modal.show();
+
+        // Level selector bindings
+        const levelsContainer = document.getElementById('new-api-key-levels');
+        if (levelsContainer) {
+            levelsContainer.querySelectorAll('.new-akm-level').forEach(card => {
+                card.addEventListener('click', () => {
+                    selectedPermission = card.dataset.level || 'read';
+                    levelsContainer.querySelectorAll('.new-akm-level').forEach(c => {
+                        if (c === card) {
+                            c.classList.add('border-primary', 'surface');
+                        } else {
+                            c.classList.remove('border-primary', 'surface');
+                        }
+                    });
+                });
+            });
+        }
 
         // Focus and clear input
         const input = document.getElementById(inputId);
@@ -1100,6 +1197,8 @@ class AdminSystem {
     }
 
     setupApiKeyManagement() {
+        this.apiKeys = [];
+        this.apiKeyManageModal = null;
         this.loadApiKeys();
 
         document.getElementById('generate-api-key-btn')?.addEventListener('click', () => {
@@ -1119,6 +1218,7 @@ class AdminSystem {
             const response = await fetch('/api/admin/api-keys');
             if (response.ok) {
                 const keys = await response.json();
+                this.apiKeys = keys;
                 this.renderApiKeys(keys);
             }
         } catch (e) { console.error(e); }
@@ -1133,31 +1233,65 @@ class AdminSystem {
             return;
         }
 
-        listContainer.innerHTML = keys.map(key => `
-            <div class="bg p-4 border-b last:border-b-0 flex justify-between items-center hover:surface transition-colors">
-                <div class="flex-1 min-w-0 pr-4">
-                    <div class="font-bold text-xs truncate mb-1 text">${this.app.escapeHtml(key.name || 'Unnamed Key')}</div>
-                    <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-secondary opacity-80">
-                        <span class="font-mono bg surface px-1 border border-primary border-opacity-20">${this.app.escapeHtml(key.key_prefix)}...</span>
-                        <span> ${window.i18n.t('admin.api_access.created_at')} <strong>${new Date(key.created_at).toLocaleDateString()}</strong></span>
-                        <span> ${window.i18n.t('admin.api_access.last_used')} <strong>${key.last_used_at ? new Date(key.last_used_at).toLocaleDateString() : 'Never'}</strong></span>
+        listContainer.innerHTML = keys.map(key => {
+            const level = key.permission || 'read';
+            const iconSvg = this.getApiKeyPermissionIcon(level, 16);
+
+            return `
+            <div class="bg p-2 border-b last:border-b-0 flex justify-between items-center">
+                <div class="flex-1 min-w-0 pr-2">
+                    <div class="flex items-center gap-1 mb-1.5">
+                        ${iconSvg}
+                        <span class="font-bold text-xs truncate text">${this.app.escapeHtml(key.name || 'Unnamed Key')}</span>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-secondary">
+                        <span class="font-mono bg surface px-1 border">${this.app.escapeHtml(key.key_prefix)}...</span>
+                        <div>
+                            <span> ${window.i18n.t('admin.api_access.created_at')} <strong>${new Date(key.created_at).toLocaleDateString()}</strong></span>
+                            <span> ${window.i18n.t('admin.api_access.last_used')} <strong>${key.last_used_at ? new Date(key.last_used_at).toLocaleDateString() : window.i18n.t('common.never')}</strong></span>
+                        </div>
                     </div>
                 </div>
                 <div class="flex-shrink-0">
-                    <button class="btn-danger px-3 py-1 text-[10px] uppercase font-bold tracking-wider" 
-                        onclick="window.adminPanel.system.revokeApiKey(${key.id})">
-                        ${window.i18n.t('admin.api_access.revoke_key')}
+                    <button class="btn px-3 py-1 text-[10px] uppercase font-bold tracking-wider" 
+                        onclick="window.adminPanel.system.manageApiKey(${key.id})">
+                        ${window.i18n.t('admin.api_access.manage_key')}
                     </button>
                 </div>
             </div>
-        `).join('');
+            `;
+        }).join('');
     }
 
-    async generateApiKey(name) {
+    manageApiKey(keyId) {
+        const key = (this.apiKeys || []).find(k => k.id === keyId);
+        if (!key) return;
+
+        if (!this.apiKeyManageModal && typeof ApiKeyManageModal !== 'undefined') {
+            this.apiKeyManageModal = new ApiKeyManageModal({
+                onUpdate: (updatedKey) => {
+                    const idx = (this.apiKeys || []).findIndex(k => k.id === updatedKey.id);
+                    if (idx !== -1) {
+                        this.apiKeys[idx] = { ...this.apiKeys[idx], ...updatedKey };
+                        this.renderApiKeys(this.apiKeys);
+                    }
+                },
+                onRevoke: (id) => {
+                    this.revokeApiKey(id, true);
+                }
+            });
+        }
+
+        if (this.apiKeyManageModal) {
+            this.apiKeyManageModal.show(key);
+        }
+    }
+
+    async generateApiKey(name, permission = 'read') {
         try {
             const response = await app.apiCall('/api/admin/api-keys', {
                 method: 'POST',
-                body: JSON.stringify({ name: name })
+                body: JSON.stringify({ name: name, permission: permission })
             });
 
             // Show result
@@ -1176,7 +1310,7 @@ class AdminSystem {
         }
     }
 
-    async revokeApiKey(keyId) {
+    async revokeApiKey(keyId, fromManageModal = false) {
         const modal = new ModalHelper({
             id: 'revoke-api-key-modal',
             type: 'danger',
@@ -1200,6 +1334,12 @@ class AdminSystem {
             },
             onCancel: () => {
                 modal.destroy();
+                if (fromManageModal && this.apiKeyManageModal) {
+                    const key = (this.apiKeys || []).find(k => k.id === keyId);
+                    if (key) {
+                        this.apiKeyManageModal.show(key);
+                    }
+                }
             }
         });
 
