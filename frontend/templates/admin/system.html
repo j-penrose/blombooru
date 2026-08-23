@@ -739,7 +739,7 @@
             {{ t('admin.api_access.description') }}
         </p>
 
-        <div class="mb-6">
+        <div class="mb-4">
             <button id="generate-api-key-btn" class="btn-primary">
                 {{ t('admin.api_access.generate_key') }}
             </button>
@@ -769,7 +769,7 @@
 
         <div id="api-keys-container">
             <h3 class="text-sm font-bold mb-3">{{ t('admin.api_access.active_keys') }}</h3>
-            <div id="api-keys-list" class="border">
+            <div id="api-keys-list" class="border max-h-66 overflow-y-auto">
                 <!-- Keys will be populated here as rows -->
                 <div class="bg p-4 text-center text-xs text-secondary">
                     {{ t('admin.api_access.loading_keys') }}
