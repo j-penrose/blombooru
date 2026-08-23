@@ -981,9 +981,9 @@ class BaseGallery {
             let endpoint = '/api/search'; // Default
             const path = window.location.pathname;
 
-            if (path.startsWith('/album/')) {
-                const id = path.split('/')[2];
-                endpoint = `/api/albums/${id}/contents`;
+            const albumId = this.albumId || (path.startsWith('/album/') ? path.split('/')[2] : null);
+            if (albumId) {
+                endpoint = `/api/albums/${albumId}/contents`;
             } else if (path === '/' || path === '/index.html') {
                 endpoint = '/api/search';
             }
@@ -992,6 +992,19 @@ class BaseGallery {
             const params = new URLSearchParams(window.location.search);
             params.set('limit', '100000'); // Fetch "all" (reasonable limit)
             params.delete('page');
+
+            if (this.options.enableRatingFilter !== false && this.currentRating) {
+                params.set('rating', this.currentRating);
+            } else {
+                params.delete('rating');
+            }
+
+            params.delete('custom_filter');
+            if (this.selectedCustomFilters && this.selectedCustomFilters.size > 0) {
+                this.selectedCustomFilters.forEach(cf => params.append('custom_filter', cf));
+            }
+
+            this.appendSortParams(params);
 
             const res = await fetch(`${endpoint}?${params.toString()}`, {
                 credentials: 'include'
