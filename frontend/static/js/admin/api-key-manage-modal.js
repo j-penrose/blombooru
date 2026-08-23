@@ -73,7 +73,7 @@ class ApiKeyManageModal {
 
                     <!-- Upload & Edit -->
                     <button class="akm-level-btn text-left p-4 bg hover:border-primary transition-all border flex items-center gap-3 relative cursor-pointer" data-level="write">
-                        <div class="mt-0.5 text-primary shrink-0">
+                        <div class="mt-0.5 text-warning shrink-0">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                                 <polyline points="17 8 12 3 7 8"></polyline>
