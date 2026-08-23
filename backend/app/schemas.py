@@ -3,7 +3,8 @@ from typing import List, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from .enums import FileTypeEnum, RatingEnum, TagCategoryEnum
+from .enums import (ApiKeyPermissionEnum, FileTypeEnum, RatingEnum,
+                    TagCategoryEnum)
 
 class TagBase(BaseModel):
     name: str
@@ -203,13 +204,19 @@ class MediaIds(BaseModel):
     media_ids: List[int]
 
 class ApiKeyCreate(BaseModel):
-    name: Optional[str] = None
+    name: Optional[str] = Field(None, max_length=64)
+    permission: ApiKeyPermissionEnum = ApiKeyPermissionEnum.read
+
+class ApiKeyUpdate(BaseModel):
+    name: Optional[str] = Field(None, max_length=64)
+    permission: Optional[ApiKeyPermissionEnum] = None
 
 class ApiKeyResponse(BaseModel):
     id: int
     key: str  # Only returned once on creation
     key_prefix: str
     name: Optional[str]
+    permission: str
     created_at: datetime
     
     model_config = ConfigDict(from_attributes=True)
@@ -218,6 +225,7 @@ class ApiKeyListResponse(BaseModel):
     id: int
     key_prefix: str
     name: Optional[str]
+    permission: str
     created_at: datetime
     last_used_at: Optional[datetime]
     is_active: bool

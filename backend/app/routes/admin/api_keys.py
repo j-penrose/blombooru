@@ -6,7 +6,8 @@ from ...utils.request_helpers import safe_error_detail
 from ...auth import generate_api_key, hash_api_key
 from ...database import get_db
 from ...models import ApiKey, User
-from ...schemas import ApiKeyCreate, ApiKeyListResponse, ApiKeyResponse
+from ...schemas import (ApiKeyCreate, ApiKeyListResponse, ApiKeyResponse,
+                        ApiKeyUpdate)
 
 router = APIRouter()
 
@@ -29,11 +30,13 @@ async def create_api_key(
     raw_key = generate_api_key()
     key_hash = hash_api_key(raw_key)
     key_prefix = raw_key[:12]
+    permission_val = data.permission.value if hasattr(data.permission, 'value') else str(data.permission or 'read')
     
     new_key = ApiKey(
         key_hash=key_hash,
         key_prefix=key_prefix,
         name=data.name,
+        permission=permission_val,
         user_id=current_user.id
     )
     
@@ -47,11 +50,39 @@ async def create_api_key(
             "key": raw_key,
             "key_prefix": new_key.key_prefix,
             "name": new_key.name,
+            "permission": new_key.permission,
             "created_at": new_key.created_at
         }
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=safe_error_detail("Failed to create API key", e))
+
+@router.patch("/api-keys/{key_id}", response_model=ApiKeyListResponse)
+async def update_api_key(
+    key_id: int,
+    data: ApiKeyUpdate,
+    current_user: User = Depends(require_admin_mode),
+    db: Session = Depends(get_db)
+):
+    """Update an API key's name or permission level"""
+    key = db.query(ApiKey).filter(ApiKey.id == key_id, ApiKey.is_active == True).first()
+    
+    if not key:
+        raise HTTPException(status_code=404, detail="API key not found")
+    
+    if data.name is not None:
+        key.name = data.name.strip() if data.name else None
+    if data.permission is not None:
+        permission_val = data.permission.value if hasattr(data.permission, 'value') else str(data.permission)
+        key.permission = permission_val
+    
+    try:
+        db.commit()
+        db.refresh(key)
+        return key
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=safe_error_detail("Failed to update API key", e))
 
 @router.delete("/api-keys/{key_id}")
 async def revoke_api_key(

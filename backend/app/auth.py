@@ -73,9 +73,9 @@ def hash_api_key(key: str) -> str:
     """Hash an API key using SHA-256"""
     return hashlib.sha256(key.encode('utf-8')).hexdigest()
 
-def verify_api_key(db: Session, key: str) -> Optional[User]:
+def verify_api_key_record(db: Session, key: str):
     """
-    Verify an API key and return the associated User if valid.
+    Verify an API key and return the ApiKey model if valid.
     Also updates the last_used_at timestamp.
     """
     from .models import ApiKey
@@ -94,7 +94,58 @@ def verify_api_key(db: Session, key: str) -> Optional[User]:
     api_key.last_used_at = datetime.now(timezone.utc)
     db.commit()
     
-    return api_key.user
+    return api_key
+
+def verify_api_key(db: Session, key: str) -> Optional[User]:
+    """
+    Verify an API key and return the associated User if valid.
+    Also updates the last_used_at timestamp.
+    """
+    record = verify_api_key_record(db, key)
+    return record.user if record else None
+
+def get_api_key_from_request(
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    if hasattr(request.state, "current_api_key") and request.state.current_api_key is not None:
+        return request.state.current_api_key
+
+    import base64 as _base64
+
+    auth_header = request.headers.get("Authorization", "")
+    api_key_record = None
+
+    # Bearer blom_<key>
+    if auth_header.startswith("Bearer blom_"):
+        key = auth_header[7:]
+        api_key_record = verify_api_key_record(db, key)
+
+    # Bare blom_<key> (no Bearer prefix)
+    elif auth_header.startswith("blom_"):
+        api_key_record = verify_api_key_record(db, auth_header)
+
+    # Basic auth with API key as the password field
+    elif auth_header.startswith("Basic "):
+        try:
+            decoded = _base64.b64decode(auth_header[6:]).decode("utf-8")
+            if ":" in decoded:
+                _, password = decoded.split(":", 1)
+                if password.startswith("blom_"):
+                    api_key_record = verify_api_key_record(db, password)
+        except Exception:
+            pass
+
+    # ?api_key= query parameter
+    if not api_key_record:
+        api_key = request.query_params.get("api_key")
+        if api_key and api_key.startswith("blom_"):
+            api_key_record = verify_api_key_record(db, api_key)
+
+    if api_key_record:
+        request.state.current_api_key = api_key_record
+
+    return api_key_record
 
 def get_current_user_from_api_key(
     request: Request,
@@ -107,36 +158,8 @@ def get_current_user_from_api_key(
     - Authorization: Basic <base64(user:blom_key)>
     - ?api_key=blom_<key> query parameter
     """
-    import base64 as _base64
-
-    auth_header = request.headers.get("Authorization", "")
-
-    # Bearer blom_<key>
-    if auth_header.startswith("Bearer blom_"):
-        key = auth_header[7:]
-        return verify_api_key(db, key)
-
-    # Bare blom_<key> (no Bearer prefix)
-    if auth_header.startswith("blom_"):
-        return verify_api_key(db, auth_header)
-
-    # Basic auth with API key as the password field
-    if auth_header.startswith("Basic "):
-        try:
-            decoded = _base64.b64decode(auth_header[6:]).decode("utf-8")
-            if ":" in decoded:
-                _, password = decoded.split(":", 1)
-                if password.startswith("blom_"):
-                    return verify_api_key(db, password)
-        except Exception:
-            pass
-
-    # ?api_key= query parameter
-    api_key = request.query_params.get("api_key")
-    if api_key and api_key.startswith("blom_"):
-        return verify_api_key(db, api_key)
-
-    return None
+    api_key_record = get_api_key_from_request(request, db)
+    return api_key_record.user if api_key_record else None
 
 def get_current_user(
     token: Optional[str] = Depends(oauth2_scheme),
@@ -149,7 +172,8 @@ def get_current_user(
         return None
     
     if token_to_use.startswith("blom_"):
-        return verify_api_key(db, token_to_use)
+        record = verify_api_key_record(db, token_to_use)
+        return record.user if record else None
     
     try:
         payload = jwt.decode(token_to_use, settings.SECRET_KEY, algorithms=[ALGORITHM])
@@ -162,9 +186,30 @@ def get_current_user(
     user = db.query(User).filter(User.username == username).first()
     return user
 
+def _enforce_api_key_permission(request: Request, api_key_user: User) -> User:
+    """Enforce permission tier for API key authentication (fail-closed to 'read')."""
+    api_key = getattr(request.state, "current_api_key", None)
+    permission = getattr(api_key, "permission", "read") if api_key else "read"
+    if request.url.path.startswith("/api/admin") and permission != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This API key requires administrator access"
+        )
+    elif permission not in ("write", "admin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This API key has read-only access"
+        )
+    return api_key_user
+
 def get_current_admin_user(
-    current_user: Optional[User] = Depends(get_current_user)
+    request: Request,
+    current_user: Optional[User] = Depends(get_current_user),
+    api_key_user: Optional[User] = Depends(get_current_user_from_api_key)
 ):
+    if api_key_user:
+        return _enforce_api_key_permission(request, api_key_user)
+
     if not current_user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -189,7 +234,7 @@ def require_admin_mode(
     """Require admin credentials (session JWT or API key) plus the admin_mode UI toggle for browser sessions."""
     # API key takes priority as API clients don't have the admin_mode cookie
     if api_key_user:
-        return api_key_user
+        return _enforce_api_key_permission(request, api_key_user)
 
     if not current_user:
         raise HTTPException(
@@ -198,7 +243,7 @@ def require_admin_mode(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # Only enforce the admin_mode toggle for browser sessions (identified by the admin_token cookie)
+    # Only enforce the admin_mode UI toggle for browser sessions (identified by the admin_token cookie)
     has_session_cookie = bool(request.cookies.get("admin_token"))
     if has_session_cookie and not admin_mode_active:
         raise HTTPException(

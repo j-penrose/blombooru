@@ -186,6 +186,7 @@ def check_and_migrate_schema(engine):
         migrate_add_implication_patterns,
         migrate_file_size_to_bigint,
         migrate_remove_duplicate_tag_aliases,
+        migrate_add_api_key_permission,
     ]
     
     for migration in migrations:
@@ -319,3 +320,21 @@ def migrate_file_size_to_bigint(engine, inspector):
         ))
         conn.commit()
 
+def migrate_add_api_key_permission(engine, inspector):
+    """Add permission column to blombooru_api_keys table with default 'admin' for existing keys"""
+    from sqlalchemy import text
+    
+    tables = inspector.get_table_names()
+    if 'blombooru_api_keys' not in tables:
+        return
+    
+    columns = [c['name'] for c in inspector.get_columns('blombooru_api_keys')]
+    if 'permission' in columns:
+        return
+    
+    logger.info("Adding permission column to blombooru_api_keys...")
+    with engine.connect() as conn:
+        conn.execute(text(
+            "ALTER TABLE blombooru_api_keys ADD COLUMN permission VARCHAR(32) DEFAULT 'admin' NOT NULL"
+        ))
+        conn.commit()

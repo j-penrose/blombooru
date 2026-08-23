@@ -16,3 +16,8 @@ class FileTypeEnum(str, enum.Enum):
     image = "image"
     video = "video"
     gif = "gif"
+
+class ApiKeyPermissionEnum(str, enum.Enum):
+    read = "read"
+    write = "write"
+    admin = "admin"

@@ -157,10 +157,11 @@ class ApiKey(Base):
     id = Column(Integer, primary_key=True, index=True)
     key_hash = Column(String(64), unique=True, nullable=False, index=True)
     key_prefix = Column(String(12), nullable=False)
-    name = Column(String(255), nullable=True)
+    name = Column(String(64), nullable=True)
     user_id = Column(Integer, ForeignKey('blombooru_users.id', ondelete='CASCADE'), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     last_used_at = Column(DateTime(timezone=True), nullable=True)
     is_active = Column(Boolean, default=True, index=True)
+    permission = Column(String(32), default='read', nullable=False, index=True)
     
     user = relationship('User', backref='api_keys')
