@@ -10,6 +10,7 @@ class TagImplicationManager {
         this.cancelBtn = document.getElementById('tag-implication-cancel');
         this.applyAllBtn = document.getElementById('apply-all-implications');
         this.editingId = null;
+        this.implications = [];
         this.tagInputHelper = new TagInputHelper();
 
         this.init();
@@ -80,6 +81,7 @@ class TagImplicationManager {
             const response = await fetch('/api/tag-implications/');
             if (!response.ok) throw new Error('Failed to load');
             const implications = await response.json();
+            this.implications = implications;
             this.renderTable(implications);
         } catch (e) {
             console.error('Error loading tag implications:', e);
@@ -103,6 +105,30 @@ class TagImplicationManager {
             return imp.target_tag_patterns.join(' ');
         }
         return imp.target_tags.map(t => t.name).join(' ');
+    }
+
+    // Extract target tokens from an implication object.
+    _getTargetTokens(imp) {
+        if (imp.target_tag_patterns && imp.target_tag_patterns.length > 0) {
+            return imp.target_tag_patterns;
+        }
+        if (imp.target_tags && imp.target_tags.length > 0) {
+            return imp.target_tags.map(t => t.name);
+        }
+        return [];
+    }
+
+    // Normalize a list of tokens: trim, lowercase, deduplicate, sort.
+    _normalizeTokens(tokens) {
+        return Array.from(new Set(tokens.map(t => t.trim().toLowerCase()).filter(Boolean))).sort();
+    }
+
+    // Check if two collections of target tokens match.
+    _areTokensEqual(tokensA, tokensB) {
+        const a = this._normalizeTokens(tokensA);
+        const b = this._normalizeTokens(tokensB);
+        if (a.length !== b.length) return false;
+        return a.every((token, idx) => token === b[idx]);
     }
 
     renderTable(implications) {
@@ -173,14 +199,62 @@ class TagImplicationManager {
             return;
         }
 
+        // Check if an existing implication already has identical target tags
+        const matchingImp = (this.implications || []).find(imp => {
+            if (this.editingId && imp.id === this.editingId) return false;
+            return this._areTokensEqual(this._getTargetTokens(imp), allTargetTokens);
+        });
+
+        if (matchingImp) {
+            const existingImpliedNames = (matchingImp.implied_tags || []).map(t => t.name);
+            const normalizedExistingSet = new Set(existingImpliedNames.map(t => t.toLowerCase()));
+            const newUniqueImplied = Array.from(new Set(impliedTags.map(t => t.toLowerCase())));
+            const missingTags = newUniqueImplied.filter(t => !normalizedExistingSet.has(t));
+
+            if (missingTags.length === 0) {
+                this.showStatus(
+                    window.i18n.t('admin.tags_implications.already_exists_msg', {
+                        target: this._buildTargetRaw(matchingImp)
+                    }),
+                    'warning'
+                );
+                return;
+            }
+
+            // Ask user if they want to merge the new implied tags into the existing implication
+            new ModalHelper({
+                id: 'merge-implication-modal',
+                type: 'warning',
+                title: window.i18n.t('admin.tags_implications.merge_confirm_title'),
+                message: window.i18n.t('admin.tags_implications.merge_confirm_msg', {
+                    target: this.escapeHtml(this._buildTargetRaw(matchingImp)),
+                    existing: this.escapeHtml(existingImpliedNames.join(' ')),
+                    new: this.escapeHtml(missingTags.join(' '))
+                }),
+                confirmText: window.i18n.t('admin.tags_implications.merge_confirm_btn'),
+                cancelText: window.i18n.t('common.cancel'),
+                confirmId: 'merge-implication-confirm-yes',
+                cancelId: 'merge-implication-confirm-no',
+                onConfirm: async () => {
+                    const mergedImpliedTags = [...existingImpliedNames, ...missingTags];
+                    await this.saveImplicationRequest(matchingImp.id, allTargetTokens, mergedImpliedTags, true);
+                }
+            }).show();
+            return;
+        }
+
+        await this.saveImplicationRequest(this.editingId, allTargetTokens, impliedTags);
+    }
+
+    async saveImplicationRequest(id, allTargetTokens, impliedTags, isMerge = false) {
         const isWildcard = t => t.includes('*') || t.includes('?');
         const concreteTags = allTargetTokens.filter(t => !isWildcard(t));
         const targetTagPatterns = allTargetTokens;
 
-        const url = this.editingId
-            ? `/api/tag-implications/${this.editingId}`
+        const url = id
+            ? `/api/tag-implications/${id}`
             : '/api/tag-implications/';
-        const method = this.editingId ? 'PUT' : 'POST';
+        const method = id ? 'PUT' : 'POST';
 
         try {
             const response = await fetch(url, {
@@ -196,6 +270,11 @@ class TagImplicationManager {
             if (!response.ok) {
                 const error = await response.json();
                 throw new Error(error.detail || 'Failed to save');
+            }
+
+            // If we merged while editing a different entry, clean up the other entry
+            if (isMerge && this.editingId && this.editingId !== id) {
+                await fetch(`/api/tag-implications/${this.editingId}`, { method: 'DELETE' });
             }
 
             this.showStatus(window.i18n.t('notifications.save_success'), 'success');

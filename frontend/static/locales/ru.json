@@ -452,7 +452,11 @@
             "apply_all": "",
             "apply_all_confirm_1_msg": "",
             "apply_all_processing": "",
-            "apply_all_no_affected": ""
+            "apply_all_no_affected": "",
+            "merge_confirm_title": "",
+            "merge_confirm_msg": "",
+            "merge_confirm_btn": "",
+            "already_exists_msg": ""
         },
         "ai_tagger": {
             "title": "AI предсказатель тегов",

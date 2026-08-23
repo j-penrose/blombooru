@@ -452,7 +452,11 @@
             "apply_all": "Tillämpa Implikationer på All Media",
             "apply_all_confirm_1_msg": "Detta kommer att tillämpa alla taggimplikationer på varje medieobjekt i ditt bibliotek. Berörda medieobjekt öppnas i en batchredigeringsmodal för granskning.",
             "apply_all_processing": "Tillämpar taggimplikationer på all media...",
-            "apply_all_no_affected": "Inga medieobjekt berördes av de nuvarande taggimplikationerna."
+            "apply_all_no_affected": "Inga medieobjekt berördes av de nuvarande taggimplikationerna.",
+            "merge_confirm_title": "Slå ihop taggimplikation",
+            "merge_confirm_msg": "En implikation för måltagg(ar) \"{target}\" finns redan med implicerade tagg(ar): \"{existing}\". Vill du slå ihop de nya implicerade tagg(arna) \"{new}\" med den befintliga implikationen?",
+            "merge_confirm_btn": "Slå ihop",
+            "already_exists_msg": "En implikation för måltagg(ar) \"{target}\" finns redan med alla angivna implicerade taggar."
         },
         "ai_tagger": {
             "title": "AI-taggförutsägare",

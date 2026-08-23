@@ -452,7 +452,11 @@
             "apply_all": "Apply Implications to All Media",
             "apply_all_confirm_1_msg": "This will apply all tag implications to every media item in your library. Affected media will be opened in a batch edit modal for review.",
             "apply_all_processing": "Applying tag implications to all media...",
-            "apply_all_no_affected": "No media was affected by the current tag implications."
+            "apply_all_no_affected": "No media was affected by the current tag implications.",
+            "merge_confirm_title": "Merge Tag Implication",
+            "merge_confirm_msg": "An implication for target tag(s) \"{target}\" already exists with implied tag(s): \"{existing}\". Would you like to merge the new implied tag(s) \"{new}\" into the existing implication?",
+            "merge_confirm_btn": "Merge",
+            "already_exists_msg": "An implication for target tag(s) \"{target}\" already exists with all specified implied tags."
         },
         "ai_tagger": {
             "title": "AI Tag Predictor",
