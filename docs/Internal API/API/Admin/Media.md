@@ -82,3 +82,13 @@ POST /api/admin/generate-missing-thumbnails
 ```
 
 **Response:** `{ "orphans_deleted", "generated", "failed", "skipped", "total" }`
+
+### Re-link media files
+
+Requires `require_admin_mode`. Scans storage (`ORIGINAL_DIR`) and re-links database records for moved or renamed media files based on content hash.
+
+```
+POST /api/admin/relink-media
+```
+
+**Response:** `{ "relinked": 2, "unresolved": 0, "total_checked": 50, "details": [ { "id": 1, "old_path": "...", "new_path": "...", "filename": "..." } ] }`

@@ -7,7 +7,7 @@ from ...auth import get_current_admin_user, require_admin_mode
 from ...config import settings
 from ...database import get_db
 from ...models import Media, User
-from ...utils.file_scanner import find_untracked_media
+from ...utils.file_scanner import find_untracked_media, relink_media_files
 from ...utils.logger import logger
 from ...utils.thumbnail_generator import generate_thumbnail
 from sqlalchemy.orm import Session
@@ -429,4 +429,17 @@ async def generate_missing_thumbnails(
         return result
     except Exception as e:
         logger.error(f"Error generating missing thumbnails: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/relink-media")
+async def relink_media(
+    current_user: User = Depends(require_admin_mode),
+    db: Session = Depends(get_db),
+):
+    """Scan storage and re-link database records for moved or renamed media files based on content hash."""
+    try:
+        result = await run_in_threadpool(relink_media_files, db)
+        return result
+    except Exception as e:
+        logger.error(f"Error relinking media: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
