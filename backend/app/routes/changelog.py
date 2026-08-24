@@ -4,6 +4,8 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
+from wenmode import Wenmode
+from wenmode.presets import github
 
 from ..auth import require_admin_mode
 from ..config import APP_VERSION, settings
@@ -12,6 +14,7 @@ from ..utils.logger import logger
 router = APIRouter(prefix="/api/changelog", tags=["changelog"])
 
 CHANGELOG_PATH = settings.BASE_DIR / "CHANGELOG.md"
+wen = Wenmode(github)
 
 class ChangelogResponse(BaseModel):
     needs_modal: bool
@@ -61,9 +64,6 @@ async def get_changelog(current_user: dict = Depends(require_admin_mode)):
     sections = [s.strip() for s in re.split(r'(?m)^(?=##\s+)', linked_content) if s.strip()] or [linked_content]
 
     try:
-        from wenmode import Wenmode
-        from wenmode.presets import github
-        wen = Wenmode(github)
         rendered_sections = []
         for s in sections:
             rendered = wen.render(s)
