@@ -544,6 +544,43 @@ class AdminContent {
         modal.show();
     }
 
+    async relinkMedia() {
+        const btn = document.getElementById('relink-media-btn');
+        if (!btn) return;
+        const originalText = btn.textContent;
+
+        btn.disabled = true;
+        btn.textContent = window.i18n.t('admin.media_management.relink.relinking');
+
+        try {
+            const result = await app.apiCall('/api/admin/relink-media', { method: 'POST' });
+            let msg = '';
+
+            if (result.relinked > 0) {
+                msg = window.i18n.t('admin.media_management.relink.done_relinked', { count: result.relinked });
+            } else {
+                msg = window.i18n.t('admin.media_management.relink.done_none');
+            }
+
+            if (result.unresolved > 0) {
+                const unresolvedMsg = window.i18n.t('admin.media_management.relink.unresolved_warning', { count: result.unresolved });
+                msg += ` ${unresolvedMsg}`;
+            }
+
+            if (result.relinked > 0) {
+                app.showNotification(msg, 'success');
+                await this.loadMediaStats();
+            } else {
+                app.showNotification(msg, result.unresolved > 0 ? 'warning' : 'info');
+            }
+        } catch (error) {
+            app.showNotification(error.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = originalText;
+        }
+    }
+
     setupTagManagement() {
         // Setup new tags input validation
         this.setupNewTagsInput();

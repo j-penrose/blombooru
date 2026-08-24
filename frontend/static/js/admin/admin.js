@@ -120,6 +120,12 @@ class AdminPanel {
             regenerateAllBtn.addEventListener('click', () => this.content.regenerateAllThumbnails());
         }
 
+        // Re-link media button
+        const relinkMediaBtn = document.getElementById('relink-media-btn');
+        if (relinkMediaBtn) {
+            relinkMediaBtn.addEventListener('click', () => this.content.relinkMedia());
+        }
+
         // Add tags form
         const addTagsForm = document.getElementById('add-tags-form');
         if (addTagsForm) {

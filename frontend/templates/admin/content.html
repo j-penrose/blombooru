@@ -81,7 +81,7 @@
         </div>
     </div>
 
-    <div id="thumbnail-section">
+    <div id="thumbnail-section" class="mb-4">
         <h3 class="text-sm font-bold mb-3">{{ t('admin.media_management.thumbnails.title') }}</h3>
         <div class="bg p-4 border">
             <p class="text-xs text-secondary mb-3">
@@ -98,6 +98,18 @@
             <div id="thumbnail-regen-status" style="display: none;" class="text-xs mt-3">
                 <div id="thumbnail-regen-result"></div>
             </div>
+        </div>
+    </div>
+
+    <div id="relink-media-section">
+        <h3 class="text-sm font-bold mb-3">{{ t('admin.media_management.relink.title') }}</h3>
+        <div class="bg p-4 border">
+            <p class="text-xs text-secondary mb-3">
+                {{ t('admin.media_management.relink.hint') }}
+            </p>
+            <button id="relink-media-btn" class="btn-primary">
+                {{ t('admin.media_management.relink.button') }}
+            </button>
         </div>
     </div>
 </div>
