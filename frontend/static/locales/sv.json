@@ -429,8 +429,13 @@
             "delete_all_tags": "Radera alla taggar",
             "drop_csv": "Släpp CSV-fil här eller klicka för att bläddra",
             "import_csv": "Importera taggar från CSV",
-            "search_manage_tags": "Sök & Hantera Taggar",
-            "search_manage_tags_description": "Använd detta för att snabbt hitta och redigera taggar, hantera dess alias eller för att slå ihop med andra taggar.",
+            "maintenance": {
+                "title": "Taggunderhåll",
+                "search_manage_tags": "Sök & Hantera Taggar",
+                "search_manage_tags_description": "Använd detta för att snabbt hitta och redigera taggar, hantera dess alias eller för att slå ihop med andra taggar.",
+                "apply_rules_title": "Applicera Taggregler",
+                "apply_rules_hint": "Applicera konfigurerade tagg-alias och implikationer retroaktivt på alla media."
+            },
             "manage_tag": "Hantera Taggar",
             "edit_tag": "Redigera Taggar",
             "merge_tag": "Slå Ihop Tagg",

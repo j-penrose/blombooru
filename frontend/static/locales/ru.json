@@ -429,8 +429,13 @@
             "delete_all_tags": "Удалить все теги",
             "drop_csv": "Перетащите CSV файл сюда или нажмите, чтобы выбрать",
             "import_csv": "Импорт тегов из CSV",
-            "search_manage_tags": "Поиск и управление тегами",
-            "search_manage_tags_description": "",
+            "maintenance": {
+                "title": "",
+                "search_manage_tags": "Поиск и управление тегами",
+                "search_manage_tags_description": "",
+                "apply_rules_title": "",
+                "apply_rules_hint": ""
+            },
             "manage_tag": "Управление тегом",
             "edit_tag": "Редактировать тег",
             "merge_tag": "",

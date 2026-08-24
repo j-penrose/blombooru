@@ -194,21 +194,8 @@
         </div>
     </div>
 
-    <div class="mb-4">
-        <h3 class="text-sm font-bold mb-3">{{ t('admin.tags_management.search_manage_tags') }}</h3>
-        <p class="text-xs text-secondary mb-3">{{ t('admin.tags_management.search_manage_tags_description') }}</p>
-        <div class="flex flex-col gap-3">
-            <div class="relative w-full">
-                <input type="text" id="tag-search-input" placeholder="{{ t('common.search_tags_placeholder') }}"
-                    autocomplete="off" spellcheck="false"
-                    class="w-full bg px-3 py-2 border text-xs focus:outline-none hover:border-primary transition-colors focus:border-primary">
-            </div>
-            <div id="tag-search-results" class="border max-h-72 overflow-y-auto empty:hidden"></div>
-        </div>
-    </div>
-
     <!-- Tag Implications -->
-    <div class="mb-4 pt-4 border-t">
+    <div class="mb-4">
         <h3 class="text-sm font-bold mb-3">{{ t('admin.tags_implications.title') }}</h3>
         <p class="text-xs text-secondary mb-3">{{ t('admin.tags_implications.description') }}</p>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -333,17 +320,45 @@
         </form>
     </div>
 
+    <!-- Tags Maintenance -->
+    <div id="tags-maintenance-section" class="mb-4">
+        <h3 class="text-sm font-bold mb-3">{{ t('admin.tags_management.maintenance.title') }}</h3>
+        <div class="bg p-4 border space-y-4">
+            <div>
+                <h4 class="text-xs font-bold mb-1">{{ t('admin.tags_management.maintenance.search_manage_tags') }}</h4>
+                <p class="text-xs text-secondary mb-3">
+                    {{ t('admin.tags_management.maintenance.search_manage_tags_description') }}
+                </p>
+                <div class="flex flex-col gap-3">
+                    <div class="relative w-full">
+                        <input type="text" id="tag-search-input" placeholder="{{ t('common.search_tags_placeholder') }}"
+                            autocomplete="off" spellcheck="false"
+                            class="w-full bg px-3 py-2 border text-xs focus:outline-none hover:border-primary transition-colors focus:border-primary">
+                    </div>
+                    <div id="tag-search-results" class="border max-h-72 overflow-y-auto empty:hidden"></div>
+                </div>
+            </div>
+
+            <div class="pt-4 border-t">
+                <h4 class="text-xs font-bold mb-1">{{ t('admin.tags_management.maintenance.apply_rules_title') }}</h4>
+                <p class="text-xs text-secondary mb-3">{{ t('admin.tags_management.maintenance.apply_rules_hint') }}</p>
+                <div class="flex flex-wrap gap-2">
+                    <button id="apply-aliases-btn" class="btn-primary">
+                        {{ t('admin.tags_management.apply_aliases_to_all') }}
+                    </button>
+                    <button type="button" id="apply-all-implications" class="btn-primary">
+                        {{ t('admin.tags_implications.apply_all') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="border-t mt-4 pt-4">
         <h3 class="text-sm font-bold mb-3 text-danger">{{ t('admin.tags_management.danger_zone') }}</h3>
         <div class="flex flex-wrap gap-2">
             <button id="clear-tags-btn" class="btn-danger">
                 {{ t('admin.tags_management.delete_all_tags') }}
-            </button>
-            <button id="apply-aliases-btn" class="btn-danger">
-                {{ t('admin.tags_management.apply_aliases_to_all') }}
-            </button>
-            <button type="button" id="apply-all-implications" class="btn-danger">
-                {{ t('admin.tags_implications.apply_all') }}
             </button>
         </div>
     </div>

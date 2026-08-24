@@ -429,8 +429,13 @@
             "delete_all_tags": "删除所有标签",
             "drop_csv": "将 CSV 文件拖放到此处或点击浏览",
             "import_csv": "从 CSV 导入标签",
-            "search_manage_tags": "",
-            "search_manage_tags_description": "",
+            "maintenance": {
+                "title": "",
+                "search_manage_tags": "",
+                "search_manage_tags_description": "",
+                "apply_rules_title": "",
+                "apply_rules_hint": ""
+            },
             "manage_tag": "",
             "edit_tag": "",
             "merge_tag": "",
