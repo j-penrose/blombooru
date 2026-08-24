@@ -169,6 +169,15 @@
                 "done_all": "Klart! Gamla miniatyrbilder raderade: {deleted}. Skapade: {generated}. Misslyckade: {failed}.",
                 "confirm_regenerate_all": "Det här kommer att radera ALLA befintliga miniatyrbilder och återskapa dem från grunden. Detta kan ta en stund för stora bibliotek. Fortsätt?"
             },
+            "relink": {
+                "title": "Återskapa Media-länkar",
+                "hint": "Skanna mediebiblioteket och återskapa kopplingar till mediafiler som flyttats eller bytt namn.",
+                "button": "Återskapa Länkar",
+                "relinking": "Återskapar Länkar...",
+                "done_relinked": "Lyckades återskapa länk för {count} mediafil(er).",
+                "done_none": "Alla mediafiler är korrekt länkade. Inga flyttade eller omdöpta filer hittades.",
+                "unresolved_warning": "{count} mediafil(er) hittades ej."
+            },
             "booru_import": {
                 "title": "Importera Från Extern Booru",
                 "hint": "Skriv en inläggs-URL för att importera media med taggar, betyg och källa. Stöder webbplatser i Danbooru-stil.",

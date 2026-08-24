@@ -169,6 +169,15 @@
                 "done_all": "",
                 "confirm_regenerate_all": ""
             },
+            "relink": {
+                "title": "",
+                "hint": "",
+                "button": "",
+                "relinking": "",
+                "done_relinked": "",
+                "done_none": "",
+                "unresolved_warning": ""
+            },
             "booru_import": {
                 "title": "从外部 Booru 导入",
                 "hint": "输入作品 URL 以导入带有标签、分级和来源的媒体。支持 Danbooru 风格的网站。",

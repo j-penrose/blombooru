@@ -169,6 +169,15 @@
                 "done_all": "Done! Old thumbnails deleted: {deleted}. Generated: {generated}. Failed: {failed}.",
                 "confirm_regenerate_all": "This will delete ALL existing thumbnails and regenerate them from scratch. This may take a while for large libraries. Continue?"
             },
+            "relink": {
+                "title": "Re-link Media Files",
+                "hint": "Scan the media folder and re-link posts to media files that have been moved or renamed.",
+                "button": "Re-link Media",
+                "relinking": "Re-linking Media...",
+                "done_relinked": "Successfully re-linked {count} media file(s).",
+                "done_none": "All media files are correctly linked. No moved or renamed files found.",
+                "unresolved_warning": "{count} media file(s) were not found."
+            },
             "booru_import": {
                 "title": "Import From External Booru",
                 "hint": "Enter a post URL to import media with tags, rating, and source. Supports Danbooru-style sites.",
