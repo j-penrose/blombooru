@@ -478,13 +478,13 @@ class AdminContent {
 
         btn.disabled = true;
         allBtn.disabled = true;
-        btn.textContent = window.i18n.t('admin.media_management.thumbnails.generating');
+        btn.textContent = window.i18n.t('admin.media_management.maintenance.thumbnails.generating');
         statusDiv.style.display = 'block';
-        resultDiv.innerHTML = `<div class="bg-primary primary-text p-3"><strong>${window.i18n.t('admin.media_management.thumbnails.generating')}</strong></div>`;
+        resultDiv.innerHTML = `<div class="bg-primary primary-text p-3"><strong>${window.i18n.t('admin.media_management.maintenance.thumbnails.generating')}</strong></div>`;
 
         try {
             const result = await app.apiCall('/api/admin/generate-missing-thumbnails', { method: 'POST' });
-            const msg = window.i18n.t('admin.media_management.thumbnails.done_missing', {
+            const msg = window.i18n.t('admin.media_management.maintenance.thumbnails.done_missing', {
                 orphans_deleted: result.orphans_deleted,
                 generated: result.generated,
                 skipped: result.skipped,
@@ -519,13 +519,13 @@ class AdminContent {
 
                 btn.disabled = true;
                 missingBtn.disabled = true;
-                btn.textContent = window.i18n.t('admin.media_management.thumbnails.generating');
+                btn.textContent = window.i18n.t('admin.media_management.maintenance.thumbnails.generating');
                 statusDiv.style.display = 'block';
-                resultDiv.innerHTML = `<div class="bg-primary primary-text p-3"><strong>${window.i18n.t('admin.media_management.thumbnails.generating')}</strong></div>`;
+                resultDiv.innerHTML = `<div class="bg-primary primary-text p-3"><strong>${window.i18n.t('admin.media_management.maintenance.thumbnails.generating')}</strong></div>`;
 
                 try {
                     const result = await app.apiCall('/api/admin/regenerate-all-thumbnails', { method: 'POST' });
-                    const msg = window.i18n.t('admin.media_management.thumbnails.done_all', {
+                    const msg = window.i18n.t('admin.media_management.maintenance.thumbnails.done_all', {
                         deleted: result.deleted,
                         generated: result.generated,
                         failed: result.failed,
@@ -550,20 +550,20 @@ class AdminContent {
         const originalText = btn.textContent;
 
         btn.disabled = true;
-        btn.textContent = window.i18n.t('admin.media_management.relink.relinking');
+        btn.textContent = window.i18n.t('admin.media_management.maintenance.relink.relinking');
 
         try {
             const result = await app.apiCall('/api/admin/relink-media', { method: 'POST' });
             let msg = '';
 
             if (result.relinked > 0) {
-                msg = window.i18n.t('admin.media_management.relink.done_relinked', { count: result.relinked });
+                msg = window.i18n.t('admin.media_management.maintenance.relink.done_relinked', { count: result.relinked });
             } else {
-                msg = window.i18n.t('admin.media_management.relink.done_none');
+                msg = window.i18n.t('admin.media_management.maintenance.relink.done_none');
             }
 
             if (result.unresolved > 0) {
-                const unresolvedMsg = window.i18n.t('admin.media_management.relink.unresolved_warning', { count: result.unresolved });
+                const unresolvedMsg = window.i18n.t('admin.media_management.maintenance.relink.unresolved_warning', { count: result.unresolved });
                 msg += ` ${unresolvedMsg}`;
             }
 

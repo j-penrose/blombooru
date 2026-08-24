@@ -159,24 +159,27 @@
             "total_videos": "视频总数",
             "upload_hint": "您可以上传图片、视频或压缩包（ZIP, TAR.GZ）。",
             "upload_media": "上传媒体",
-            "thumbnails": {
+            "maintenance": {
                 "title": "",
-                "hint": "",
-                "generate_missing": "",
-                "regenerate_all": "",
-                "generating": "",
-                "done_missing": "",
-                "done_all": "",
-                "confirm_regenerate_all": ""
-            },
-            "relink": {
-                "title": "",
-                "hint": "",
-                "button": "",
-                "relinking": "",
-                "done_relinked": "",
-                "done_none": "",
-                "unresolved_warning": ""
+                "thumbnails": {
+                    "title": "",
+                    "hint": "",
+                    "generate_missing": "",
+                    "regenerate_all": "",
+                    "generating": "",
+                    "done_missing": "",
+                    "done_all": "",
+                    "confirm_regenerate_all": ""
+                },
+                "relink": {
+                    "title": "",
+                    "hint": "",
+                    "button": "",
+                    "relinking": "",
+                    "done_relinked": "",
+                    "done_none": "",
+                    "unresolved_warning": ""
+                }
             },
             "booru_import": {
                 "title": "从外部 Booru 导入",
