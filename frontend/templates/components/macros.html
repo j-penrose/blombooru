@@ -184,7 +184,7 @@ location='desktop') %}
                     </div>
                 </div>
                 <button id="sort-order-toggle{{ suffix }}" type="button"
-                    class="js-sort-order-toggle sort-order-toggle p-1 border bg text hover:border-primary transition-colors flex-shrink-0 {{ default_order }}"
+                    class="js-sort-order-toggle sort-order-toggle p-1 border bg text hover:border-primary transition-colors flex-shrink-0 cursor-pointer {{ default_order }}"
                     data-order="{{ default_order }}" aria-label="{{ t('gallery.sort_toggle_order') }}"
                     title="{{ t('gallery.sort_toggle_order') }}">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
@@ -194,7 +194,7 @@ location='desktop') %}
                     </svg>
                 </button>
                 <button id="sort-random-regen{{ suffix }}" type="button"
-                    class="js-sort-random-regen sort-random-regen p-1 border bg text hover:border-primary transition-colors flex-shrink-0 hidden"
+                    class="js-sort-random-regen sort-random-regen p-1 border bg text hover:border-primary transition-colors flex-shrink-0 cursor-pointer hidden"
                     aria-label="{{ t('gallery.sort_regen_random') }}" title="{{ t('gallery.sort_regen_random') }}">
                     {{ dice_icon() }}
                 </button>
@@ -223,37 +223,37 @@ location='desktop') %}
     <p class="mb-2">{{ t('common.items_selected', count='<span id="selected-count">0</span>') | safe }}</p>
     <div class="flex gap-2 flex-wrap">
         {% if 'select_all' in buttons %}
-        <button id="select-all-btn" class="btn-primary px-3 py-1">
+        <button id="select-all-btn" class="btn-primary px-3 py-1 cursor-pointer">
             {{ t('gallery.select_all') }}
         </button>
         {% endif %}
         {% if 'deselect_all' in buttons %}
-        <button id="deselect-all-btn" class="btn px-3 py-1">
+        <button id="deselect-all-btn" class="btn px-3 py-1 cursor-pointer">
             {{ t('gallery.deselect_all') }}
         </button>
         {% endif %}
         {% if 'album' in buttons %}
-        <button id="bulk-album-btn" class="btn px-3 py-1">
+        <button id="bulk-album-btn" class="btn px-3 py-1 cursor-pointer">
             {{ t('common.add_to_albums') }}
         </button>
         {% endif %}
         {% if 'manage_tags' in buttons %}
-        <button id="bulk-manage-tags-btn" class="btn px-3 py-1 flex items-center gap-1.5">
+        <button id="bulk-manage-tags-btn" class="btn px-3 py-1 flex items-center gap-1.5 cursor-pointer">
             {{ t('common.manage_tags') }}
         </button>
         {% endif %}
         {% if 'remove' in buttons %}
-        <button id="bulk-remove-btn" class="btn-danger px-3 py-1">
+        <button id="bulk-remove-btn" class="btn-danger px-3 py-1 cursor-pointer">
             {{ t('gallery.remove_from_album') }}
         </button>
         {% endif %}
         {% if 'rating' in buttons %}
-        <button id="bulk-rating-btn" class="btn px-3 py-1 flex items-center gap-1.5">
+        <button id="bulk-rating-btn" class="btn px-3 py-1 flex items-center gap-1.5 cursor-pointer">
             {{ t('modal.bulk_rating.title') }}
         </button>
         {% endif %}
         {% if 'delete' in buttons %}
-        <button id="bulk-delete-btn" class="btn-danger px-3 py-1">
+        <button id="bulk-delete-btn" class="btn-danger px-3 py-1 cursor-pointer">
             {{ t('gallery.delete_selected') }}
         </button>
         {% endif %}
@@ -269,10 +269,10 @@ location='desktop') %}
         <input type="number" id="page-jump-input" min="1"
             class="w-full bg px-3 py-2 border text-xs mb-3 focus:outline-none focus:border-primary hover:border-primary transition-colors">
         <div class="flex gap-2">
-            <button id="page-jump-go" class="btn-primary flex-1 px-3 py-2">
+            <button id="page-jump-go" class="btn-primary flex-1 px-3 py-2 cursor-pointer">
                 {{ t('common.go') }}
             </button>
-            <button id="page-jump-cancel" class="btn flex-1 px-3 py-2">
+            <button id="page-jump-cancel" class="btn flex-1 px-3 py-2 cursor-pointer">
                 {{ t('common.cancel') }}
             </button>
         </div>

@@ -250,7 +250,7 @@
                                     {{ t('admin.settings.custom_buttons_hint') }}
                                 </p>
                                 <div id="custom-buttons-list" class="space-y-2 mb-2"></div>
-                                <button type="button" id="add-custom-button-btn" class="btn-primary w-full px-3 py-2">
+                                <button type="button" id="add-custom-button-btn" class="btn-primary w-full px-3 py-2 cursor-pointer">
                                     + {{ t('admin.settings.add_button') }}
                                 </button>
                             </div>
@@ -260,7 +260,7 @@
             </div>
 
             <div class="border-t mt-4 pt-4">
-                <button type="submit" class="btn-primary">
+                <button type="submit" class="btn-primary cursor-pointer">
                     {{ t('admin.settings.save_settings') }}
                 </button>
             </div>
@@ -301,10 +301,10 @@
                                 alt="">
                         </div>
                         <div class="flex flex-wrap gap-2">
-                            <button type="button" id="custom-bg-select-btn" class="btn-primary px-3 py-1.5 text-xs">
+                            <button type="button" id="custom-bg-select-btn" class="btn-primary px-3 py-1.5 text-xs cursor-pointer">
                                 {{ t('admin.settings.custom_background.select_media') }}
                             </button>
-                            <button type="button" id="custom-bg-remove-btn" class="btn-danger px-3 py-1.5 text-xs"
+                            <button type="button" id="custom-bg-remove-btn" class="btn-danger px-3 py-1.5 text-xs cursor-pointer"
                                 style="display: none;">
                                 {{ t('admin.settings.custom_background.remove_media') }}
                             </button>
@@ -487,7 +487,7 @@
                     </div>
 
                     <div class="border-t pt-3">
-                        <button type="submit" class="btn-primary">
+                        <button type="submit" class="btn-primary cursor-pointer">
                             {{ t('admin.theming.save_background') }}
                         </button>
                     </div>
@@ -607,16 +607,16 @@
                         </div>
 
                         <div class="flex flex-wrap gap-2">
-                            <button type="button" id="custom-theme-add-btn" class="btn-primary text-xs px-4 py-2">
+                            <button type="button" id="custom-theme-add-btn" class="btn-primary text-xs px-4 py-2 cursor-pointer">
                                 {{ t('admin.settings.custom_themes.add_theme') }}
                             </button>
-                            <button type="button" id="custom-theme-import-bundle-btn" class="btn text-xs px-4 py-2">
+                            <button type="button" id="custom-theme-import-bundle-btn" class="btn text-xs px-4 py-2 cursor-pointer">
                                 {{ t('admin.settings.custom_themes.import_bundle') }}
                             </button>
-                            <button type="button" id="custom-theme-import-css-btn" class="btn text-xs px-4 py-2">
+                            <button type="button" id="custom-theme-import-css-btn" class="btn text-xs px-4 py-2 cursor-pointer">
                                 {{ t('admin.settings.custom_themes.import_css') }}
                             </button>
-                            <button type="button" id="custom-theme-cancel-btn" class="btn text-xs px-4 py-2"
+                            <button type="button" id="custom-theme-cancel-btn" class="btn text-xs px-4 py-2 cursor-pointer"
                                 style="display:none">
                                 {{ t('common.cancel') }}
                             </button>
@@ -692,7 +692,7 @@
                         </p>
                     </div>
                     <div class="mt-4">
-                        <button type="submit" class="btn-primary">
+                        <button type="submit" class="btn-primary cursor-pointer">
                             {{ t('common.save') }}
                         </button>
                     </div>
@@ -740,7 +740,7 @@
         </p>
 
         <div class="mb-4">
-            <button id="generate-api-key-btn" class="btn-primary">
+            <button id="generate-api-key-btn" class="btn-primary cursor-pointer">
                 {{ t('admin.api_access.generate_key') }}
             </button>
 
@@ -757,7 +757,7 @@
                     <input type="text" id="new-api-key-value"
                         class="w-full surface px-3 py-2 border text-xs font-mono hover:border-primary transition-colors focus:outline-none focus:border-primary"
                         readonly>
-                    <button id="copy-api-key-btn" class="btn-primary whitespace-nowrap">
+                    <button id="copy-api-key-btn" class="btn-primary whitespace-nowrap cursor-pointer">
                         {{ t('admin.api_access.copy_key') }}
                     </button>
                 </div>
@@ -829,7 +829,7 @@
                                     placeholder="{{ t('common.password_placeholder') }}">
                             </div>
                         </div>
-                        <button type="button" id="test-redis-btn" class="btn-primary w-full">
+                        <button type="button" id="test-redis-btn" class="btn-primary w-full cursor-pointer">
                             {{ t('common.test_connection') }}
                         </button>
                         <div id="redis-test-result" class="mt-2 text-xs" style="display: none;"></div>
@@ -896,10 +896,10 @@
                             </div>
                         </div>
                         <div class="flex gap-2 mb-2">
-                            <button type="button" id="test-shared-tags-btn" class="btn-primary flex-1">
+                            <button type="button" id="test-shared-tags-btn" class="btn-primary flex-1 cursor-pointer">
                                 {{ t('common.test_connection') }}
                             </button>
-                            <button type="button" id="sync-shared-tags-btn" class="btn-dark flex-1"
+                            <button type="button" id="sync-shared-tags-btn" class="btn-dark flex-1 cursor-pointer"
                                 style="display: none;">
                                 {{ t('admin.shared_tags.sync_now') }}
                             </button>
@@ -945,7 +945,7 @@
                                 <button type="button"
                                     onclick="document.getElementById('sim-weight-{{ cat }}').value = document.getElementById('sim-weight-{{ cat }}').dataset.simDefault"
                                     title="{{ t('admin.similarity.reset') }}"
-                                    class="btn-dark p-2 text-xs text-secondary flex items-center justify-center hover:border-primary transition-colors shrink-0">
+                                    class="btn-dark p-2 text-xs text-secondary flex items-center justify-center hover:border-primary transition-colors shrink-0 cursor-pointer">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
@@ -960,7 +960,7 @@
             </div>
 
             <div class="mt-4">
-                <button type="submit" class="btn-primary">
+                <button type="submit" class="btn-primary cursor-pointer">
                     {{ t('admin.backend.save_settings') }}
                 </button>
             </div>
@@ -977,13 +977,13 @@
                     {{ t('admin.backup.export_api_keys_notice') }}
                 </p>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <a href="/api/admin/backup/tags" class="btn-dark w-full">
+                    <a href="/api/admin/backup/tags" class="btn-dark w-full cursor-pointer">
                         {{ t('admin.backup.export_tags') }}
                     </a>
-                    <a href="/api/admin/backup/media" class="btn-dark w-full">
+                    <a href="/api/admin/backup/media" class="btn-dark w-full cursor-pointer">
                         {{ t('admin.backup.export_media') }}
                     </a>
-                    <a href="/api/admin/backup/full" class="btn-primary w-full">
+                    <a href="/api/admin/backup/full" class="btn-primary w-full cursor-pointer">
                         {{ t('admin.backup.full_backup') }}
                     </a>
                 </div>
@@ -1025,7 +1025,7 @@
                 <p class="text-xs text-secondary mb-3">
                     {{ t('admin.update.contact_github') }}
                 </p>
-                <button id="btn-check-updates" class="btn-primary">
+                <button id="btn-check-updates" class="btn-primary cursor-pointer">
                     {{ t('admin.update.check_updates') }}
                 </button>
             </div>
@@ -1061,13 +1061,13 @@
                 </div>
 
                 <div class="flex gap-3">
-                    <button id="btn-update-now" style="display: none;" class="btn-primary">
+                    <button id="btn-update-now" style="display: none;" class="btn-primary cursor-pointer">
                         {{ t('admin.update.update_now') }}
                     </button>
-                    <a id="btn-view-release" href="#" target="_blank" style="display: none;" class="btn-dark">
+                    <a id="btn-view-release" href="#" target="_blank" style="display: none;" class="btn-dark cursor-pointer">
                         {{ t('admin.update.view_release') }}
                     </a>
-                    <button id="btn-view-changelog" style="display: none;" class="btn-dark">
+                    <button id="btn-view-changelog" style="display: none;" class="btn-dark cursor-pointer">
                         {{ t('admin.update.view_changelog') }}
                     </button>
                 </div>

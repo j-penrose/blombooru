@@ -127,7 +127,7 @@
             <!-- Back to Album -->
             <div id="back-to-album-section" class="surface p-3 border" style="display: none;">
                 <a id="back-to-album-btn" href="#"
-                    class="btn w-full px-3 py-2 flex items-center justify-center gap-2 font-medium text-xs min-w-0">
+                    class="btn w-full px-3 py-2 flex items-center justify-center gap-2 font-medium text-xs min-w-0 cursor-pointer">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                         class="flex-shrink-0">
@@ -148,7 +148,7 @@
                     <label class="block text-xs font-bold mb-2">{{ t('media.info.source_url') }}</label>
                     <input type="url" id="source-input" placeholder="https://example.com/source"
                         class="w-full bg px-2 py-1 border text-xs focus:outline-none hover:border-primary transition-colors focus:border-primary mb-2">
-                    <button id="save-source-btn" class="btn-primary w-full px-3 py-1">
+                    <button id="save-source-btn" class="btn-primary w-full px-3 py-1 cursor-pointer">
                         {{ t('media.info.save_source') }}
                     </button>
                 </div>
@@ -165,7 +165,7 @@
                     <textarea id="description-input" rows="4"
                         placeholder="{{ t('media.info.description_placeholder') }}"
                         class="w-full bg px-2 py-1 border text-xs focus:outline-none hover:border-primary transition-colors focus:border-primary mb-2 resize-y"></textarea>
-                    <button id="save-description-btn" class="btn-primary w-full px-3 py-1">
+                    <button id="save-description-btn" class="btn-primary w-full px-3 py-1 cursor-pointer">
                         {{ t('media.info.save_description') }}
                     </button>
                 </div>
@@ -196,16 +196,16 @@
                                     style="min-height: 1.5rem; white-space: pre-wrap; overflow-wrap: break-word;"></div>
                             </div>
                             <div class="flex gap-2 mb-2">
-                                <button type="button" id="append-ai-tags-btn" class="btn flex-1 px-3 py-1"
+                                <button type="button" id="append-ai-tags-btn" class="btn flex-1 px-3 py-1 cursor-pointer"
                                     style="display: none;">
                                     <span class="btn-text">{{ t('media.tags.append_ai_tags') }}</span>
                                 </button>
-                                <button type="button" id="predict-wd-tags-btn" class="btn flex-1 px-3 py-1"
+                                <button type="button" id="predict-wd-tags-btn" class="btn flex-1 px-3 py-1 cursor-pointer"
                                     style="display: none;">
                                     <span class="btn-text">{{ t('media.tags.predict_tags') }}</span>
                                 </button>
                             </div>
-                            <button type="submit" class="btn-primary w-full px-3 py-1">
+                            <button type="submit" class="btn-primary w-full px-3 py-1 cursor-pointer">
                                 {{ t('media.tags.save_tags') }}
                             </button>
                         </form>
@@ -234,7 +234,7 @@
                 <div class="flex flex-col gap-3">
                     <!-- Primary Action -->
                     <a id="download-btn" href="#" download
-                        class="btn-primary flex items-center justify-center gap-2 w-full text-sm font-medium">
+                        class="btn-primary flex items-center justify-center gap-2 w-full text-sm font-medium cursor-pointer">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -273,7 +273,7 @@
                             </div>
 
                             <button id="share-btn"
-                                class="btn flex items-center justify-center gap-1 w-full px-3 py-1.5">
+                                class="btn flex items-center justify-center gap-1 w-full px-3 py-1.5 cursor-pointer">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                     stroke-linejoin="round">
@@ -289,10 +289,10 @@
 
                         <!-- Management Actions Row -->
                         <div class="grid grid-cols-2 gap-2">
-                            <button id="add-to-albums-btn" class="btn w-full px-3 py-1.5">
+                            <button id="add-to-albums-btn" class="btn w-full px-3 py-1.5 cursor-pointer">
                                 {{ t('common.albums') }}
                             </button>
-                            <button id="manage-relations-btn" class="btn w-full px-3 py-1.5">
+                            <button id="manage-relations-btn" class="btn w-full px-3 py-1.5 cursor-pointer">
                                 {{ t('media.actions.relations') }}
                             </button>
                         </div>
@@ -300,10 +300,10 @@
                         <!-- Danger Actions Row -->
                         <div class="grid grid-cols-2 gap-2">
                             <button id="update-post-btn"
-                                class="btn w-full px-3 py-1.5 border-danger text-danger hover:bg-danger hover:tag-text">
+                                class="btn w-full px-3 py-1.5 border-danger text-danger hover:bg-danger hover:tag-text cursor-pointer">
                                 {{ t('media.actions.update_post') }}
                             </button>
-                            <button id="delete-btn" class="btn-danger w-full px-3 py-1.5">
+                            <button id="delete-btn" class="btn-danger w-full px-3 py-1.5 cursor-pointer">
                                 {{ t('media.actions.delete_media') }}
                             </button>
                         </div>
@@ -353,7 +353,7 @@
                 <input type="text" id="share-link-input" readonly
                     class="w-full bg px-2 py-1 border focus:outline-none hover:border-primary transition-colors focus:border-primary text-xs text mb-2">
                 <div class="space-y-1">
-                    <button id="copy-share-link-btn" class="btn w-full px-3 py-1">
+                    <button id="copy-share-link-btn" class="btn w-full px-3 py-1 cursor-pointer">
                         {{ t('media.share.copy_link') }}
                     </button>
                 </div>

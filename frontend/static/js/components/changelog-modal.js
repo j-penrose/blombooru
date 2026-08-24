@@ -61,7 +61,7 @@ class ChangelogModal {
                     ${data.html}
                 </div>
                 <div class="flex pt-4 border-t justify-center">
-                    <button id="changelog-got-it-btn" class="btn-primary px-6 py-3 font-bold text-sm">
+                    <button id="changelog-got-it-btn" class="btn-primary px-6 py-3 font-bold text-sm cursor-pointer">
                         ${t('common.got_it')}
                     </button>
                 </div>

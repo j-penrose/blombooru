@@ -29,7 +29,7 @@
                 {{ t('admin.media_management.supported_videos') }}<br>
                 {{ t('admin.media_management.archive_hint') }}
             </p>
-            <button id="scan-media-btn" class="btn-primary w-full mb-4">
+            <button id="scan-media-btn" class="btn-primary w-full mb-4 cursor-pointer">
                 {{ t('admin.media_management.scan_untracked') }}
             </button>
             <div id="upload-area" class="upload-area">
@@ -45,7 +45,7 @@
                     <input type="url" id="url-import-input"
                         class="flex-1 bg px-3 py-2 border text-xs focus:outline-none focus:border-primary hover:border-primary transition-colors"
                         placeholder="{{ t('admin.media_management.url_import.url_placeholder') }}">
-                    <button id="url-import-fetch-btn" class="btn-primary whitespace-nowrap">
+                    <button id="url-import-fetch-btn" class="btn-primary whitespace-nowrap cursor-pointer">
                         {{ t('admin.media_management.url_import.fetch') }}
                     </button>
                 </div>
@@ -66,7 +66,7 @@
                 <input type="text" id="booru-url-input"
                     class="flex-1 bg px-3 py-2 border text-xs focus:outline-none focus:border-primary hover:border-primary transition-colors"
                     placeholder="{{ t('admin.media_management.booru_import.url_placeholder') }}">
-                <button id="booru-fetch-btn" class="btn-primary whitespace-nowrap">
+                <button id="booru-fetch-btn" class="btn-primary whitespace-nowrap cursor-pointer">
                     {{ t('admin.media_management.booru_import.fetch') }}
                 </button>
             </div>
@@ -90,10 +90,10 @@
                     {{ t('admin.media_management.maintenance.thumbnails.hint') }}
                 </p>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <button id="generate-missing-thumbnails-btn" class="btn-primary">
+                    <button id="generate-missing-thumbnails-btn" class="btn-primary cursor-pointer">
                         {{ t('admin.media_management.maintenance.thumbnails.generate_missing') }}
                     </button>
-                    <button id="regenerate-all-thumbnails-btn" class="btn-danger">
+                    <button id="regenerate-all-thumbnails-btn" class="btn-danger cursor-pointer">
                         {{ t('admin.media_management.maintenance.thumbnails.regenerate_all') }}
                     </button>
                 </div>
@@ -107,7 +107,7 @@
                 <p class="text-xs text-secondary mb-3">
                     {{ t('admin.media_management.maintenance.relink.hint') }}
                 </p>
-                <button id="relink-media-btn" class="btn-primary">
+                <button id="relink-media-btn" class="btn-primary cursor-pointer">
                     {{ t('admin.media_management.maintenance.relink.button') }}
                 </button>
             </div>
@@ -181,7 +181,7 @@
                         class="w-full bg px-3 py-2 border text-xs mb-3 focus:outline-none hover:border-primary transition-colors focus:border-primary"
                         style="min-height: 1.5rem; white-space: pre-wrap; overflow-wrap: break-word;"></div>
                 </div>
-                <button type="submit" class="btn-primary w-full">
+                <button type="submit" class="btn-primary w-full cursor-pointer">
                     {{ t('admin.tags_management.add_tags') }}
                 </button>
             </form>
@@ -227,10 +227,10 @@
                         </div>
                     </div>
                     <div class="mt-4 flex flex-wrap gap-2">
-                        <button type="submit" class="btn-primary">
+                        <button type="submit" class="btn-primary cursor-pointer">
                             {{ t('common.save') }}
                         </button>
-                        <button type="button" id="tag-implication-cancel" class="btn" style="display: none;">
+                        <button type="button" id="tag-implication-cancel" class="btn cursor-pointer" style="display: none;">
                             {{ t('common.cancel') }}
                         </button>
                     </div>
@@ -312,7 +312,7 @@
                     </div>
                 </div>
                 <div class="mt-4">
-                    <button type="submit" class="btn-primary">
+                    <button type="submit" class="btn-primary cursor-pointer">
                         {{ t('admin.settings.save_media_type_tags') }}
                     </button>
                 </div>
@@ -343,10 +343,10 @@
                 <h4 class="text-xs font-bold mb-1">{{ t('admin.tags_management.maintenance.apply_rules_title') }}</h4>
                 <p class="text-xs text-secondary mb-3">{{ t('admin.tags_management.maintenance.apply_rules_hint') }}</p>
                 <div class="flex flex-wrap gap-2">
-                    <button id="apply-aliases-btn" class="btn-primary">
+                    <button id="apply-aliases-btn" class="btn-primary cursor-pointer">
                         {{ t('admin.tags_management.apply_aliases_to_all') }}
                     </button>
-                    <button type="button" id="apply-all-implications" class="btn-primary">
+                    <button type="button" id="apply-all-implications" class="btn-primary cursor-pointer">
                         {{ t('admin.tags_implications.apply_all') }}
                     </button>
                 </div>
@@ -357,7 +357,7 @@
     <div class="border-t mt-4 pt-4">
         <h3 class="text-sm font-bold mb-3 text-danger">{{ t('admin.tags_management.danger_zone') }}</h3>
         <div class="flex flex-wrap gap-2">
-            <button id="clear-tags-btn" class="btn-danger">
+            <button id="clear-tags-btn" class="btn-danger cursor-pointer">
                 {{ t('admin.tags_management.delete_all_tags') }}
             </button>
         </div>
@@ -415,7 +415,7 @@
                     </div>
                 </div>
 
-                <button type="submit" class="btn-primary w-full">
+                <button type="submit" class="btn-primary w-full cursor-pointer">
                     {{ t('admin.albums_management.create_album') }}
                 </button>
             </form>
@@ -430,7 +430,7 @@
                     <input type="text" id="album-search-input" placeholder="{{ t('common.search_albums_placeholder') }}"
                         class="flex-1 w-full bg px-3 py-2 border text-xs focus:outline-none hover:border-primary transition-colors focus:border-primary">
                 </div>
-                <button id="album-search-btn" class="btn-primary">
+                <button id="album-search-btn" class="btn-primary cursor-pointer">
                     {{ t('common.search') }}
                 </button>
             </div>
@@ -464,7 +464,7 @@
                         </div>
                     </div>
                     <button id="wd-model-action-btn" type="button"
-                        class="btn-primary p-2 flex items-center justify-center flex-shrink-0 text-xs"
+                        class="btn-primary p-2 flex items-center justify-center flex-shrink-0 text-xs cursor-pointer"
                         style="display: none;">
                     </button>
                 </div>
@@ -523,7 +523,7 @@
                 {% endfor %}
             </div>
         </div>
-        <button type="submit" class="btn-primary w-full md:w-auto px-6" id="save-ai-tagger-btn">
+        <button type="submit" class="btn-primary w-full md:w-auto px-6 cursor-pointer" id="save-ai-tagger-btn">
             {{ t('admin.settings.save_settings') }}
         </button>
     </form>

@@ -43,8 +43,8 @@ class BulkRatingModal {
                 </div>
 
                 <div class="flex gap-2 justify-end pt-3 border-t">
-                    <button id="bulk-rating-confirm" class="btn-primary">${window.i18n.t('common.confirm')}</button>
-                    <button id="bulk-rating-cancel" class="btn">${window.i18n.t('common.cancel')}</button>
+                    <button id="bulk-rating-confirm" class="btn-primary cursor-pointer">${window.i18n.t('common.confirm')}</button>
+                    <button id="bulk-rating-cancel" class="btn cursor-pointer">${window.i18n.t('common.cancel')}</button>
                 </div>
             </div>
         `;

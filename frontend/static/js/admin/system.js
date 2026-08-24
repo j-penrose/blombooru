@@ -1253,7 +1253,7 @@ class AdminSystem {
                     </div>
                 </div>
                 <div class="flex-shrink-0">
-                    <button class="btn px-3 py-1 text-[10px] uppercase font-bold tracking-wider" 
+                    <button class="btn px-3 py-1 text-[10px] uppercase font-bold tracking-wider cursor-pointer" 
                         onclick="window.adminPanel.system.manageApiKey(${key.id})">
                         ${window.i18n.t('admin.api_access.manage_key')}
                     </button>
@@ -1426,7 +1426,7 @@ class AdminSystem {
                 if (configMessage) configMessage.textContent = msg;
                 if (configLinks) {
                     configLinks.innerHTML = Object.entries(status.asset_urls || {}).map(([name, url]) =>
-                        `<a href="${this.app.escapeHtml(url)}" target="_blank" class="btn-dark px-3 py-1 text-[10px]">${this.app.escapeHtml(name)}</a>`
+                        `<a href="${this.app.escapeHtml(url)}" target="_blank" class="btn-dark px-3 py-1 text-[10px] cursor-pointer">${this.app.escapeHtml(name)}</a>`
                     ).join('');
                 }
             } else if (configNotice) {
@@ -1567,8 +1567,8 @@ class AdminSystem {
         <div>
             ${(hasChanges && hasCommits) ? `
             <div class="flex border-b mb-3" id="changelog-tabs">
-                <button class="px-3 py-1 text-xs font-bold border-b-2 border-primary text-primary" data-tab="changes">${this.app.escapeHtml(tabLabelChanges)}</button>
-                <button class="px-3 py-1 text-xs text-secondary hover:text-primary" data-tab="commits">${this.app.escapeHtml(tabLabelCommits)}</button>
+                <button class="px-3 py-1 text-xs font-bold border-b-2 border-primary text-primary cursor-pointer" data-tab="changes">${this.app.escapeHtml(tabLabelChanges)}</button>
+                <button class="px-3 py-1 text-xs text-secondary hover:text-primary cursor-pointer" data-tab="commits">${this.app.escapeHtml(tabLabelCommits)}</button>
             </div>` : ''}
             <div class="max-h-80 overflow-y-auto custom-scrollbar">
                 <div id="tab-changes" ${!hasChanges ? 'style="display:none"' : ''}>${changesHtml || `<div class="text-xs text-secondary">${this.app.escapeHtml(noReleasesMsg)}</div>`}</div>
@@ -1790,17 +1790,17 @@ class AdminSystem {
                 <td class="py-2 px-3 text-xs">${typeBadge}</td>
                 <td class="py-2 px-3 text-xs text-right">
                     <div class="flex justify-end gap-2">
-                        <button type="button" class="btn text-xs px-2 py-1"
+                        <button type="button" class="btn text-xs px-2 py-1 cursor-pointer"
                             data-action="edit" data-theme-id="${this.app.escapeHtml(theme.id)}"
                             title="${window.i18n.t('admin.settings.custom_themes.edit')}">
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                         </button>
-                        <button type="button" class="btn text-xs px-2 py-1"
+                        <button type="button" class="btn text-xs px-2 py-1 cursor-pointer"
                             data-action="export" data-theme-id="${this.app.escapeHtml(theme.id)}"
                             title="${window.i18n.t('admin.settings.custom_themes.export')}">
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                         </button>
-                        <button type="button" class="btn-danger text-xs px-2 py-1"
+                        <button type="button" class="btn-danger text-xs px-2 py-1 cursor-pointer"
                             data-action="delete" data-theme-id="${this.app.escapeHtml(theme.id)}"
                             title="${window.i18n.t('common.delete')}">
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>

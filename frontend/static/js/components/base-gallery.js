@@ -743,7 +743,7 @@ class BaseGallery {
         }
 
         return `
-            <a href="#" class="page-link ${baseClass} btn-dark text-secondary" 
+            <a href="#" class="page-link ${baseClass} btn-dark text-secondary cursor-pointer" 
                data-page="${pageNum}">
                ${pageNum}
             </a>`;
@@ -751,7 +751,7 @@ class BaseGallery {
 
     createEllipsis() {
         return `
-            <a href="#" class="page-ellipsis btn-dark min-w-[2rem] h-8 px-2 flex items-center justify-center transition-all duration-200 text-secondary" 
+            <a href="#" class="page-ellipsis btn-dark min-w-[2rem] h-8 px-2 flex items-center justify-center transition-all duration-200 text-secondary cursor-pointer" 
                title="${window.i18n.t('gallery.jump_to_page')}">
                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                    <circle cx="12" cy="12" r="1"></circle>
@@ -1738,7 +1738,7 @@ class BaseGallery {
         this.elements.grid.innerHTML = `
             <div class="col-span-full text-center py-16 text-secondary">
                 <h2 class="text-lg mb-2">${message}</h2>
-                ${app.isAuthenticated ? `<a href="/admin" class="btn mt-4 inline-block">${window.i18n.t('gallery.go_to_admin')}</a>` : ''}
+                ${app.isAuthenticated ? `<a href="/admin" class="btn mt-4 inline-block cursor-pointer">${window.i18n.t('gallery.go_to_admin')}</a>` : ''}
             </div>
         `;
     }

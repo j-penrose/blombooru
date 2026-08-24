@@ -129,12 +129,12 @@
                                     class="w-full bg px-3 py-1 border text text-xs focus:outline-none focus:border-primary hover:border-primary transition-colors">
                             </div>
                             <button type="button" id="search-random-btn"
-                                class="p-1 border bg text hover:border-primary transition-colors"
+                                class="p-1 border bg text hover:border-primary transition-colors cursor-pointer"
                                 title="{{ t('search.random') }}">
                                 {{ dice_icon() }}
                             </button>
                             <button type="button" id="search-help-btn"
-                                class="p-1 border bg text hover:border-primary transition-colors"
+                                class="p-1 border bg text hover:border-primary transition-colors cursor-pointer"
                                 title="{{ t('common.help') }}">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -184,7 +184,7 @@
                             {% endif %}
                             <li>
                                 <a href="#" id="logout-btn" title="{{ t('nav.logout') }}"
-                                    class="block p-1 border bg hover:border-primary transition-colors text">
+                                    class="block p-1 border bg hover:border-primary transition-colors text cursor-pointer">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
                                         xmlns="http://www.w3.org/2000/svg">
                                         <path
@@ -199,7 +199,7 @@
 
                     <div class="sm:hidden flex gap-2">
                         <button type="button" id="search-help-btn-mobile"
-                            class="sm:hidden p-2 border bg hover:border-primary transition-colors"
+                            class="sm:hidden p-2 border bg hover:border-primary transition-colors cursor-pointer"
                             title="{{ t('common.help') }}">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -212,7 +212,7 @@
 
                         <!-- Mobile Nav Toggle -->
                         <button id="mobile-menu-btn"
-                            class="group sm:hidden relative inline-flex items-center justify-center w-8 h-8 border bg hover:border-primary transition-colors focus:outline-none"
+                            class="group sm:hidden relative inline-flex items-center justify-center w-8 h-8 border bg hover:border-primary transition-colors focus:outline-none cursor-pointer"
                             aria-controls="mobile-menu" aria-expanded="false">
                             <span class="sr-only">Toggle navigation</span>
                             <span
@@ -238,32 +238,32 @@
                     <ul class="flex flex-col py-2 gap-1">
                         <li id="nav-tags-gallery-item-mobile">
                             <a href="/tags-gallery"
-                                class="btn-dark w-full justify-start px-4 py-2 {{ 'text-primary' if request.url.path.startswith('/tags-gallery') or request.url.path.startswith('/tags-gallery/') else 'text' }}">
+                                class="btn-dark w-full justify-start px-4 py-2 cursor-pointer {{ 'text-primary' if request.url.path.startswith('/tags-gallery') or request.url.path.startswith('/tags-gallery/') else 'text' }}">
                                 {{ t('common.tags') }}
                             </a>
                         </li>
                         <li id="nav-albums-item-mobile">
                             <a href="/albums"
-                                class="btn-dark w-full justify-start px-4 py-2 {{ 'text-primary' if request.url.path.startswith('/albums') or request.url.path.startswith('/album/') else 'text' }}">
+                                class="btn-dark w-full justify-start px-4 py-2 cursor-pointer {{ 'text-primary' if request.url.path.startswith('/albums') or request.url.path.startswith('/album/') else 'text' }}">
                                 {{ t('common.albums') }}
                             </a>
                         </li>
                         {% if is_admin(request) %}
                         <li>
                             <a href="/admin?tab=content#media-management"
-                                class="btn-dark w-full justify-start px-4 py-2">
+                                class="btn-dark w-full justify-start px-4 py-2 cursor-pointer">
                                 {{ t('nav.upload') }}
                             </a>
                         </li>
                         {% endif %}
                         <li>
                             <a href="/admin"
-                                class="btn-dark w-full justify-start px-4 py-2 {{ 'text-primary' if request.url.path.startswith('/admin') else 'text' }}">
+                                class="btn-dark w-full justify-start px-4 py-2 cursor-pointer {{ 'text-primary' if request.url.path.startswith('/admin') else 'text' }}">
                                 {{ t('common.admin_panel') }}
                             </a>
                         </li>
                         <li>
-                            <a href="#" id="logout-btn-mobile" class="btn-dark w-full justify-start px-4 py-2">
+                            <a href="#" id="logout-btn-mobile" class="btn-dark w-full justify-start px-4 py-2 cursor-pointer">
                                 {{ t('nav.logout') }} </a>
                         </li>
                     </ul>
@@ -279,7 +279,7 @@
                                 class="w-full bg px-3 py-2 border text text-xs focus:outline-none focus:border-primary hover:border-primary transition-colors">
                         </div>
                         <button type="button" id="search-random-btn-mobile"
-                            class="p-2 border bg hover:border-primary transition-colors"
+                            class="p-2 border bg hover:border-primary transition-colors cursor-pointer"
                             title="{{ t('search.random') }}">
                             {{ dice_icon() }}
                         </button>

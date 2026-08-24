@@ -366,10 +366,10 @@ class TagAutocomplete {
                 </div>
 
                 <div class="flex gap-3 justify-center">
-                    <button id="tag-create-submit" class="btn-primary px-6 py-3 font-bold text-sm flex-1">
+                    <button id="tag-create-submit" class="btn-primary px-6 py-3 font-bold text-sm flex-1 cursor-pointer">
                         ${this.escapeHtml(createText)}
                     </button>
-                    <button id="tag-create-cancel" class="btn px-6 py-3 font-bold text-sm flex-1">
+                    <button id="tag-create-cancel" class="btn px-6 py-3 font-bold text-sm flex-1 cursor-pointer">
                         ${this.escapeHtml(cancelText)}
                     </button>
                 </div>

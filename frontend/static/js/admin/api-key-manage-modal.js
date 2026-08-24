@@ -50,7 +50,7 @@ class ApiKeyManageModal {
                             placeholder="${window.i18n.t('modal.api_key_name.placeholder')}"
                             maxlength="64"
                             autocomplete="off">
-                        <button type="button" id="akm-rename-btn" class="btn-primary">
+                        <button type="button" id="akm-rename-btn" class="btn-primary cursor-pointer">
                             ${window.i18n.t('common.save')}
                         </button>
                     </div>
@@ -101,10 +101,10 @@ class ApiKeyManageModal {
                 </div>
 
                 <div class="flex justify-between items-center pt-3 border-t">
-                    <button class="akm-revoke-btn btn-danger">
+                    <button class="akm-revoke-btn btn-danger cursor-pointer">
                         ${window.i18n.t('modal.manage_api_key.revoke_btn')}
                     </button>
-                    <button class="akm-close-btn btn">
+                    <button class="akm-close-btn btn cursor-pointer">
                         ${window.i18n.t('common.close')}
                     </button>
                 </div>

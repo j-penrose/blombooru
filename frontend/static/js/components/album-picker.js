@@ -116,8 +116,8 @@ class AlbumPicker {
                 </div>
 
                 <div class="flex gap-2 justify-end">
-                    <button id="album-picker-confirm" class="btn-primary">${window.i18n.t('common.confirm')}</button>
-                    <button id="album-picker-cancel" class="btn-dark">${window.i18n.t('common.cancel')}</button>
+                    <button id="album-picker-confirm" class="btn-primary cursor-pointer">${window.i18n.t('common.confirm')}</button>
+                    <button id="album-picker-cancel" class="btn-dark cursor-pointer">${window.i18n.t('common.cancel')}</button>
                 </div>
             </div>
         `;
@@ -218,7 +218,7 @@ class AlbumPicker {
             const hasChildren = album.children && album.children.length > 0;
             if (hasChildren) {
                 const icon = album.isCollapsed ? '▶' : '▼';
-                toggleHtml = `<button class="album-toggle-btn text-secondary hover:text-primary px-2 py-3 text-xs" data-album-id="${album.id}">${icon}</button>`;
+                toggleHtml = `<button class="album-toggle-btn text-secondary hover:text-primary px-2 py-3 text-xs cursor-pointer" data-album-id="${album.id}">${icon}</button>`;
             }
 
             if (text) {

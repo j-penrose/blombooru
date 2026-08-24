@@ -142,14 +142,14 @@ class TagImplicationManager {
                 <td class="py-2 px-3 text-xs font-mono">${this._buildTargetDisplay(imp)}</td>
                 <td class="py-2 px-3 text-xs font-mono">${imp.implied_tags.map(t => this.escapeHtml(t.name)).join(' ')}</td>
                 <td class="py-2 px-3 text-xs text-right whitespace-nowrap">
-                    <button class="text-primary hover:opacity-70 mr-2" title="${window.i18n.t('common.edit')}"
+                    <button class="text-primary hover:opacity-70 mr-2 cursor-pointer" title="${window.i18n.t('common.edit')}"
                         onclick="window.tagImplicationManager.editImplication(${imp.id}, '${this.escapeAttr(this._buildTargetRaw(imp))}', '${this.escapeAttr(imp.implied_tags.map(t => t.name).join(' '))}')">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                         </svg>
                     </button>
-                    <button class="text-danger hover:opacity-70" title="${window.i18n.t('common.delete')}"
+                    <button class="text-danger hover:opacity-70 cursor-pointer" title="${window.i18n.t('common.delete')}"
                         onclick="window.tagImplicationManager.deleteImplication(${imp.id})">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="3 6 5 6 21 6"></polyline>

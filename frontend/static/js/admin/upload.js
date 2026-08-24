@@ -150,7 +150,7 @@ class Uploader {
                 badge.className = 'surface px-2 py-1 border text-xs flex items-center gap-2';
                 badge.innerHTML = `
                     <span>${this.escapeHtml(album.name)}</span>
-                    <button class="bg-danger tag-text px-1 hover:bg-danger transition-colors" data-id="${id}">×</button>
+                    <button class="bg-danger tag-text px-1 hover:bg-danger transition-colors cursor-pointer" data-id="${id}">×</button>
                 `;
                 badge.querySelector('button').addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -226,7 +226,7 @@ class Uploader {
                 badge.className = 'surface px-2 py-1 border text-xs flex items-center gap-2';
                 badge.innerHTML = `
                     <span>${this.escapeHtml(album.name)}</span>
-                    <button class="bg-danger tag-text px-1 hover:bg-danger transition-colors" data-id="${id}">×</button>
+                    <button class="bg-danger tag-text px-1 hover:bg-danger transition-colors cursor-pointer" data-id="${id}">×</button>
                 `;
                 badge.querySelector('button').addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -457,7 +457,7 @@ class Uploader {
                         ${window.i18n.t('upload.preview.final_tags')}<span id="final-tags-preview" class="text"></span>
                     </div>
                     
-                    <button id="remove-media-btn" class="btn-danger px-3 py-2">${window.i18n.t('upload.preview.remove_media')}</button>
+                    <button id="remove-media-btn" class="btn-danger px-3 py-2 cursor-pointer">${window.i18n.t('upload.preview.remove_media')}</button>
                 </div>
             </div>
         `;
@@ -552,8 +552,8 @@ class Uploader {
         submitDiv.style.display = 'none';
         submitDiv.className = 'flex gap-2';
         submitDiv.innerHTML = `
-            <button id="cancel-all-btn" class="btn flex-1">${window.i18n.t('upload.submit.cancel_all')}</button>
-            <button id="submit-all-btn" class="btn-primary flex-1 font-bold">${window.i18n.t('upload.submit.submit_all')}</button>
+            <button id="cancel-all-btn" class="btn flex-1 cursor-pointer">${window.i18n.t('upload.submit.cancel_all')}</button>
+            <button id="submit-all-btn" class="btn-primary flex-1 font-bold cursor-pointer">${window.i18n.t('upload.submit.submit_all')}</button>
         `;
 
         document.getElementById('preview-grid').parentNode.insertBefore(submitDiv, document.getElementById('preview-grid').nextSibling);

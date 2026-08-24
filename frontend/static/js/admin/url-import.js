@@ -136,10 +136,10 @@ class UrlImporter {
                     </div>
                 </div>
                 <div class="flex flex-col sm:flex-row gap-2 mt-4">
-                    <button id="url-import-cancel-btn" class="btn-danger px-4 py-2 font-medium">
+                    <button id="url-import-cancel-btn" class="btn-danger px-4 py-2 font-medium cursor-pointer">
                         ${window.i18n.t('common.cancel')}
                     </button>
-                    <button id="url-import-queue-btn" class="btn-primary flex-1 px-4 py-2 font-medium">
+                    <button id="url-import-queue-btn" class="btn-primary flex-1 px-4 py-2 font-medium cursor-pointer">
                         ${window.i18n.t('admin.media_management.url_import.add_to_queue')}
                     </button>
                 </div>

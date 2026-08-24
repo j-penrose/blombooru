@@ -70,7 +70,7 @@ class MediaPickerModal {
                                 bg px-3 py-2 border text text-sm hover:border-primary transition-colors focus:outline-none focus:border-primary"
                                 style="width:120px"
                                 placeholder="${this._esc(window.i18n.t('media_picker.media_id_placeholder'))}">
-                            <button type="button" class="mpicker-id-go-btn hidden sm:inline-flex btn-primary px-3 py-2 text-sm">
+                            <button type="button" class="mpicker-id-go-btn hidden sm:inline-flex btn-primary px-3 py-2 text-sm cursor-pointer">
                                 ${this._esc(window.i18n.t('common.go'))}
                             </button>
                         </div>
@@ -93,7 +93,7 @@ class MediaPickerModal {
                         <p>${this._esc(window.i18n.t('gallery.no_results_found'))}</p>
                     </div>
                     <div class="mpicker-load-more text-center py-4" style="display:none">
-                        <button class="mpicker-load-more-btn btn px-6 py-2 text-sm">
+                        <button class="mpicker-load-more-btn btn px-6 py-2 text-sm cursor-pointer">
                             ${this._esc(window.i18n.t('common.load_more'))}
                         </button>
                     </div>
@@ -106,20 +106,20 @@ class MediaPickerModal {
                             <span class="mpicker-selected-count text-sm font-medium">
                                 ${window.i18n.t('common.items_selected', { count: 0 })}
                             </span>
-                            <button class="mpicker-clear-btn text-xs text-secondary hover:text-primary ml-2" style="display:none">
+                            <button class="mpicker-clear-btn text-xs text-secondary hover:text-primary ml-2 cursor-pointer" style="display:none">
                                 ${this._esc(window.i18n.t('common.clear_selection'))}
                             </button>
                         </div>
                         <div class="flex flex-wrap gap-2 mpicker-actions">
                             ${this.options.extraButtons.map(b => `
-                                <button id="${this._esc(b.id)}" class="${this._esc(b.className || 'btn-primary')} px-4 py-2" style="display:none">
+                                <button id="${this._esc(b.id)}" class="${this._esc(b.className || 'btn-primary')} px-4 py-2 cursor-pointer" style="display:none">
                                     ${this._esc(b.text)}
                                 </button>
                             `).join('')}
-                            <button class="mpicker-confirm-btn btn-primary px-4 py-2" style="display:none">
+                            <button class="mpicker-confirm-btn btn-primary px-4 py-2 cursor-pointer" style="display:none">
                                 ${this._esc(this.options.confirmText)}
                             </button>
-                            <button class="mpicker-cancel-btn btn-dark px-4 py-2">
+                            <button class="mpicker-cancel-btn btn-dark px-4 py-2 cursor-pointer">
                                 ${this._esc(this.options.cancelText)}
                             </button>
                         </div>

@@ -64,10 +64,10 @@ class UpdatePostDeviceUpload extends UpdatePostModalBase {
                 <div class="flex-shrink-0 p-4 border-t border-color surface">
                     <div class="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3">
                         <div class="flex gap-2 sm:ml-auto">
-                            <button id="upm-device-apply" class="flex-1 sm:flex-none min-h-[48px] sm:min-h-0 px-5 py-3 sm:py-2 btn-primary text-sm font-medium" disabled>
+                            <button id="upm-device-apply" class="flex-1 sm:flex-none min-h-[48px] sm:min-h-0 px-5 py-3 sm:py-2 btn-primary text-sm font-medium cursor-pointer" disabled>
                                 ${this._t('modal.update_post.apply')}
                             </button>
-                            <button id="upm-device-cancel" class="flex-1 sm:flex-none min-h-[48px] sm:min-h-0 px-5 py-3 sm:py-2 btn text-sm font-medium">
+                            <button id="upm-device-cancel" class="flex-1 sm:flex-none min-h-[48px] sm:min-h-0 px-5 py-3 sm:py-2 btn text-sm font-medium cursor-pointer">
                                 ${this._t('common.cancel')}
                             </button>
                         </div>

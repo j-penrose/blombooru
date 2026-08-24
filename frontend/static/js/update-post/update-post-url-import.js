@@ -32,7 +32,7 @@ class UpdatePostUrlImport extends UpdatePostModalBase {
                             class="flex-1 bg px-3 py-2 border text-xs focus:outline-none focus:border-primary hover:border-primary transition-colors"
                             placeholder="https://danbooru.donmai.us/posts/..."
                             value="${this._escapeHtml(this.currentMedia?.source || '')}">
-                        <button id="upm-url-fetch" class="btn-primary whitespace-nowrap">
+                        <button id="upm-url-fetch" class="btn-primary whitespace-nowrap cursor-pointer">
                             ${this._t('admin.media_management.booru_import.fetch')}
                         </button>
                     </div>
@@ -47,10 +47,10 @@ class UpdatePostUrlImport extends UpdatePostModalBase {
                 <div class="flex-shrink-0 p-4 border-t border-color surface">
                     <div class="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3">
                         <div class="flex gap-2 sm:ml-auto">
-                            <button id="upm-url-apply" class="flex-1 sm:flex-none min-h-[48px] sm:min-h-0 px-5 py-3 sm:py-2 btn-primary text-sm font-medium" style="display:none;">
+                            <button id="upm-url-apply" class="flex-1 sm:flex-none min-h-[48px] sm:min-h-0 px-5 py-3 sm:py-2 btn-primary text-sm font-medium cursor-pointer" style="display:none;">
                                 ${this._t('modal.update_post.apply')}
                             </button>
-                            <button id="upm-url-cancel" class="flex-1 sm:flex-none min-h-[48px] sm:min-h-0 px-5 py-3 sm:py-2 btn text-sm font-medium">
+                            <button id="upm-url-cancel" class="flex-1 sm:flex-none min-h-[48px] sm:min-h-0 px-5 py-3 sm:py-2 btn text-sm font-medium cursor-pointer">
                                 ${this._t('common.cancel')}
                             </button>
                         </div>

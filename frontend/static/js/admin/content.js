@@ -891,7 +891,7 @@ class AdminContent {
                 return `
                 <div class="bg px-2 py-1.5 ${i === arr.length - 1 ? '' : 'border-b'} flex flex-wrap items-center gap-2">
                     <div class="flex items-center gap-2 min-w-0">
-                        <button class="manage-tag-btn flex-shrink-0 flex items-center justify-center w-7 h-7 bg-primary hover:bg-primary border-primary hover:border-primary transition-colors"
+                        <button class="manage-tag-btn flex-shrink-0 flex items-center justify-center w-7 h-7 bg-primary hover:bg-primary border-primary hover:border-primary transition-colors cursor-pointer"
                             data-tag-id="${tag.id}"
                             data-tag-name="${this.app.escapeHtml(tag.name)}"
                             data-tag-category="${tag.category}"
@@ -975,13 +975,13 @@ class AdminContent {
                 <h2 class="text-xl font-bold mb-2 text-primary">${window.i18n.t('admin.tags_management.manage_tag')}</h2>
                 <p class="text-base mb-6 text font-medium">${this.app.escapeHtml(tagName)}</p>
                 <div class="flex flex-col gap-3">
-                    <button id="tag-manage-edit" class="btn-dark px-6 py-3 font-bold text-sm flex items-center justify-center gap-2">
+                    <button id="tag-manage-edit" class="btn-dark px-6 py-3 font-bold text-sm flex items-center justify-center gap-2 cursor-pointer">
                         <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
                         </svg>
                         ${window.i18n.t('admin.tags_management.edit_tag')}
                     </button>
-                    <button id="tag-manage-merge" class="btn-dark px-6 py-3 font-bold text-sm flex items-center justify-center gap-2">
+                    <button id="tag-manage-merge" class="btn-dark px-6 py-3 font-bold text-sm flex items-center justify-center gap-2 cursor-pointer">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M4 6h5a4 4 0 0 1 4 4v2"></path>
                             <path d="M4 18h5a4 4 0 0 0 4-4v-2"></path>
@@ -990,13 +990,13 @@ class AdminContent {
                         </svg>
                         ${window.i18n.t('admin.tags_management.merge_tag')}
                     </button>
-                    <button id="tag-manage-delete" class="px-6 py-3 transition-colors bg border border-danger text-danger hover:bg-danger hover:tag-text font-bold text-sm flex items-center justify-center gap-2">
+                    <button id="tag-manage-delete" class="px-6 py-3 transition-colors bg border border-danger text-danger hover:bg-danger hover:tag-text font-bold text-sm flex items-center justify-center gap-2 cursor-pointer">
                         <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
                         </svg>
                         ${window.i18n.t('modal.delete_tag.title')}
                     </button>
-                    <button id="tag-manage-cancel" class="btn-dark px-6 py-3 font-bold text-sm flex items-center justify-center gap-2">
+                    <button id="tag-manage-cancel" class="btn-dark px-6 py-3 font-bold text-sm flex items-center justify-center gap-2 cursor-pointer">
                         ${window.i18n.t('common.cancel')}
                     </button>
                 </div>
@@ -1064,10 +1064,10 @@ class AdminContent {
                 </div>
 
                 <div class="flex gap-3 justify-center">
-                    <button id="tag-merge-submit" class="btn-primary px-6 py-3 font-bold text-sm flex-1">
+                    <button id="tag-merge-submit" class="btn-primary px-6 py-3 font-bold text-sm flex-1 cursor-pointer">
                         ${window.i18n.t('admin.tags_management.merge_into')}
                     </button>
-                    <button id="tag-merge-cancel" class="btn px-6 py-3 font-bold text-sm flex-1">
+                    <button id="tag-merge-cancel" class="btn px-6 py-3 font-bold text-sm flex-1 cursor-pointer">
                         ${window.i18n.t('common.cancel')}
                     </button>
                 </div>
@@ -1287,10 +1287,10 @@ class AdminContent {
                 </div>
 
                 <div class="flex gap-3 justify-center">
-                    <button id="tag-edit-save" class="btn-primary px-6 py-3 font-bold text-sm flex-1">
+                    <button id="tag-edit-save" class="btn-primary px-6 py-3 font-bold text-sm flex-1 cursor-pointer">
                         ${window.i18n.t('common.save')}
                     </button>
-                    <button id="tag-edit-cancel" class="btn px-6 py-3 font-bold text-sm flex-1">
+                    <button id="tag-edit-cancel" class="btn px-6 py-3 font-bold text-sm flex-1 cursor-pointer">
                         ${window.i18n.t('common.cancel')}
                     </button>
                 </div>
@@ -1769,7 +1769,7 @@ class AdminContent {
                             ${parentChain ? `<div class="text-xs text-secondary">Path: ${this.app.escapeHtml(parentChain)}</div>` : '<div class="text-xs text-secondary">' + window.i18n.t('albums.root_album') + '</div>'}
                         </div>
                         <div class="flex gap-2">
-                            <button class="manage-album-btn btn-primary px-3 py-1"
+                            <button class="manage-album-btn btn-primary px-3 py-1 cursor-pointer"
                                 data-album-id="${album.id}"
                                 data-album-name="${this.app.escapeHtml(album.name)}"
                                 data-parent-id="${immediateParentId || ''}">${window.i18n.t('common.manage')}</button>
@@ -1816,25 +1816,25 @@ class AdminContent {
                 <h2 class="text-xl font-bold mb-2 text-primary">${window.i18n.t('admin.albums_management.manage_album')}</h2>
                 <p class="text-base mb-6 text font-medium">${this.app.escapeHtml(albumName)}</p>
                 <div class="flex flex-col gap-3">
-                    <button id="album-manage-rename" class="btn-dark px-6 py-3 font-bold text-sm flex items-center justify-center gap-2">
+                    <button id="album-manage-rename" class="btn-dark px-6 py-3 font-bold text-sm flex items-center justify-center gap-2 cursor-pointer">
                         <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
                         </svg>
                         ${window.i18n.t('admin.albums_management.rename_album')}
                     </button>
-                    <button id="album-manage-parent" class="btn-dark px-6 py-3 font-bold text-sm flex items-center justify-center gap-2">
+                    <button id="album-manage-parent" class="btn-dark px-6 py-3 font-bold text-sm flex items-center justify-center gap-2 cursor-pointer">
                         <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/>
                         </svg>
                         ${window.i18n.t('admin.albums_management.change_parent_album')}
                     </button>
-                    <button id="album-manage-delete" class="px-6 py-3 transition-colors bg border border-danger text-danger hover:bg-danger hover:tag-text font-bold text-sm flex items-center justify-center gap-2">
+                    <button id="album-manage-delete" class="px-6 py-3 transition-colors bg border border-danger text-danger hover:bg-danger hover:tag-text font-bold text-sm flex items-center justify-center gap-2 cursor-pointer">
                         <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
                         </svg>
                         ${window.i18n.t('common.delete_album')}
                     </button>
-                    <button id="album-manage-cancel" class="btn-dark px-6 py-3 font-bold text-sm flex items-center justify-center gap-2">
+                    <button id="album-manage-cancel" class="btn-dark px-6 py-3 font-bold text-sm flex items-center justify-center gap-2 cursor-pointer">
                         ${window.i18n.t('common.close')}
                     </button>
                 </div>
@@ -1901,10 +1901,10 @@ class AdminContent {
                         class="w-full bg px-3 py-2 border text-sm focus:outline-none focus:border-primary">
                 </div>
                 <div class="flex gap-4 justify-center">
-                    <button id="album-rename-confirm" class="btn-primary px-6 py-3 font-bold text-sm">
+                    <button id="album-rename-confirm" class="btn-primary px-6 py-3 font-bold text-sm cursor-pointer">
                         Save
                     </button>
-                    <button id="album-rename-cancel" class="btn px-6 py-3 font-bold text-sm">
+                    <button id="album-rename-cancel" class="btn px-6 py-3 font-bold text-sm cursor-pointer">
                         Cancel
                     </button>
                 </div>
@@ -2091,10 +2091,10 @@ class AdminContent {
                     </div>
                 </div>
                 <div class="flex gap-4 justify-center">
-                    <button id="album-parent-confirm" class="btn-primary px-6 py-3 font-bold text-sm">
+                    <button id="album-parent-confirm" class="btn-primary px-6 py-3 font-bold text-sm cursor-pointer">
                         Save
                     </button>
-                    <button id="album-parent-cancel" class="btn px-6 py-3 font-bold text-sm">
+                    <button id="album-parent-cancel" class="btn px-6 py-3 font-bold text-sm cursor-pointer">
                         Cancel
                     </button>
                 </div>

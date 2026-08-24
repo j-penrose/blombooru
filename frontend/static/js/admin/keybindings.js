@@ -65,7 +65,7 @@ class AdminKeybindings {
                      data-action-id="${this._escapeHtml(action.id)}">${this._escapeHtml(chipText)}</kbd>
 
 
-                <button class="btn keybinding-edit-btn p-2 text-xs flex items-center justify-center hover:border-primary transition-colors"
+                <button class="btn keybinding-edit-btn p-2 text-xs flex items-center justify-center hover:border-primary transition-colors cursor-pointer"
                         data-action-id="${this._escapeHtml(action.id)}"
                         title="${this._escapeHtml(editTitle)}">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -74,7 +74,7 @@ class AdminKeybindings {
                     </svg>
                 </button>
 
-                <button class="btn keybinding-reset-btn p-2 text-xs text-secondary flex items-center justify-center hover:border-primary transition-colors"
+                <button class="btn keybinding-reset-btn p-2 text-xs text-secondary flex items-center justify-center hover:border-primary transition-colors cursor-pointer"
                         data-action-id="${this._escapeHtml(action.id)}"
                         title="${this._escapeHtml(resetTitle)}">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -145,7 +145,7 @@ class AdminKeybindings {
                 <span class="text-xs text animate-pulse">${this._escapeHtml(promptText)}</span>
             </div>
             <div class="flex items-center gap-2">
-                <button class="btn keybinding-cancel-capture-btn p-2 text-xs text flex items-center justify-center hover:border-danger transition-colors"
+                <button class="btn keybinding-cancel-capture-btn p-2 text-xs text flex items-center justify-center hover:border-danger transition-colors cursor-pointer"
                         title="${this._escapeHtml(cancelTitle)}">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="18" y1="6" x2="6" y2="18"></line>

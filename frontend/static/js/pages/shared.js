@@ -129,7 +129,7 @@ class SharedViewer extends MediaViewerBase {
 
                     ${showAIMetadata ? `
                     <div id="ai-metadata-section" style="display: none;" class="surface border">
-                        <button type="button" id="ai-metadata-toggle" class="w-full p-3 flex justify-between items-center text-left hover:text-primary transition-colors">
+                        <button type="button" id="ai-metadata-toggle" class="w-full p-3 flex justify-between items-center text-left hover:text-primary transition-colors cursor-pointer">
                             <h3 class="text-sm font-bold">${window.i18n.t('shared.ai_generation_data')}</h3>
                             <svg id="ai-metadata-chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-200">
                                 <polyline points="6 9 12 15 18 9"></polyline>
@@ -143,7 +143,7 @@ class SharedViewer extends MediaViewerBase {
                         <h3 class="text-sm font-bold mb-3 pb-2 border-b">${window.i18n.t('common.actions')}</h3>
                         <div class="space-y-2">
                             <a id="download-btn" href="/api/shared/${this.shareUuid}/file${media.hash ? '?v=' + media.hash : ''}" download="${media.filename}" 
-                               class="btn-primary flex items-center justify-center gap-2 w-full text-sm font-medium ${this.isProcessing ? 'pointer-events-none opacity-50' : ''}">
+                               class="btn-primary flex items-center justify-center gap-2 w-full text-sm font-medium cursor-pointer ${this.isProcessing ? 'pointer-events-none opacity-50' : ''}">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>

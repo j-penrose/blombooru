@@ -324,7 +324,7 @@ class MediaViewerBase {
             return `
             <div class="ai-expandable-wrapper">
                 <div class="ai-text-content is-collapsed">${escaped}</div>
-                <button type="button" class="ai-toggle-btn">${window.i18n.t('media.ai_metadata.show_more')}</button>
+                <button type="button" class="ai-toggle-btn cursor-pointer">${window.i18n.t('media.ai_metadata.show_more')}</button>
             </div>
         `;
         }

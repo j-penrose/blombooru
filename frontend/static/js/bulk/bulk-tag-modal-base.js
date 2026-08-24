@@ -104,10 +104,10 @@ class BulkTagModalBase {
                             </div>
                         ` : ''}
                         <div class="flex gap-2 ${footerLeft ? '' : 'sm:ml-auto'}">
-                            <button class="${prefix}-save flex-1 sm:flex-none min-h-[48px] sm:min-h-0 px-5 py-3 sm:py-2 btn-primary text-sm font-medium" style="display: none;">
+                            <button class="${prefix}-save flex-1 sm:flex-none min-h-[48px] sm:min-h-0 px-5 py-3 sm:py-2 btn-primary text-sm font-medium cursor-pointer" style="display: none;">
                                 ${window.i18n.t('modal.buttons.save_all')}
                             </button>
-                            <button class="${prefix}-cancel flex-1 sm:flex-none min-h-[48px] sm:min-h-0 px-5 py-3 sm:py-2 btn text-sm font-medium">
+                            <button class="${prefix}-cancel flex-1 sm:flex-none min-h-[48px] sm:min-h-0 px-5 py-3 sm:py-2 btn text-sm font-medium cursor-pointer">
                                 ${window.i18n.t('common.cancel')}
                             </button>
                         </div>
@@ -858,7 +858,7 @@ class BulkTagModalBase {
                             <!-- Action buttons -->
                             <div class="${prefix}-actions flex gap-1.5 flex-shrink-0 transition-all">
                                 <button type="button" 
-                                        class="${prefix}-refresh w-11 h-11 sm:w-9 sm:h-9 surface hover:surface-light text-secondary hover:text flex items-center justify-center transition-colors"
+                                        class="${prefix}-refresh w-11 h-11 sm:w-9 sm:h-9 surface hover:surface-light text-secondary hover:text flex items-center justify-center transition-colors cursor-pointer"
                                         data-index="${index}"
                                         title="${window.i18n.t('bulk_modal.buttons.refresh_tags')}">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 sm:w-4 sm:h-4">
@@ -866,7 +866,7 @@ class BulkTagModalBase {
                                     </svg>
                                 </button>
                                 <button type="button" 
-                                        class="${prefix}-clear w-11 h-11 sm:w-9 sm:h-9 bg-danger hover:bg-danger tag-text flex items-center justify-center transition-colors"
+                                        class="${prefix}-clear w-11 h-11 sm:w-9 sm:h-9 bg-danger hover:bg-danger tag-text flex items-center justify-center transition-colors cursor-pointer"
                                         data-index="${index}"
                                         title="${window.i18n.t('bulk_modal.buttons.clear_tags')}">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 sm:w-4 sm:h-4">
