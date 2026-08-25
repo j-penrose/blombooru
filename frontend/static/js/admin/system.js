@@ -450,8 +450,9 @@ class AdminSystem {
 
             const removeBtn = document.createElement('button');
             removeBtn.type = 'button';
-            removeBtn.className = 'px-3 py-2 bg-danger tag-text text-xs hover:bg-danger transition-colors h-[34px]';
-            removeBtn.textContent = '×';
+            removeBtn.className = 'btn-danger p-2 flex items-center justify-center flex-shrink-0 text-xs cursor-pointer h-[34px] w-[34px]';
+            removeBtn.title = window.i18n.t('common.delete');
+            removeBtn.innerHTML = window.Icons ? window.Icons.trash({ size: 14 }) : '';
             removeBtn.onclick = () => this.removeCustomButton(index);
 
             row.appendChild(titleInput);
