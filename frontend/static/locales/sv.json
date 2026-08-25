@@ -100,7 +100,6 @@
             "shown_once": "VISAS EN GÅNG",
             "store_securely": "Spara denna nyckel säkert. Den visas inte igen efter att du uppdaterar eller lämnar denna sida.",
             "title": "API-åtkomst",
-            "manage_key": "Hantera",
             "level_read": "Endast läsning",
             "level_write": "Uppladdning & redigering",
             "level_admin": "Admin",

@@ -100,7 +100,6 @@
             "shown_once": "SHOWN ONCE",
             "store_securely": "Store this key securely. It will not be shown again after you refresh or leave this page.",
             "title": "API Access",
-            "manage_key": "Manage",
             "level_read": "Read-Only",
             "level_write": "Upload & Edit",
             "level_admin": "Admin",

@@ -100,7 +100,6 @@
             "shown_once": "仅显示一次",
             "store_securely": "请安全地存储此密钥。刷新或离开此页面后，它将不再显示。",
             "title": "API 访问",
-            "manage_key": "",
             "level_read": "",
             "level_write": "",
             "level_admin": "",

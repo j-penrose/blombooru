@@ -1235,7 +1235,7 @@ class AdminSystem {
                 <div class="flex-shrink-0">
                     <button class="btn px-3 py-1 text-[10px] uppercase font-bold tracking-wider cursor-pointer" 
                         onclick="window.adminPanel.system.manageApiKey(${key.id})">
-                        ${window.i18n.t('admin.api_access.manage_key')}
+                        ${window.i18n.t('common.manage')}
                     </button>
                 </div>
             </div>
