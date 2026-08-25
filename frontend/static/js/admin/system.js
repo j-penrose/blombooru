@@ -1767,24 +1767,22 @@ class AdminSystem {
             tr.innerHTML = `
                 <td class="py-2 px-3 text-xs"></td>
                 <td class="py-2 px-3 text-xs">${typeBadge}</td>
-                <td class="py-2 px-3 text-xs text-right">
-                    <div class="flex justify-end gap-2">
-                        <button type="button" class="btn text-xs px-2 py-1 cursor-pointer"
-                            data-action="edit" data-theme-id="${this.app.escapeHtml(theme.id)}"
-                            title="${window.i18n.t('admin.settings.custom_themes.edit')}">
-                            ${window.Icons ? window.Icons.edit({ size: 12 }) : ''}
-                        </button>
-                        <button type="button" class="btn text-xs px-2 py-1 cursor-pointer"
-                            data-action="export" data-theme-id="${this.app.escapeHtml(theme.id)}"
-                            title="${window.i18n.t('admin.settings.custom_themes.export')}">
-                            ${window.Icons ? window.Icons.download({ size: 12 }) : ''}
-                        </button>
-                        <button type="button" class="btn-danger text-xs px-2 py-1 cursor-pointer"
-                            data-action="delete" data-theme-id="${this.app.escapeHtml(theme.id)}"
-                            title="${window.i18n.t('common.delete')}">
-                            ${window.Icons ? window.Icons.trash({ size: 12 }) : ''}
-                        </button>
-                    </div>
+                <td class="py-2 px-3 text-xs text-right whitespace-nowrap">
+                    <button type="button" class="text-success hover:text-success transition-colors mr-2 cursor-pointer"
+                        data-action="export" data-theme-id="${this.app.escapeHtml(theme.id)}"
+                        title="${window.i18n.t('admin.settings.custom_themes.export')}">
+                        ${window.Icons ? window.Icons.download({ size: 14 }) : ''}
+                    </button>
+                    <button type="button" class="text-primary hover:text-primary transition-colors mr-2 cursor-pointer"
+                        data-action="edit" data-theme-id="${this.app.escapeHtml(theme.id)}"
+                        title="${window.i18n.t('admin.settings.custom_themes.edit')}">
+                        ${window.Icons ? window.Icons.edit({ size: 14 }) : ''}
+                    </button>
+                    <button type="button" class="text-danger hover:text-danger transition-colors cursor-pointer"
+                        data-action="delete" data-theme-id="${this.app.escapeHtml(theme.id)}"
+                        title="${window.i18n.t('common.delete')}">
+                        ${window.Icons ? window.Icons.trash({ size: 14 }) : ''}
+                    </button>
                 </td>`;
 
             // Set the name cell via textContent to avoid XSS

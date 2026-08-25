@@ -142,11 +142,11 @@ class TagImplicationManager {
                 <td class="py-2 px-3 text-xs font-mono">${this._buildTargetDisplay(imp)}</td>
                 <td class="py-2 px-3 text-xs font-mono">${imp.implied_tags.map(t => this.escapeHtml(t.name)).join(' ')}</td>
                 <td class="py-2 px-3 text-xs text-right whitespace-nowrap">
-                    <button class="text-primary hover:opacity-70 mr-2 cursor-pointer" title="${window.i18n.t('common.edit')}"
+                    <button class="text-primary hover:text-primary transition-colors mr-2 cursor-pointer" title="${window.i18n.t('common.edit')}"
                         onclick="window.tagImplicationManager.editImplication(${imp.id}, '${this.escapeAttr(this._buildTargetRaw(imp))}', '${this.escapeAttr(imp.implied_tags.map(t => t.name).join(' '))}')">
                         ${window.Icons ? window.Icons.edit({ size: 14 }) : ''}
                     </button>
-                    <button class="text-danger hover:opacity-70 cursor-pointer" title="${window.i18n.t('common.delete')}"
+                    <button class="text-danger hover:text-danger transition-colors cursor-pointer" title="${window.i18n.t('common.delete')}"
                         onclick="window.tagImplicationManager.deleteImplication(${imp.id})">
                         ${window.Icons ? window.Icons.trash({ size: 14 }) : ''}
                     </button>
