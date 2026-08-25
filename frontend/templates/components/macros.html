@@ -1,3 +1,5 @@
+{% from "components/icons.html" import dice_icon, chevron_down_icon, check_icon, select_arrow_icon %}
+
 {# Rating Filter Component #}
 {% macro rating_filter(location='desktop', mode='rating', custom_buttons=[]) %}
 {% if mode == 'off' %}
@@ -10,11 +12,7 @@
         <summary
             class="flex items-center justify-between cursor-pointer font-bold text-xs uppercase tracking-wider hover:text-primary transition-colors list-none [&::-webkit-details-marker]:hidden select-none">
             <span>{{ t('gallery.filtering') }}</span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                class="transition-transform duration-200 group-open:rotate-180 flex-shrink-0">
-                <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
+            {{ chevron_down_icon(size=14, class="transition-transform duration-200 group-open:rotate-180 flex-shrink-0") }}
         </summary>
         <div class="mt-2.5 pt-2.5 border-t space-y-2.5">
             <div>
@@ -42,11 +40,7 @@
         <summary
             class="text-sm font-bold pb-1 border-b flex items-center justify-between cursor-pointer hover:text-primary transition-colors list-none [&::-webkit-details-marker]:hidden select-none group-open:mb-2.5">
             <span>{{ t('gallery.filtering') }}</span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                class="transition-transform duration-200 group-open:rotate-180 flex-shrink-0">
-                <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
+            {{ chevron_down_icon(size=14, class="transition-transform duration-200 group-open:rotate-180 flex-shrink-0") }}
         </summary>
         <div class="space-y-2.5 mb-1">
             <div>
@@ -110,11 +104,7 @@
     <input type="checkbox" name="rating" value="{{ rating }}" class="hidden rating-filter-input">
     <span
         class="relative block text-center px-3 {{ padding }} border-1 cursor-pointer bg hover:border-primary transition-colors rating-filter-label">
-        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"
-            class="absolute left-2 top-1/2 -translate-y-1/2 filter-check-icon">
-            <polyline points="20 6 9 17 4 12"></polyline>
-        </svg>
+        {{ check_icon(size=12, stroke_width=3, class="absolute left-2 top-1/2 -translate-y-1/2 filter-check-icon") }}
         <span>{{ t('common.' + rating) }}</span>
     </span>
 </label>
@@ -127,11 +117,7 @@
     <input type="checkbox" name="custom_filter" value="{{ button.tags }}" class="hidden custom-filter-input">
     <span
         class="relative block text-center px-3 {{ padding }} border-1 cursor-pointer bg hover:border-primary transition-colors custom-filter-label">
-        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"
-            class="absolute left-2 top-1/2 -translate-y-1/2 filter-check-icon">
-            <polyline points="20 6 9 17 4 12"></polyline>
-        </svg>
+        {{ check_icon(size=12, stroke_width=3, class="absolute left-2 top-1/2 -translate-y-1/2 filter-check-icon") }}
         <span>{{ button.title }}</span>
     </span>
 </label>
@@ -140,7 +126,7 @@
 
 
 {# Sorting Options Component #}
-{% from "components/icons.html" import dice_icon %}
+
 {% macro sorting_options(sort_options=none, default_sort='uploaded_at', default_order='desc', show_wrapper=true,
 location='desktop') %}
 {% set standard_sort_options = {
@@ -187,11 +173,7 @@ location='desktop') %}
                     class="js-sort-order-toggle sort-order-toggle p-1 border bg text hover:border-primary transition-colors flex-shrink-0 cursor-pointer {{ default_order }}"
                     data-order="{{ default_order }}" aria-label="{{ t('gallery.sort_toggle_order') }}"
                     title="{{ t('gallery.sort_toggle_order') }}">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                        class="sort-order-chevron">
-                        <polyline points="6 9 12 15 18 9"></polyline>
-                    </svg>
+                    {{ chevron_down_icon(size=16, class="sort-order-chevron") }}
                 </button>
                 <button id="sort-random-regen{{ suffix }}" type="button"
                     class="js-sort-random-regen sort-random-regen p-1 border bg text hover:border-primary transition-colors flex-shrink-0 cursor-pointer hidden"
@@ -211,10 +193,7 @@ location='desktop') %}
 {% endmacro %}
 
 {% macro _select_arrow() %}
-<svg class="custom-select-arrow flex-shrink-0 transition-transform duration-200 text-secondary" width="12" height="12"
-    viewBox="0 0 12 12">
-    <path fill="currentColor" d="M6 9L1 4h10z" />
-</svg>
+{{ select_arrow_icon(size=12) }}
 {% endmacro %}
 
 {# Bulk Actions Component #}

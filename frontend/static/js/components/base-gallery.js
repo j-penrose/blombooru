@@ -369,10 +369,10 @@ class BaseGallery {
     }
 
     rollSortRandomDice() {
-        if (typeof renderDiceIcon === 'undefined') return;
+        if (!window.Icons && typeof renderDiceIcon === 'undefined') return;
 
         this.sortRandomRegenBtns.forEach(btn => {
-            btn.innerHTML = renderDiceIcon();
+            btn.innerHTML = window.Icons ? window.Icons.dice() : renderDiceIcon();
         });
     }
 
@@ -750,14 +750,11 @@ class BaseGallery {
     }
 
     createEllipsis() {
+        const dotsIcon = window.Icons ? window.Icons.dots({ size: 16 }) : '';
         return `
             <a href="#" class="page-ellipsis btn-dark min-w-[2rem] h-8 px-2 flex items-center justify-center transition-all duration-200 text-secondary cursor-pointer" 
                title="${window.i18n.t('gallery.jump_to_page')}">
-               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                   <circle cx="12" cy="12" r="1"></circle>
-                   <circle cx="19" cy="12" r="1"></circle>
-                   <circle cx="5" cy="12" r="1"></circle>
-               </svg>
+               ${dotsIcon}
             </a>`;
     }
 
@@ -1522,11 +1519,7 @@ class BaseGallery {
             // Custom visual indicator (the clickable circle)
             indicator = document.createElement('div');
             indicator.className = 'select-indicator';
-            indicator.innerHTML = `
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-            `;
+            indicator.innerHTML = window.Icons ? window.Icons.check({ size: 24 }) : '';
 
             if (this.selectedItems.has(media.id)) {
                 checkbox.checked = true;
@@ -1681,16 +1674,7 @@ class BaseGallery {
         if (media.is_shared) {
             const shareIcon = document.createElement('div');
             shareIcon.className = 'share-icon w-6 h-6 flex items-center justify-center p-0';
-            shareIcon.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
-                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                    stroke-linejoin="round">
-                    <circle cx="18" cy="5" r="3"></circle>
-                    <circle cx="6" cy="12" r="3"></circle>
-                    <circle cx="18" cy="19" r="3"></circle>
-                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-                </svg>`;
+            shareIcon.innerHTML = window.Icons ? window.Icons.share({ size: 12 }) : '';
             item.appendChild(shareIcon);
         }
 

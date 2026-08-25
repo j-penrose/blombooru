@@ -41,26 +41,10 @@ class ModalHelper {
 
     getIconSVG(type) {
         const icons = {
-            primary: `
-                <svg class="mx-auto mb-4" width="64" height="64" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" fill="var(--primary)"/>
-                </svg>
-            `,
-            info: `
-                <svg class="mx-auto mb-4" width="64" height="64" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" fill="var(--info)"/>
-                </svg>
-            `,
-            warning: `
-                <svg class="mx-auto mb-4" width="64" height="64" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" fill="var(--warning)"/>
-                </svg>
-            `,
-            danger: `
-                <svg class="mx-auto mb-4" width="64" height="64" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="var(--danger)"/>
-                </svg>
-            `
+            primary: window.Icons ? window.Icons.primary({ class: 'mx-auto mb-4 text-primary' }) : '',
+            info: window.Icons ? window.Icons.info({ class: 'mx-auto mb-4 text-info' }) : '',
+            warning: window.Icons ? window.Icons.warning({ class: 'mx-auto mb-4 text-warning' }) : '',
+            danger: window.Icons ? window.Icons.danger({ class: 'mx-auto mb-4 text-danger' }) : ''
         };
         return icons[type] || icons.info;
     }

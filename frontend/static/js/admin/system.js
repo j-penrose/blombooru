@@ -1062,30 +1062,18 @@ class AdminSystem {
         if (permission === 'write') {
             const title = window.i18n.t('admin.api_access.level_write');
             return `<span title="${this.app.escapeHtml(title)}" class="inline-flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-warning shrink-0">
-                    <title>${this.app.escapeHtml(title)}</title>
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="17 8 12 3 7 8"></polyline>
-                    <line x1="12" y1="3" x2="12" y2="15"></line>
-                </svg>
+                ${window.Icons ? window.Icons.upload({ size: size, class: 'text-warning shrink-0' }) : ''}
             </span>`;
         }
         if (permission === 'admin') {
             const title = window.i18n.t('admin.api_access.level_admin');
             return `<span title="${this.app.escapeHtml(title)}" class="inline-flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-danger shrink-0">
-                    <title>${this.app.escapeHtml(title)}</title>
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                </svg>
+                ${window.Icons ? window.Icons.shield({ size: size, class: 'text-danger shrink-0' }) : ''}
             </span>`;
         }
         const title = window.i18n.t('admin.api_access.level_read');
         return `<span title="${this.app.escapeHtml(title)}" class="inline-flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-success shrink-0">
-                <title>${this.app.escapeHtml(title)}</title>
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                <circle cx="12" cy="12" r="3"></circle>
-            </svg>
+            ${window.Icons ? window.Icons.eye({ size: size, class: 'text-success shrink-0' }) : ''}
         </span>`;
     }
 
@@ -1110,10 +1098,7 @@ class AdminSystem {
                         <!-- Read-Only -->
                         <button type="button" class="new-akm-level text-left p-3.5 bg hover:border-primary transition-all border flex items-start gap-3 cursor-pointer border-primary surface" data-level="read">
                             <div class="mt-0.5 text-success shrink-0">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                    <circle cx="12" cy="12" r="3"></circle>
-                                </svg>
+                                ${window.Icons ? window.Icons.eye({ size: 18 }) : ''}
                             </div>
                             <div class="flex-1">
                                 <div class="font-bold text-xs text mb-0.5">${window.i18n.t('modal.manage_api_key.level_read_title')}</div>
@@ -1124,11 +1109,7 @@ class AdminSystem {
                         <!-- Upload & Edit -->
                         <button type="button" class="new-akm-level text-left p-3.5 bg hover:border-primary transition-all border flex items-start gap-3 cursor-pointer" data-level="write">
                             <div class="mt-0.5 text-warning shrink-0">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                    <polyline points="17 8 12 3 7 8"></polyline>
-                                    <line x1="12" y1="3" x2="12" y2="15"></line>
-                                </svg>
+                                ${window.Icons ? window.Icons.upload({ size: 18 }) : ''}
                             </div>
                             <div class="flex-1">
                                 <div class="font-bold text-xs text mb-0.5">${window.i18n.t('modal.manage_api_key.level_write_title')}</div>
@@ -1139,9 +1120,7 @@ class AdminSystem {
                         <!-- Full Admin -->
                         <button type="button" class="new-akm-level text-left p-3.5 bg hover:border-primary transition-all border flex items-start gap-3 cursor-pointer" data-level="admin">
                             <div class="mt-0.5 text-danger shrink-0">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                                </svg>
+                                ${window.Icons ? window.Icons.shield({ size: 18 }) : ''}
                             </div>
                             <div class="flex-1">
                                 <div class="font-bold text-xs text mb-0.5">${window.i18n.t('modal.manage_api_key.level_admin_title')}</div>
@@ -1793,17 +1772,17 @@ class AdminSystem {
                         <button type="button" class="btn text-xs px-2 py-1 cursor-pointer"
                             data-action="edit" data-theme-id="${this.app.escapeHtml(theme.id)}"
                             title="${window.i18n.t('admin.settings.custom_themes.edit')}">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                            ${window.Icons ? window.Icons.edit({ size: 12 }) : ''}
                         </button>
                         <button type="button" class="btn text-xs px-2 py-1 cursor-pointer"
                             data-action="export" data-theme-id="${this.app.escapeHtml(theme.id)}"
                             title="${window.i18n.t('admin.settings.custom_themes.export')}">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            ${window.Icons ? window.Icons.download({ size: 12 }) : ''}
                         </button>
                         <button type="button" class="btn-danger text-xs px-2 py-1 cursor-pointer"
                             data-action="delete" data-theme-id="${this.app.escapeHtml(theme.id)}"
                             title="${window.i18n.t('common.delete')}">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                            ${window.Icons ? window.Icons.trash({ size: 12 }) : ''}
                         </button>
                     </div>
                 </td>`;

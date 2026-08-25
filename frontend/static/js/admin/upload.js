@@ -288,9 +288,7 @@ class Uploader {
                 <div id="base-rating" class="custom-select" data-value="safe">
                     <button class="custom-select-trigger w-full flex items-center justify-between gap-3 px-3 py-2 surface border text-xs cursor-pointer focus:outline-none focus:border-primary" type="button">
                         <span class="custom-select-value text">${window.i18n.t('upload.base_settings.safe')}</span>
-                        <svg class="custom-select-arrow flex-shrink-0 transition-transform duration-200 text-secondary" width="12" height="12" viewBox="0 0 12 12">
-                            <path fill="currentColor" d="M6 9L1 4h10z"/>
-                        </svg>
+                        ${window.Icons ? window.Icons.selectArrow({ size: 12 }) : ''}
                     </button>
                     <div class="custom-select-dropdown surface border border-primary max-h-60 overflow-y-auto shadow-lg">
                         <div class="custom-select-option px-3 py-2 cursor-pointer hover:surface text text-xs selected" data-value="safe">${window.i18n.t('common.safe')}</div>
@@ -306,9 +304,7 @@ class Uploader {
                 <div id="base-album-select" class="custom-select" data-value="">
                     <button class="custom-select-trigger w-full flex items-center justify-between gap-3 px-3 py-2 surface border text-xs cursor-pointer focus:outline-none focus:border-primary" type="button">
                         <span class="custom-select-value text">${window.i18n.t('upload.base_settings.select_album')}</span>
-                        <svg class="custom-select-arrow flex-shrink-0 transition-transform duration-200 text-secondary" width="12" height="12" viewBox="0 0 12 12">
-                            <path fill="currentColor" d="M6 9L1 4h10z"/>
-                        </svg>
+                        ${window.Icons ? window.Icons.selectArrow({ size: 12 }) : ''}
                     </button>
                     <div class="custom-select-dropdown surface border border-primary max-h-60 overflow-y-auto shadow-lg">
                         <div class="custom-select-option px-3 py-2 cursor-pointer hover:surface text text-xs selected" data-value="">${window.i18n.t('upload.base_settings.select_album')}</div>
@@ -413,9 +409,7 @@ class Uploader {
                         <div id="individual-rating" class="custom-select" data-value="safe">
                             <button class="custom-select-trigger w-full flex items-center justify-between gap-3 px-3 py-2 surface border text-xs cursor-pointer focus:outline-none focus:border-primary" type="button">
                                 <span class="custom-select-value text">${window.i18n.t('upload.base_settings.safe')}</span>
-                                <svg class="custom-select-arrow flex-shrink-0 transition-transform duration-200 text-secondary" width="12" height="12" viewBox="0 0 12 12">
-                                    <path fill="currentColor" d="M6 9L1 4h10z"/>
-                                </svg>
+                                ${window.Icons ? window.Icons.selectArrow({ size: 12 }) : ''}
                             </button>
                             <div class="custom-select-dropdown surface border border-primary max-h-60 overflow-y-auto shadow-lg">
                                 <div class="custom-select-option px-3 py-2 cursor-pointer hover:surface text text-xs selected" data-value="safe">${window.i18n.t('common.safe')}</div>
@@ -431,9 +425,7 @@ class Uploader {
                         <div id="individual-album-select" class="custom-select" data-value="">
                             <button class="custom-select-trigger w-full flex items-center justify-between gap-3 px-3 py-2 surface border text-xs cursor-pointer focus:outline-none focus:border-primary" type="button">
                                 <span class="custom-select-value text">${window.i18n.t('upload.base_settings.select_album')}</span>
-                                <svg class="custom-select-arrow flex-shrink-0 transition-transform duration-200 text-secondary" width="12" height="12" viewBox="0 0 12 12">
-                                    <path fill="currentColor" d="M6 9L1 4h10z"/>
-                                </svg>
+                                ${window.Icons ? window.Icons.selectArrow({ size: 12 }) : ''}
                             </button>
                             <div class="custom-select-dropdown surface border border-primary max-h-60 overflow-y-auto shadow-lg">
                                 <!-- Options populated dynamically -->

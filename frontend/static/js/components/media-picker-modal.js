@@ -86,10 +86,7 @@ class MediaPickerModal {
                         <p class="text-secondary mt-2">${this._esc(window.i18n.t('common.loading'))}</p>
                     </div>
                     <div class="mpicker-empty text-center py-8 text-secondary" style="display:none">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto mb-3 opacity-50" width="48" height="48"
-                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round"
-                            stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle>
-                            <path d="m21 21-4.35-4.35"></path></svg>
+                        ${window.Icons ? window.Icons.search({ size: 48, class: 'mx-auto mb-3 opacity-50' }) : ''}
                         <p>${this._esc(window.i18n.t('gallery.no_results_found'))}</p>
                     </div>
                     <div class="mpicker-load-more text-center py-4" style="display:none">
@@ -638,11 +635,7 @@ class MediaPickerModal {
         // Select indicator
         const indicator = document.createElement('div');
         indicator.className = 'select-indicator';
-        indicator.innerHTML = `
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-        `;
+        indicator.innerHTML = window.Icons ? window.Icons.check({ size: 24 }) : '';
 
         // Badge (parent/child indicators for relation manager, etc.)
         if (this.options.badgeFn) {

@@ -1,34 +1,341 @@
-{% macro dice_icon(class="") %}
-{% set face = range(1, 7) | random %}
-<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="{{ class }}">
-    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-    {% if face == 1 %}
-    <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle>
-    {% elif face == 2 %}
-    <circle cx="8" cy="8" r="1.5" fill="currentColor" stroke="none"></circle>
-    <circle cx="16" cy="16" r="1.5" fill="currentColor" stroke="none"></circle>
-    {% elif face == 3 %}
-    <circle cx="8" cy="8" r="1.5" fill="currentColor" stroke="none"></circle>
-    <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle>
-    <circle cx="16" cy="16" r="1.5" fill="currentColor" stroke="none"></circle>
-    {% elif face == 4 %}
-    <circle cx="8" cy="8" r="1.5" fill="currentColor" stroke="none"></circle>
-    <circle cx="16" cy="8" r="1.5" fill="currentColor" stroke="none"></circle>
-    <circle cx="8" cy="16" r="1.5" fill="currentColor" stroke="none"></circle>
-    <circle cx="16" cy="16" r="1.5" fill="currentColor" stroke="none"></circle>
-    {% elif face == 5 %}
-    <circle cx="8" cy="8" r="1.5" fill="currentColor" stroke="none"></circle>
-    <circle cx="16" cy="8" r="1.5" fill="currentColor" stroke="none"></circle>
-    <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle>
-    <circle cx="8" cy="16" r="1.5" fill="currentColor" stroke="none"></circle>
-    <circle cx="16" cy="16" r="1.5" fill="currentColor" stroke="none"></circle>
-    {% elif face == 6 %}
-    <circle cx="8" cy="8" r="1.5" fill="currentColor" stroke="none"></circle>
-    <circle cx="16" cy="8" r="1.5" fill="currentColor" stroke="none"></circle>
-    <circle cx="8" cy="12" r="1.5" fill="currentColor" stroke="none"></circle>
-    <circle cx="16" cy="12" r="1.5" fill="currentColor" stroke="none"></circle>
-    <circle cx="8" cy="16" r="1.5" fill="currentColor" stroke="none"></circle>
-    <circle cx="16" cy="16" r="1.5" fill="currentColor" stroke="none"></circle>
-    {% endif %}
+{#
+  Reusable SVG Icon Library & Single Source of Truth
+  Contains the centralized SVG Sprite definition (`icon_sprite`) and customizable Jinja macros.
+#}
+
+{% macro icon_sprite() %}
+<svg xmlns="http://www.w3.org/2000/svg" id="__blombooru_icons__" style="display: none;">
+  <defs>
+    <!-- Dice Faces 1-6 -->
+    <symbol id="icon-dice-1" viewBox="0 0 24 24">
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/>
+    </symbol>
+    <symbol id="icon-dice-2" viewBox="0 0 24 24">
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="8" cy="8" r="1.5" fill="currentColor" stroke="none"/>
+      <circle cx="16" cy="16" r="1.5" fill="currentColor" stroke="none"/>
+    </symbol>
+    <symbol id="icon-dice-3" viewBox="0 0 24 24">
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="8" cy="8" r="1.5" fill="currentColor" stroke="none"/>
+      <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/>
+      <circle cx="16" cy="16" r="1.5" fill="currentColor" stroke="none"/>
+    </symbol>
+    <symbol id="icon-dice-4" viewBox="0 0 24 24">
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="8" cy="8" r="1.5" fill="currentColor" stroke="none"/>
+      <circle cx="16" cy="8" r="1.5" fill="currentColor" stroke="none"/>
+      <circle cx="8" cy="16" r="1.5" fill="currentColor" stroke="none"/>
+      <circle cx="16" cy="16" r="1.5" fill="currentColor" stroke="none"/>
+    </symbol>
+    <symbol id="icon-dice-5" viewBox="0 0 24 24">
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="8" cy="8" r="1.5" fill="currentColor" stroke="none"/>
+      <circle cx="16" cy="8" r="1.5" fill="currentColor" stroke="none"/>
+      <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/>
+      <circle cx="8" cy="16" r="1.5" fill="currentColor" stroke="none"/>
+      <circle cx="16" cy="16" r="1.5" fill="currentColor" stroke="none"/>
+    </symbol>
+    <symbol id="icon-dice-6" viewBox="0 0 24 24">
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="8" cy="8" r="1.5" fill="currentColor" stroke="none"/>
+      <circle cx="16" cy="8" r="1.5" fill="currentColor" stroke="none"/>
+      <circle cx="8" cy="12" r="1.5" fill="currentColor" stroke="none"/>
+      <circle cx="16" cy="12" r="1.5" fill="currentColor" stroke="none"/>
+      <circle cx="8" cy="16" r="1.5" fill="currentColor" stroke="none"/>
+      <circle cx="16" cy="16" r="1.5" fill="currentColor" stroke="none"/>
+    </symbol>
+
+    <!-- Logo -->
+    <symbol id="icon-logo" viewBox="0 0 28 28">
+      <path fill="var(--logo-icon-primary, var(--primary-color, currentColor))" d="m23.078 3.281 0.279 0.232C26.027 5.807 27.726 9.3 28 12.797c0.226 3.764 -0.823 7.386 -3.281 10.281 -0.077 0.092 -0.153 0.184 -0.232 0.279C22.193 26.027 18.7 27.726 15.203 28c-3.764 0.226 -7.386 -0.823 -10.281 -3.281 -0.092 -0.077 -0.184 -0.153 -0.279 -0.232C1.973 22.193 0.274 18.7 0 15.203c-0.226 -3.764 0.823 -7.386 3.281 -10.281 0.077 -0.092 0.153 -0.184 0.232 -0.279C8.412 -1.059 17.427 -1.517 23.078 3.281"/>
+      <path fill="var(--logo-icon-secondary, var(--primary-text, currentColor))" d="m11.67 6.257 0.342 0.001q0.357 0.002 0.715 0.01c0.361 0.007 0.722 0.009 1.084 0.01q0.348 0.003 0.697 0.007l0.323 0.002c1.822 0.043 3.614 0.828 4.892 2.13 1.311 1.434 1.903 3.099 1.935 5.036l0.017 0.368c0.021 0.672 -0.04 1.112 -0.345 1.71 -0.076 0.304 -0.076 0.304 -0.109 0.547h-0.219l-0.007 0.369C20.832 17.656 19.645 18.557 18.813 19.359l-0.294 0.31C18.266 19.906 18.266 19.906 17.958 19.94L17.719 19.906v0.219c-0.17 0.089 -0.341 0.175 -0.513 0.26l-0.288 0.146c-1.164 0.408 -2.395 0.39 -3.614 0.381l-0.501 -0.001a352.078 352.078 0 0 1 -1.305 -0.005c-0.446 -0.002 -0.892 -0.003 -1.337 -0.004Q8.853 20.898 7.547 20.891c-0.008 -0.804 -0.014 -1.607 -0.018 -2.411q-0.002 -0.409 -0.007 -0.819c-0.004 -0.394 -0.006 -0.788 -0.007 -1.182 -0.002 -0.121 -0.003 -0.241 -0.005 -0.365 0 -1.728 0.593 -3.106 1.799 -4.334 1.412 -1.319 3.139 -1.572 4.991 -1.513 1.021 0.059 1.946 0.454 2.634 1.221 0.164 0.213 0.316 0.424 0.457 0.653l0.124 0.185c0.149 0.397 0.135 0.788 0.135 1.209l0.008 0.256c0.005 0.94 -0.397 1.618 -1.033 2.287l-0.328 0.109 -0.005 -0.32c-0.037 -0.998 -0.104 -1.884 -0.863 -2.619 -0.912 -0.719 -1.838 -0.779 -2.96 -0.67 -0.828 0.173 -1.556 0.647 -2.078 1.313 -0.638 1.001 -0.632 1.993 -0.636 3.138a187.469 187.469 0 0 1 -0.008 0.521c-0.007 0.421 -0.01 0.842 -0.012 1.263q1.129 -0.011 2.258 -0.029 0.383 -0.005 0.767 -0.009c2.652 0.056 2.652 0.056 4.932 -1.117L17.938 17.391c0.328 -0.328 0.328 -0.328 0.488 -0.47 0.2 -0.221 0.282 -0.421 0.387 -0.699l0.103 -0.268c0.038 -0.103 0.077 -0.207 0.116 -0.313l0.085 -0.193c0.251 -0.594 0.294 -1.12 0.284 -1.762l-0.003 -0.293c-0.016 -0.68 -0.076 -1.285 -0.366 -1.908l-0.117 -0.253c-0.688 -1.347 -1.685 -2.054 -3.106 -2.521 -0.466 -0.119 -0.921 -0.115 -1.399 -0.111l-0.638 -0.006q-0.497 -0.002 -0.993 -0.001c-0.322 0 -0.645 -0.003 -0.967 -0.007l-0.298 0.003C10.867 8.581 10.483 8.472 9.953 8.094c-0.122 -0.231 -0.122 -0.231 -0.144 -0.472l-0.033 -0.238c0.246 -1.008 0.971 -1.152 1.894 -1.127"/>
+    </symbol>
+
+    <!-- Help -->
+    <symbol id="icon-help" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line x1="12" y1="17" x2="12.01" y2="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+
+    <!-- Upload -->
+    <symbol id="icon-upload" viewBox="0 0 24 24">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <polyline points="17 8 12 3 7 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line x1="12" y1="3" x2="12" y2="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+
+    <!-- Logout -->
+    <symbol id="icon-logout" viewBox="0 0 24 24">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <polyline points="16 17 21 12 16 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line x1="21" y1="12" x2="9" y2="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+
+    <!-- Chevrons -->
+    <symbol id="icon-chevron-down" viewBox="0 0 24 24">
+      <polyline points="6 9 12 15 18 9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="icon-chevron-up" viewBox="0 0 24 24">
+      <polyline points="18 15 12 9 6 15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="icon-chevron-left" viewBox="0 0 24 24">
+      <polyline points="15 18 9 12 15 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="icon-chevron-right" viewBox="0 0 24 24">
+      <polyline points="9 18 15 12 9 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+
+    <!-- Check -->
+    <symbol id="icon-check" viewBox="0 0 24 24">
+      <polyline points="20 6 9 17 4 12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+
+    <!-- Select Arrow -->
+    <symbol id="icon-select-arrow" viewBox="0 0 12 12">
+      <path fill="currentColor" d="M6 9L1 4h10z"/>
+    </symbol>
+
+    <!-- Navigation Arrows -->
+    <symbol id="icon-arrow-left" viewBox="0 0 24 24">
+      <line x1="19" y1="12" x2="5" y2="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <polyline points="12 19 5 12 12 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="icon-arrow-right" viewBox="0 0 24 24">
+      <line x1="5" y1="12" x2="19" y2="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <polyline points="12 5 19 12 12 19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+
+    <!-- Download -->
+    <symbol id="icon-download" viewBox="0 0 24 24">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <polyline points="7 10 12 15 17 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line x1="12" y1="15" x2="12" y2="3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+
+    <!-- Share -->
+    <symbol id="icon-share" viewBox="0 0 24 24">
+      <circle cx="18" cy="5" r="3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="6" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="18" cy="19" r="3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+
+    <!-- Reset -->
+    <symbol id="icon-reset" viewBox="0 0 24 24">
+      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M3 3v5h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+
+    <!-- Image -->
+    <symbol id="icon-image" viewBox="0 0 24 24">
+      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="8.5" cy="8.5" r="1.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <polyline points="21 15 16 10 5 21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+
+    <!-- Trash -->
+    <symbol id="icon-trash" viewBox="0 0 24 24">
+      <polyline points="3 6 5 6 21 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+
+    <!-- Edit -->
+    <symbol id="icon-edit" viewBox="0 0 24 24">
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+
+    <!-- Plus / Minus -->
+    <symbol id="icon-plus" viewBox="0 0 24 24">
+      <line x1="12" y1="5" x2="12" y2="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line x1="5" y1="12" x2="19" y2="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="icon-minus" viewBox="0 0 24 24">
+      <line x1="5" y1="12" x2="19" y2="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+
+    <!-- Link -->
+    <symbol id="icon-link" viewBox="0 0 24 24">
+      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+
+    <!-- Info / Warning / Danger / Success -->
+    <symbol id="icon-info" viewBox="0 0 24 24">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" fill="currentColor"/>
+    </symbol>
+    <symbol id="icon-info-circle" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line x1="12" y1="16" x2="12" y2="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line x1="12" y1="8" x2="12.01" y2="8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="icon-warning" viewBox="0 0 24 24">
+      <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" fill="currentColor"/>
+    </symbol>
+    <symbol id="icon-danger" viewBox="0 0 24 24">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
+    </symbol>
+    <symbol id="icon-success" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <polyline points="16 10 11 15 8 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+
+    <!-- Shield & Eye -->
+    <symbol id="icon-shield" viewBox="0 0 24 24">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="icon-eye" viewBox="0 0 24 24">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+
+    <!-- Search -->
+    <symbol id="icon-search" viewBox="0 0 24 24">
+      <circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line x1="21" y1="21" x2="16.65" y2="16.65" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+
+    <!-- Wand / Camera / Message / Close / Dots -->
+    <symbol id="icon-wand" viewBox="0 0 24 24">
+      <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="icon-camera" viewBox="0 0 24 24">
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="12" cy="13" r="4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="icon-message-square" viewBox="0 0 24 24">
+      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="icon-close" viewBox="0 0 24 24">
+      <line x1="18" y1="6" x2="6" y2="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line x1="6" y1="6" x2="18" y2="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="icon-dots" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="19" cy="12" r="1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="5" cy="12" r="1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+
+    <!-- Folder / Folder Parent / Tag Menu / Merge -->
+    <symbol id="icon-folder" viewBox="0 0 24 24">
+      <path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z" fill="currentColor"/>
+    </symbol>
+    <symbol id="icon-folder-parent" viewBox="0 0 24 24">
+      <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" fill="currentColor"/>
+    </symbol>
+    <symbol id="icon-tag-menu" viewBox="0 0 24 24">
+      <rect x="3" y="5" width="18" height="2" fill="currentColor"/>
+      <rect x="3" y="11" width="18" height="2" fill="currentColor"/>
+      <rect x="3" y="17" width="18" height="2" fill="currentColor"/>
+    </symbol>
+    <symbol id="icon-merge" viewBox="0 0 24 24">
+      <path d="M4 6h5a4 4 0 0 1 4 4v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M4 18h5a4 4 0 0 0 4-4v-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line x1="13" y1="12" x2="20" y2="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <polyline points="17 9 20 12 17 15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+  </defs>
 </svg>
+{% endmacro %}
+
+{# --- Macro Helpers --- #}
+
+{% macro icon_use(name, size=16, class="", id="", style="", viewBox="0 0 24 24", extra="", stroke_width=none, stroke=none, fill=none, fill_primary=none, fill_text=none) %}
+{% set _ = kwargs %}
+<svg width="{{ size }}" height="{{ size }}" viewBox="{{ viewBox }}" class="{{ class }}"{% if id %} id="{{ id }}"{% endif %}{% if stroke_width %} stroke-width="{{ stroke_width }}"{% endif %}{% if stroke %} stroke="{{ stroke }}"{% endif %}{% if fill %} fill="{{ fill }}"{% endif %}{% if style %} style="{{ style }}"{% endif %}{% if extra %} {{ extra }}{% endif %}><use href="#icon-{{ name }}"/></svg>
+{% endmacro %}
+
+{% macro dice_icon(size=16, class="", face=none, id="", style="", extra="", stroke_width=none, stroke=none, fill=none) %}
+{% set _ = kwargs %}
+{% set resolved_face = face if face is not none and face >= 1 and face <= 6 else range(1, 7) | random %}
+<svg width="{{ size }}" height="{{ size }}" viewBox="0 0 24 24" class="{{ class }}"{% if id %} id="{{ id }}"{% endif %}{% if stroke_width %} stroke-width="{{ stroke_width }}"{% endif %}{% if stroke %} stroke="{{ stroke }}"{% endif %}{% if fill %} fill="{{ fill }}"{% endif %}{% if style %} style="{{ style }}"{% endif %}{% if extra %} {{ extra }}{% endif %}><use href="#icon-dice-{{ resolved_face }}"/></svg>
+{% endmacro %}
+
+{% macro logo_icon(size=28, class="", id="header-logo-svg", style="", extra="", fill_primary=none, fill_text=none, stroke_width=none) %}
+{% set _ = kwargs %}
+<svg width="{{ size }}" height="{{ size }}" viewBox="0 0 28 28" class="{{ class }}"{% if id %} id="{{ id }}"{% endif %}{% if fill_primary or fill_text or style %} style="{% if fill_primary %}--logo-icon-primary: {{ fill_primary }};{% endif %}{% if fill_text %}--logo-icon-secondary: {{ fill_text }};{% endif %}{{ style }}"{% endif %}{% if extra %} {{ extra }}{% endif %}><use href="#icon-logo"/></svg>
+{% endmacro %}
+
+{% macro help_icon(size=16, class="", id="", style="", extra="", stroke_width=none, stroke=none, fill=none) %}
+{% set _ = kwargs %}
+{{ icon_use("help", size=size, class=class, id=id, style=style, extra=extra, stroke_width=stroke_width, stroke=stroke, fill=fill) }}
+{% endmacro %}
+
+{% macro upload_icon(size=16, class="", id="", style="", extra="", stroke_width=none, stroke=none, fill=none) %}
+{% set _ = kwargs %}
+{{ icon_use("upload", size=size, class=class, id=id, style=style, extra=extra, stroke_width=stroke_width, stroke=stroke, fill=fill) }}
+{% endmacro %}
+
+{% macro logout_icon(size=16, class="", id="", style="", extra="", stroke_width=none, stroke=none, fill=none) %}
+{% set _ = kwargs %}
+{{ icon_use("logout", size=size, class=class, id=id, style=style, extra=extra, stroke_width=stroke_width, stroke=stroke, fill=fill) }}
+{% endmacro %}
+
+{% macro chevron_icon(direction="down", size=16, class="", id="", style="", extra="", stroke_width=none, stroke=none, fill=none) %}
+{% set _ = kwargs %}
+{{ icon_use("chevron-" ~ direction, size=size, class=class, id=id, style=style, extra=extra, stroke_width=stroke_width, stroke=stroke, fill=fill) }}
+{% endmacro %}
+
+{% macro chevron_down_icon(size=16, class="", id="", style="", extra="", stroke_width=none, stroke=none, fill=none) %}
+{% set _ = kwargs %}
+{{ chevron_icon("down", size=size, class=class, id=id, style=style, extra=extra, stroke_width=stroke_width, stroke=stroke, fill=fill) }}
+{% endmacro %}
+
+{% macro chevron_up_icon(size=16, class="", id="", style="", extra="", stroke_width=none, stroke=none, fill=none) %}
+{% set _ = kwargs %}
+{{ chevron_icon("up", size=size, class=class, id=id, style=style, extra=extra, stroke_width=stroke_width, stroke=stroke, fill=fill) }}
+{% endmacro %}
+
+{% macro chevron_left_icon(size=16, class="", id="", style="", extra="", stroke_width=none, stroke=none, fill=none) %}
+{% set _ = kwargs %}
+{{ chevron_icon("left", size=size, class=class, id=id, style=style, extra=extra, stroke_width=stroke_width, stroke=stroke, fill=fill) }}
+{% endmacro %}
+
+{% macro chevron_right_icon(size=16, class="", id="", style="", extra="", stroke_width=none, stroke=none, fill=none) %}
+{% set _ = kwargs %}
+{{ chevron_icon("right", size=size, class=class, id=id, style=style, extra=extra, stroke_width=stroke_width, stroke=stroke, fill=fill) }}
+{% endmacro %}
+
+{% macro check_icon(size=12, class="", id="", style="", extra="", stroke_width=none, stroke=none, fill=none) %}
+{% set _ = kwargs %}
+{{ icon_use("check", size=size, class=class, id=id, style=style, extra=extra, stroke_width=stroke_width, stroke=stroke, fill=fill) }}
+{% endmacro %}
+
+{% macro select_arrow_icon(size=12, class="custom-select-arrow flex-shrink-0 transition-transform duration-200 text-secondary", id="", style="", extra="", stroke_width=none, stroke=none, fill=none) %}
+{% set _ = kwargs %}
+{{ icon_use("select-arrow", size=size, class=class, id=id, style=style, viewBox="0 0 12 12", extra=extra, stroke_width=stroke_width, stroke=stroke, fill=fill) }}
+{% endmacro %}
+
+{% macro arrow_left_icon(size=16, class="", id="", style="", extra="", stroke_width=none, stroke=none, fill=none) %}
+{% set _ = kwargs %}
+{{ icon_use("arrow-left", size=size, class=class, id=id, style=style, extra=extra, stroke_width=stroke_width, stroke=stroke, fill=fill) }}
+{% endmacro %}
+
+{% macro arrow_right_icon(size=16, class="", id="", style="", extra="", stroke_width=none, stroke=none, fill=none) %}
+{% set _ = kwargs %}
+{{ icon_use("arrow-right", size=size, class=class, id=id, style=style, extra=extra, stroke_width=stroke_width, stroke=stroke, fill=fill) }}
+{% endmacro %}
+
+{% macro download_icon(size=16, class="", id="", style="", extra="", stroke_width=none, stroke=none, fill=none) %}
+{% set _ = kwargs %}
+{{ icon_use("download", size=size, class=class, id=id, style=style, extra=extra, stroke_width=stroke_width, stroke=stroke, fill=fill) }}
+{% endmacro %}
+
+{% macro share_icon(size=16, class="", id="", style="", extra="", stroke_width=none, stroke=none, fill=none) %}
+{% set _ = kwargs %}
+{{ icon_use("share", size=size, class=class, id=id, style=style, extra=extra, stroke_width=stroke_width, stroke=stroke, fill=fill) }}
+{% endmacro %}
+
+{% macro reset_icon(size=14, class="", id="", style="", extra="", stroke_width=none, stroke=none, fill=none) %}
+{% set _ = kwargs %}
+{{ icon_use("reset", size=size, class=class, id=id, style=style, extra=extra, stroke_width=stroke_width, stroke=stroke, fill=fill) }}
+{% endmacro %}
+
+{% macro image_icon(size=24, class="", id="", style="", extra="", stroke_width=none, stroke=none, fill=none) %}
+{% set _ = kwargs %}
+{{ icon_use("image", size=size, class=class, id=id, style=style, extra=extra, stroke_width=stroke_width, stroke=stroke, fill=fill) }}
 {% endmacro %}

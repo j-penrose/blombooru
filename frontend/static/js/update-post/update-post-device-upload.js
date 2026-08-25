@@ -29,11 +29,7 @@ class UpdatePostDeviceUpload extends UpdatePostModalBase {
                 <div class="flex-1 overflow-auto p-4">
                     <!-- Drop zone -->
                     <div id="upm-drop-zone" class="upload-area bg flex flex-col items-center justify-center gap-2 p-6 mb-3" style="min-height:120px;">
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-secondary">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                            <polyline points="17 8 12 3 7 8"></polyline>
-                            <line x1="12" y1="3" x2="12" y2="15"></line>
-                        </svg>
+                        ${window.Icons ? window.Icons.upload({ size: 28, class: 'text-secondary' }) : ''}
                         <p id="upm-drop-label" class="text-xs text-secondary text-center">
                             ${this._t('modal.update_post.drop_file_here')}
                         </p>

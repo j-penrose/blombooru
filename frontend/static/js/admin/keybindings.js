@@ -68,19 +68,13 @@ class AdminKeybindings {
                 <button class="btn keybinding-edit-btn p-2 text-xs flex items-center justify-center hover:border-primary transition-colors cursor-pointer"
                         data-action-id="${this._escapeHtml(action.id)}"
                         title="${this._escapeHtml(editTitle)}">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                    </svg>
+                    ${window.Icons ? window.Icons.edit({ size: 14 }) : ''}
                 </button>
 
                 <button class="btn keybinding-reset-btn p-2 text-xs text-secondary flex items-center justify-center hover:border-primary transition-colors cursor-pointer"
                         data-action-id="${this._escapeHtml(action.id)}"
                         title="${this._escapeHtml(resetTitle)}">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
-                        <path d="M3 3v5h5"></path>
-                    </svg>
+                    ${window.Icons ? window.Icons.reset({ size: 14 }) : ''}
                 </button>
             </div>
         `;
@@ -147,10 +141,7 @@ class AdminKeybindings {
             <div class="flex items-center gap-2">
                 <button class="btn keybinding-cancel-capture-btn p-2 text-xs text flex items-center justify-center hover:border-danger transition-colors cursor-pointer"
                         title="${this._escapeHtml(cancelTitle)}">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
+                    ${window.Icons ? window.Icons.close({ size: 14 }) : ''}
                 </button>
             </div>
         `;

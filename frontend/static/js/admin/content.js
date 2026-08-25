@@ -247,24 +247,11 @@ class AdminContent {
             if (isDownloaded) {
                 btn.className = 'btn-danger p-2 flex items-center justify-center flex-shrink-0 text-xs';
                 btn.title = window.i18n.t('common.delete');
-                btn.innerHTML = `
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="3 6 5 6 21 6"></polyline>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                        <line x1="10" y1="11" x2="10" y2="17"></line>
-                        <line x1="14" y1="11" x2="14" y2="17"></line>
-                    </svg>
-                `;
+                btn.innerHTML = window.Icons ? window.Icons.trash({ size: 14 }) : '';
             } else {
                 btn.className = 'btn-primary p-2 flex items-center justify-center flex-shrink-0 text-xs';
                 btn.title = window.i18n.t('common.download');
-                btn.innerHTML = `
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="7 10 12 15 17 10"></polyline>
-                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                    </svg>
-                `;
+                btn.innerHTML = window.Icons ? window.Icons.download({ size: 14 }) : '';
             }
         } catch (e) {
             console.error('Error checking model status:', e);
@@ -891,16 +878,12 @@ class AdminContent {
                 return `
                 <div class="bg px-2 py-1.5 ${i === arr.length - 1 ? '' : 'border-b'} flex flex-wrap items-center gap-2">
                     <div class="flex items-center gap-2 min-w-0">
-                        <button class="manage-tag-btn flex-shrink-0 flex items-center justify-center w-7 h-7 bg-primary hover:bg-primary border-primary hover:border-primary transition-colors cursor-pointer"
+                        <button class="manage-tag-btn flex-shrink-0 flex items-center justify-center w-7 h-7 bg-primary primary-text hover:bg-primary border-primary hover:border-primary transition-colors cursor-pointer"
                             data-tag-id="${tag.id}"
                             data-tag-name="${this.app.escapeHtml(tag.name)}"
                             data-tag-category="${tag.category}"
                             title="${window.i18n.t('admin.tags_management.manage_tag')}">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--primary-text)">
-                                <rect x="3" y="5" width="18" height="2"/>
-                                <rect x="3" y="11" width="18" height="2"/>
-                                <rect x="3" y="17" width="18" height="2"/>
-                            </svg>
+                            ${window.Icons ? window.Icons.tagMenu({ size: 14 }) : ''}
                         </button>
                         <a href="/?q=${encodeURIComponent(tag.name)}" class="tag ${tag.category} tag-text overflow-hidden whitespace-nowrap text-ellipsis">${tag.name}</a>
                     </div>
@@ -976,24 +959,15 @@ class AdminContent {
                 <p class="text-base mb-6 text font-medium">${this.app.escapeHtml(tagName)}</p>
                 <div class="flex flex-col gap-3">
                     <button id="tag-manage-edit" class="btn-dark px-6 py-3 font-bold text-sm flex items-center justify-center gap-2 cursor-pointer">
-                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-                        </svg>
+                        ${window.Icons ? window.Icons.edit({ size: 16 }) : ''}
                         ${window.i18n.t('admin.tags_management.edit_tag')}
                     </button>
                     <button id="tag-manage-merge" class="btn-dark px-6 py-3 font-bold text-sm flex items-center justify-center gap-2 cursor-pointer">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M4 6h5a4 4 0 0 1 4 4v2"></path>
-                            <path d="M4 18h5a4 4 0 0 0 4-4v-2"></path>
-                            <line x1="13" y1="12" x2="20" y2="12"></line>
-                            <polyline points="17 9 20 12 17 15"></polyline>
-                        </svg>
+                        ${window.Icons ? window.Icons.merge({ size: 16 }) : ''}
                         ${window.i18n.t('admin.tags_management.merge_tag')}
                     </button>
                     <button id="tag-manage-delete" class="px-6 py-3 transition-colors bg border border-danger text-danger hover:bg-danger hover:tag-text font-bold text-sm flex items-center justify-center gap-2 cursor-pointer">
-                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
-                        </svg>
+                        ${window.Icons ? window.Icons.trash({ size: 16 }) : ''}
                         ${window.i18n.t('modal.delete_tag.title')}
                     </button>
                     <button id="tag-manage-cancel" class="btn-dark px-6 py-3 font-bold text-sm flex items-center justify-center gap-2 cursor-pointer">
@@ -1269,9 +1243,7 @@ class AdminContent {
                     <div id="tag-edit-category-select" class="custom-select w-full" data-value="${tagCategory}">
                         <button class="custom-select-trigger w-full flex items-center justify-between gap-3 px-3 py-2 bg border text-xs cursor-pointer focus:outline-none hover:border-primary transition-colors focus:border-primary" type="button">
                             <span class="custom-select-value text">${currentCatLabel}</span>
-                            <svg class="custom-select-arrow flex-shrink-0 transition-transform duration-200 text-secondary" width="12" height="12" viewBox="0 0 12 12">
-                                <path fill="currentColor" d="M6 9L1 4h10z" />
-                            </svg>
+                            ${window.Icons ? window.Icons.selectArrow({ size: 12 }) : ''}
                         </button>
                         <div class="custom-select-dropdown bg border border-primary max-h-60 overflow-y-auto shadow-lg">
                             ${categoryOptions}
@@ -1810,28 +1782,20 @@ class AdminContent {
 
         modal.innerHTML = `
             <div class="surface border-2 border-primary p-8 max-w-md w-full text-center">
-                <svg class="mx-auto mb-4" width="48" height="48" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z" fill="var(--primary)"/>
-                </svg>
+                ${window.Icons ? window.Icons.folder({ size: 48, class: 'mx-auto mb-4 text-primary' }) : ''}
                 <h2 class="text-xl font-bold mb-2 text-primary">${window.i18n.t('admin.albums_management.manage_album')}</h2>
                 <p class="text-base mb-6 text font-medium">${this.app.escapeHtml(albumName)}</p>
                 <div class="flex flex-col gap-3">
                     <button id="album-manage-rename" class="btn-dark px-6 py-3 font-bold text-sm flex items-center justify-center gap-2 cursor-pointer">
-                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-                        </svg>
+                        ${window.Icons ? window.Icons.edit({ size: 16 }) : ''}
                         ${window.i18n.t('admin.albums_management.rename_album')}
                     </button>
                     <button id="album-manage-parent" class="btn-dark px-6 py-3 font-bold text-sm flex items-center justify-center gap-2 cursor-pointer">
-                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/>
-                        </svg>
+                        ${window.Icons ? window.Icons.folderParent({ size: 16 }) : ''}
                         ${window.i18n.t('admin.albums_management.change_parent_album')}
                     </button>
                     <button id="album-manage-delete" class="px-6 py-3 transition-colors bg border border-danger text-danger hover:bg-danger hover:tag-text font-bold text-sm flex items-center justify-center gap-2 cursor-pointer">
-                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
-                        </svg>
+                        ${window.Icons ? window.Icons.trash({ size: 16 }) : ''}
                         ${window.i18n.t('common.delete_album')}
                     </button>
                     <button id="album-manage-cancel" class="btn-dark px-6 py-3 font-bold text-sm flex items-center justify-center gap-2 cursor-pointer">
@@ -2080,10 +2044,7 @@ class AdminContent {
                             class="custom-select-trigger w-full flex items-center justify-between gap-3 px-3 py-2 bg border text-xs cursor-pointer focus:outline-none focus:border-primary"
                             type="button">
                             <span class="custom-select-value text">${this.app.escapeHtml(initialDisplayText)}</span>
-                            <svg class="custom-select-arrow flex-shrink-0 transition-transform duration-200 text-secondary"
-                                width="12" height="12" viewBox="0 0 12 12">
-                                <path fill="currentColor" d="M6 9L1 4h10z" />
-                            </svg>
+                            ${window.Icons ? window.Icons.selectArrow({ size: 12 }) : ''}
                         </button>
                         <div class="custom-select-dropdown bg border border-primary max-h-60 overflow-y-auto shadow-lg">
                             ${optionsHtml}

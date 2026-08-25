@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "components/icons.html" import chevron_down_icon %}
 
 {% set show_header = false %}
 {% set show_footer = false %}
@@ -122,10 +123,7 @@
                 <button type="button" id="toggle-backup-section"
                     class="w-full p-3 flex justify-between items-center text-left text-xs font-bold hover:text-primary transition-colors cursor-pointer select-none">
                     <span id="backup-dropdown-title">{{ t('admin.backup.import_backup') }}</span>
-                    <svg id="backup-dropdown-arrow" class="w-4 h-4 transition-transform text-secondary duration-200"
-                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                    </svg>
+                    {{ chevron_down_icon(size=16, id="backup-dropdown-arrow", class="w-4 h-4 transition-transform text-secondary duration-200") }}
                 </button>
                 <div id="backup-restore-panel" style="display: none;" class="p-4 pt-2 border-t">
                     <p class="text-xs text-secondary mb-3">{{ t('admin.backup.import_hint') }}</p>

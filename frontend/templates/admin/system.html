@@ -1,3 +1,4 @@
+{% from "components/icons.html" import select_arrow_icon, reset_icon %}
 <!-- Settings Section -->
 <div id="settings-section">
     <div class="surface p-2 sm:p-6 border mb-4">
@@ -36,10 +37,7 @@
                                 <span class="custom-select-value text">
                                     {{ t('admin.settings.loading_themes') }}
                                 </span>
-                                <svg class="custom-select-arrow flex-shrink-0 transition-transform duration-200 text-secondary"
-                                    width="12" height="12" viewBox="0 0 12 12">
-                                    <path fill="currentColor" d="M6 9L1 4h10z" />
-                                </svg>
+                                {{ select_arrow_icon(size=12) }}
                             </button>
                             <div
                                 class="custom-select-dropdown bg border border-primary max-h-60 overflow-y-auto shadow-lg">
@@ -57,10 +55,7 @@
                                 <span class="custom-select-value text">
                                     {{ t('common.loading') }}
                                 </span>
-                                <svg class="custom-select-arrow flex-shrink-0 transition-transform duration-200 text-secondary"
-                                    width="12" height="12" viewBox="0 0 12 12">
-                                    <path fill="currentColor" d="M6 9L1 4h10z" />
-                                </svg>
+                                {{ select_arrow_icon(size=12) }}
                             </button>
                             <div
                                 class="custom-select-dropdown bg border border-primary max-h-60 overflow-y-auto shadow-lg">
@@ -83,10 +78,7 @@
                                     <span class="custom-select-value text">
                                         {{ t('admin.settings.upload_date') }}
                                     </span>
-                                    <svg class="custom-select-arrow flex-shrink-0 transition-transform duration-200 text-secondary"
-                                        width="12" height="12" viewBox="0 0 12 12">
-                                        <path fill="currentColor" d="M6 9L1 4h10z" />
-                                    </svg>
+                                    {{ select_arrow_icon(size=12) }}
                                 </button>
                                 <div
                                     class="custom-select-dropdown bg border border-primary max-h-60 overflow-y-auto shadow-lg">
@@ -111,10 +103,7 @@
                                     <span class="custom-select-value text">
                                         {{ t('admin.settings.descending') }}
                                     </span>
-                                    <svg class="custom-select-arrow flex-shrink-0 transition-transform duration-200 text-secondary"
-                                        width="12" height="12" viewBox="0 0 12 12">
-                                        <path fill="currentColor" d="M6 9L1 4h10z" />
-                                    </svg>
+                                    {{ select_arrow_icon(size=12) }}
                                 </button>
                                 <div
                                     class="custom-select-dropdown bg border border-primary max-h-60 overflow-y-auto shadow-lg">
@@ -139,10 +128,7 @@
                                     <span class="custom-select-value text">
                                         {{ t('admin.settings.popular_tags_mode_page') }}
                                     </span>
-                                    <svg class="custom-select-arrow flex-shrink-0 transition-transform duration-200 text-secondary"
-                                        width="12" height="12" viewBox="0 0 12 12">
-                                        <path fill="currentColor" d="M6 9L1 4h10z" />
-                                    </svg>
+                                    {{ select_arrow_icon(size=12) }}
                                 </button>
                                 <div
                                     class="custom-select-dropdown bg border border-primary max-h-60 overflow-y-auto shadow-lg">
@@ -215,10 +201,7 @@
                                         <span class="custom-select-value text">
                                             {{ t('admin.settings.sidebar_mode_rating') }}
                                         </span>
-                                        <svg class="custom-select-arrow flex-shrink-0 transition-transform duration-200 text-secondary"
-                                            width="12" height="12" viewBox="0 0 12 12">
-                                            <path fill="currentColor" d="M6 9L1 4h10z" />
-                                        </svg>
+                                        {{ select_arrow_icon(size=12) }}
                                     </button>
                                     <div
                                         class="custom-select-dropdown bg border border-primary max-h-60 overflow-y-auto shadow-lg">
@@ -323,10 +306,7 @@
                                 <span class="custom-select-value text">
                                     {{ t('admin.settings.custom_background.fit_cover') }}
                                 </span>
-                                <svg class="custom-select-arrow flex-shrink-0 transition-transform duration-200 text-secondary"
-                                    width="12" height="12" viewBox="0 0 12 12">
-                                    <path fill="currentColor" d="M6 9L1 4h10z" />
-                                </svg>
+                                {{ select_arrow_icon(size=12) }}
                             </button>
                             <div
                                 class="custom-select-dropdown bg border border-primary max-h-60 overflow-y-auto shadow-lg">
@@ -527,10 +507,7 @@
                                     <span class="custom-select-value text">
                                         {{ t('admin.settings.custom_themes.type_dark') }}
                                     </span>
-                                    <svg class="custom-select-arrow flex-shrink-0 transition-transform duration-200 text-secondary"
-                                        width="12" height="12" viewBox="0 0 12 12">
-                                        <path fill="currentColor" d="M6 9L1 4h10z" />
-                                    </svg>
+                                    {{ select_arrow_icon(size=12) }}
                                 </button>
                                 <div
                                     class="custom-select-dropdown bg border border-primary max-h-60 overflow-y-auto shadow-lg">
@@ -555,10 +532,7 @@
                                     class="custom-select-trigger w-full flex items-center justify-between gap-3 px-3 py-2 bg border text-xs cursor-pointer focus:outline-none hover:border-primary transition-colors focus:border-primary"
                                     type="button">
                                     <span class="custom-select-value text">Default Dark</span>
-                                    <svg class="custom-select-arrow flex-shrink-0 transition-transform duration-200 text-secondary"
-                                        width="12" height="12" viewBox="0 0 12 12">
-                                        <path fill="currentColor" d="M6 9L1 4h10z" />
-                                    </svg>
+                                    {{ select_arrow_icon(size=12) }}
                                 </button>
                                 <div
                                     class="custom-select-dropdown bg border border-primary max-h-60 overflow-y-auto shadow-lg">
@@ -946,11 +920,7 @@
                                     onclick="document.getElementById('sim-weight-{{ cat }}').value = document.getElementById('sim-weight-{{ cat }}').dataset.simDefault"
                                     title="{{ t('admin.similarity.reset') }}"
                                     class="btn-dark p-2 text-xs text-secondary flex items-center justify-center hover:border-primary transition-colors shrink-0 cursor-pointer">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
-                                        <path d="M3 3v5h5"></path>
-                                    </svg>
+                                    {{ reset_icon(size=14) }}
                                 </button>
                             </div>
                         </div>

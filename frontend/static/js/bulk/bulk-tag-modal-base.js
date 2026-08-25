@@ -861,18 +861,13 @@ class BulkTagModalBase {
                                         class="${prefix}-refresh w-11 h-11 sm:w-9 sm:h-9 surface hover:surface-light text-secondary hover:text flex items-center justify-center transition-colors cursor-pointer"
                                         data-index="${index}"
                                         title="${window.i18n.t('bulk_modal.buttons.refresh_tags')}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 sm:w-4 sm:h-4">
-                                        <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
-                                    </svg>
+                                    ${window.Icons ? window.Icons.wand({ size: 20, class: 'w-5 h-5 sm:w-4 sm:h-4' }) : ''}
                                 </button>
                                 <button type="button" 
                                         class="${prefix}-clear w-11 h-11 sm:w-9 sm:h-9 bg-danger hover:bg-danger tag-text flex items-center justify-center transition-colors cursor-pointer"
                                         data-index="${index}"
                                         title="${window.i18n.t('bulk_modal.buttons.clear_tags')}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 sm:w-4 sm:h-4">
-                                        <polyline points="3 6 5 6 21 6"></polyline>
-                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                    </svg>
+                                    ${window.Icons ? window.Icons.trash({ size: 20, class: 'w-5 h-5 sm:w-4 sm:h-4' }) : ''}
                                 </button>
                             </div>
                         </div>

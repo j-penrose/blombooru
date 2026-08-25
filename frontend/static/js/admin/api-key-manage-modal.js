@@ -60,10 +60,7 @@ class ApiKeyManageModal {
                     <!-- Read-Only -->
                     <button class="akm-level-btn text-left p-4 bg hover:border-primary transition-all border flex items-center gap-3 relative cursor-pointer" data-level="read">
                         <div class="text-success shrink-0">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                <circle cx="12" cy="12" r="3"></circle>
-                            </svg>
+                            ${window.Icons ? window.Icons.eye({ size: 20 }) : ''}
                         </div>
                         <div class="flex-1">
                             <div class="font-bold text-sm">${window.i18n.t('modal.manage_api_key.level_read_title')}</div>
@@ -74,11 +71,7 @@ class ApiKeyManageModal {
                     <!-- Upload & Edit -->
                     <button class="akm-level-btn text-left p-4 bg hover:border-primary transition-all border flex items-center gap-3 relative cursor-pointer" data-level="write">
                         <div class="mt-0.5 text-warning shrink-0">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                <polyline points="17 8 12 3 7 8"></polyline>
-                                <line x1="12" y1="3" x2="12" y2="15"></line>
-                            </svg>
+                            ${window.Icons ? window.Icons.upload({ size: 20 }) : ''}
                         </div>
                         <div class="flex-1">
                             <div class="font-bold text-sm">${window.i18n.t('modal.manage_api_key.level_write_title')}</div>
@@ -89,9 +82,7 @@ class ApiKeyManageModal {
                     <!-- Full Admin -->
                     <button class="akm-level-btn text-left p-4 bg hover:border-primary transition-all border flex items-center gap-3 relative cursor-pointer" data-level="admin">
                         <div class="mt-0.5 text-danger shrink-0">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                            </svg>
+                            ${window.Icons ? window.Icons.shield({ size: 20 }) : ''}
                         </div>
                         <div class="flex-1">
                             <div class="font-bold text-sm">${window.i18n.t('modal.manage_api_key.level_admin_title')}</div>

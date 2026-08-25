@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "components/macros.html" import loading_indicator %}
+{% from "components/icons.html" import chevron_down_icon, chevron_left_icon, chevron_right_icon, arrow_left_icon, download_icon, share_icon, select_arrow_icon %}
 
 {% block title %}{{ t('media.title') }} - {{ app_name }}{% endblock %}
 
@@ -25,11 +26,7 @@
                     <h2 id="hierarchy-media-title" class="text-base font-bold">
                         {{ t('media.hierarchy.title') }}
                     </h2>
-                    <svg id="hierarchy-media-chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round" class="transition-transform duration-200">
-                        <polyline points="6 9 12 15 18 9"></polyline>
-                    </svg>
+                    {{ chevron_down_icon(size=16, id="hierarchy-media-chevron", class="transition-transform duration-200") }}
                 </button>
                 <div id="hierarchy-media-content" class="p-4 border-t relative group">
                     <div class="carousel-wrapper relative overflow-hidden">
@@ -41,20 +38,12 @@
                         <button id="hierarchy-prev-btn"
                             class="absolute left-0 top-1/2 -translate-y-1/2 cursor-pointer bg-black/50 hover:bg-black/70 text p-2 transition-opacity opacity-0 group-hover:opacity-100 disabled:opacity-0"
                             style="z-index: 10;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
-                                <polyline points="15 18 9 12 15 6"></polyline>
-                            </svg>
+                            {{ chevron_left_icon(size=20) }}
                         </button>
                         <button id="hierarchy-next-btn"
                             class="absolute right-0 top-1/2 -translate-y-1/2 cursor-pointer bg-black/50 hover:bg-black/70 text p-2 transition-opacity opacity-0 group-hover:opacity-100 disabled:opacity-0"
                             style="z-index: 10;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
-                                <polyline points="9 18 15 12 9 6"></polyline>
-                            </svg>
+                            {{ chevron_right_icon(size=20) }}
                         </button>
                     </div>
                 </div>
@@ -78,11 +67,7 @@
                         </div>
                         <div
                             class="relative z-10 pl-1 sm:pl-3 flex items-center gap-2 text group-hover:text-primary transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-                                stroke-linejoin="round">
-                                <polyline points="15 18 9 12 15 6"></polyline>
-                            </svg>
+                            {{ chevron_left_icon(size=20, stroke_width=2.5) }}
                             <span class="font-bold text-xs uppercase tracking-wider">
                                 {{ t('common.previous') }}
                             </span>
@@ -104,11 +89,7 @@
                             <span class="font-bold text-xs uppercase tracking-wider">
                                 {{ t('common.next') }}
                             </span>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-                                stroke-linejoin="round">
-                                <polyline points="9 18 15 12 9 6"></polyline>
-                            </svg>
+                            {{ chevron_right_icon(size=20, stroke_width=2.5) }}
                         </div>
                     </a>
                 </div>
@@ -128,12 +109,7 @@
             <div id="back-to-album-section" class="surface p-3 border" style="display: none;">
                 <a id="back-to-album-btn" href="#"
                     class="btn w-full px-3 py-2 flex items-center justify-center gap-2 font-medium text-xs min-w-0 cursor-pointer">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                        class="flex-shrink-0">
-                        <line x1="19" y1="12" x2="5" y2="12"></line>
-                        <polyline points="12 19 5 12 12 5"></polyline>
-                    </svg>
+                    {{ arrow_left_icon(size=16, class="flex-shrink-0") }}
                     <span id="back-to-album-text" class="truncate min-w-0">{{ t('media.back_to_album') }}</span>
                 </a>
             </div>
@@ -181,11 +157,7 @@
                     <button type="button" id="edit-tags-toggle"
                         class="w-full flex justify-between items-center text-left py-2 hover:text-primary transition-colors cursor-pointer">
                         <span class="text-xs font-bold">{{ t('media.tags.edit_tags') }}</span>
-                        <svg id="edit-tags-chevron" xmlns="http://www.w3.org/2000/svg" width="14" height="14"
-                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-200">
-                            <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
+                        {{ chevron_down_icon(size=14, id="edit-tags-chevron", class="transition-transform duration-200") }}
                     </button>
 
                     <div id="edit-tags-content" style="display: none;" class="mt-2">
@@ -218,11 +190,7 @@
                 <button type="button" id="ai-metadata-toggle"
                     class="w-full p-3 flex justify-between items-center text-left hover:text-primary transition-colors cursor-pointer">
                     <h3 class="text-sm font-bold">{{ t('media.ai_metadata.title') }}</h3>
-                    <svg id="ai-metadata-chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round" class="transition-transform duration-200">
-                        <polyline points="6 9 12 15 18 9"></polyline>
-                    </svg>
+                    {{ chevron_down_icon(size=16, id="ai-metadata-chevron", class="transition-transform duration-200") }}
                 </button>
                 <div id="ai-metadata-content" class="text-xs px-3 pb-3" style="display: none;"></div>
             </div>
@@ -235,12 +203,7 @@
                     <!-- Primary Action -->
                     <a id="download-btn" href="#" download
                         class="btn-primary flex items-center justify-center gap-2 w-full text-sm font-medium cursor-pointer">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                            <polyline points="7 10 12 15 17 10"></polyline>
-                            <line x1="12" y1="15" x2="12" y2="3"></line>
-                        </svg>
+                        {{ download_icon(size=16) }}
                         {{ t('common.download') }}
                     </a>
 
@@ -256,10 +219,7 @@
                                     <span class="custom-select-value text truncate">
                                         {{ t('media.actions.safe') }}
                                     </span>
-                                    <svg class="custom-select-arrow flex-shrink-0 transition-transform duration-200 text-secondary"
-                                        width="12" height="12" viewBox="0 0 12 12">
-                                        <path fill="currentColor" d="M6 9L1 4h10z" />
-                                    </svg>
+                                    {{ select_arrow_icon(size=12) }}
                                 </button>
                                 <div
                                     class="custom-select-dropdown bg border border-primary max-h-60 overflow-y-auto shadow-lg z-20">
@@ -274,15 +234,7 @@
 
                             <button id="share-btn"
                                 class="btn flex items-center justify-center gap-1 w-full px-3 py-1.5 cursor-pointer">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <circle cx="18" cy="5" r="3"></circle>
-                                    <circle cx="6" cy="12" r="3"></circle>
-                                    <circle cx="18" cy="19" r="3"></circle>
-                                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-                                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-                                </svg>
+                                {{ share_icon(size=12) }}
                                 <span id="share-btn-text">{{ t('common.share') }}</span>
                             </button>
                         </div>
@@ -323,10 +275,7 @@
                             class="custom-select-trigger w-full flex items-center justify-between gap-2 px-2 py-1.5 bg border text-xs cursor-pointer hover:border-primary transition-colors focus:outline-none focus:border-primary"
                             type="button">
                             <span class="custom-select-value text truncate">{{ t('common.default') }}</span>
-                            <svg class="custom-select-arrow flex-shrink-0 transition-transform duration-200 text-secondary"
-                                width="10" height="10" viewBox="0 0 12 12">
-                                <path fill="currentColor" d="M6 9L1 4h10z" />
-                            </svg>
+                            {{ select_arrow_icon(size=10) }}
                         </button>
                         <div
                             class="custom-select-dropdown bg border border-primary max-h-48 overflow-y-auto shadow-lg z-20">
