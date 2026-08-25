@@ -76,10 +76,14 @@
             "album_name": "Название альбома",
             "album_name_placeholder": "Мой альбом",
             "create_album": "Создать альбом",
+            "maintenance": {
+                "title": "Обслуживание альбомов",
+                "search_manage": "Поиск и управление альбомами",
+                "search_manage_description": ""
+            },
             "none_root": "Пусто (Корневой альбом)",
             "parent_album": "Родительский альбом (опционально)",
             "root_albums": "Корневых альбомов",
-            "search_manage": "Поиск и управление альбомами",
             "title": "Управление альбомами",
             "total_albums": "Всего альбомов",
             "manage_album": "Управление альбомом",

@@ -76,10 +76,14 @@
             "album_name": "Albumnamn",
             "album_name_placeholder": "Mitt album",
             "create_album": "Skapa album",
+            "maintenance": {
+                "title": "Albumunderhåll",
+                "search_manage": "Sök & Hantera Album",
+                "search_manage_description": "Använd detta för att snabbt hitta, byta namn på, ändra överordnad hierarki eller ta bort album."
+            },
             "none_root": "Inget (Rotalbum)",
             "parent_album": "Överordnat album (Valfritt)",
             "root_albums": "Rotalbum",
-            "search_manage": "Sök & hantera album",
             "title": "Albumhantering",
             "total_albums": "Totalt antal album",
             "manage_album": "Hantera album",

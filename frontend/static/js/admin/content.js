@@ -1572,12 +1572,15 @@ class AdminContent {
         }
 
         // Album search
-        const albumSearchBtn = document.getElementById('album-search-btn');
         const albumSearchInput = document.getElementById('album-search-input');
 
-        albumSearchBtn?.addEventListener('click', () => this.searchAlbums());
-        albumSearchInput?.addEventListener('keypress', (e) => {
+        albumSearchInput?.addEventListener('input', () => {
+            this.searchAlbums();
+        });
+
+        albumSearchInput?.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
+                e.preventDefault();
                 this.searchAlbums();
             }
         });
@@ -1695,17 +1698,36 @@ class AdminContent {
     }
 
     async searchAlbums() {
-        const query = document.getElementById('album-search-input').value;
+        const searchInput = document.getElementById('album-search-input');
+        const query = searchInput ? searchInput.value.trim() : '';
         const resultsDiv = document.getElementById('album-search-results');
 
+        if (this._albumSearchAbortController) {
+            this._albumSearchAbortController.abort();
+            this._albumSearchAbortController = null;
+        }
+
         if (!query) {
-            resultsDiv.innerHTML = '';
+            if (resultsDiv) resultsDiv.innerHTML = '';
             return;
         }
 
+        const abortController = new AbortController();
+        this._albumSearchAbortController = abortController;
+
         try {
-            const response = await fetch('/api/albums?limit=100&sort=name&order=asc');
+            const response = await fetch('/api/albums?limit=100&sort=name&order=asc', {
+                signal: abortController.signal
+            });
+            if (!response.ok) return;
             const data = await response.json();
+
+            // Guard against stale response if query changed in the meantime
+            const currentQuery = document.getElementById('album-search-input')?.value.trim();
+            if (!currentQuery) {
+                if (resultsDiv) resultsDiv.innerHTML = '';
+                return;
+            }
 
             // Filter albums by name
             const filtered = (data.items || []).filter(album =>
@@ -1713,44 +1735,67 @@ class AdminContent {
             );
 
             if (filtered.length === 0) {
-                resultsDiv.innerHTML = '<p class="bg border text-xs text-secondary p-3">' + window.i18n.t('album_picker.no_albums') + '</p>';
+                resultsDiv.innerHTML = '<p class="bg text-xs text-secondary p-3">' + window.i18n.t('album_picker.no_albums') + '</p>';
+                resultsDiv.scrollTop = 0;
                 return;
             }
 
-            // Build results HTML
-            let html = '';
-            for (let i = 0; i < filtered.length; i++) {
-                const album = filtered[i];
-                // Get parent info
-                const parentsResponse = await fetch(`/api/albums/${album.id}/parents`);
-                const parentsData = await parentsResponse.json();
-                const parentChain = parentsData.parents.map(p => p.name).join(' > ');
-                const immediateParentId = parentsData.parents.length > 0
-                    ? parentsData.parents[parentsData.parents.length - 1].id
-                    : null;
+            // Fetch parent chains in parallel with abort signal
+            const albumItems = await Promise.all(
+                filtered.map(async (album) => {
+                    try {
+                        const parentsResponse = await fetch(`/api/albums/${album.id}/parents`, {
+                            signal: abortController.signal
+                        });
+                        if (parentsResponse.ok) {
+                            const parentsData = await parentsResponse.json();
+                            const parentChain = (parentsData.parents || []).map(p => p.name).join(' > ');
+                            const immediateParentId = parentsData.parents && parentsData.parents.length > 0
+                                ? parentsData.parents[parentsData.parents.length - 1].id
+                                : null;
+                            return { album, parentChain, immediateParentId };
+                        }
+                    } catch (e) {
+                        if (e.name === 'AbortError') throw e;
+                    }
+                    return { album, parentChain: '', immediateParentId: null };
+                })
+            );
 
-                const borderClass = filtered.length === 1 ? 'border' : (i === filtered.length - 1 ? '' : 'border-b');
+            resultsDiv.innerHTML = albumItems.map((item, i, arr) => {
+                const { album, parentChain, immediateParentId } = item;
+                let dateStr = '';
+                const dateVal = album.created_at || album.last_modified;
+                if (dateVal) {
+                    const d = new Date(dateVal);
+                    if (!isNaN(d.getTime())) {
+                        dateStr = `${new Intl.DateTimeFormat(undefined, { dateStyle: "short" }).format(d)} ${new Intl.DateTimeFormat(undefined, { timeStyle: "short", hour12: false }).format(d)}`;
+                    }
+                }
 
-                html += `
-                    <div class="bg p-3 ${borderClass} flex justify-between items-center">
-                        <div class="flex-1">
-                            <div class="flex items-center gap-2 mb-1">
-                                <a href="/album/${album.id}" class="text-sm font-bold hover:text-primary">${this.app.escapeHtml(album.name)}</a>
-                                <span class="text-xs text-secondary">(${album.media_count || 0} media)</span>
-                            </div>
-                            ${parentChain ? `<div class="text-xs text-secondary">Path: ${this.app.escapeHtml(parentChain)}</div>` : '<div class="text-xs text-secondary">' + window.i18n.t('albums.root_album') + '</div>'}
-                        </div>
-                        <div class="flex gap-2">
-                            <button class="manage-album-btn btn-primary px-3 py-1 cursor-pointer"
-                                data-album-id="${album.id}"
-                                data-album-name="${this.app.escapeHtml(album.name)}"
-                                data-parent-id="${immediateParentId || ''}">${window.i18n.t('common.manage')}</button>
-                        </div>
+                const pathDisplay = parentChain || window.i18n.t('albums.root_album');
+
+                return `
+                <div class="bg px-2 py-1.5 ${i === arr.length - 1 ? '' : 'border-b'} flex flex-wrap items-center gap-2">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <button class="manage-album-btn flex-shrink-0 flex items-center justify-center w-7 h-7 bg-primary primary-text hover:bg-primary border-primary hover:border-primary transition-colors cursor-pointer"
+                            data-album-id="${album.id}"
+                            data-album-name="${this.app.escapeHtml(album.name)}"
+                            data-parent-id="${immediateParentId || ''}"
+                            title="${window.i18n.t('admin.albums_management.manage_album')}">
+                            ${window.Icons ? window.Icons.tagMenu({ size: 14 }) : ''}
+                        </button>
+                        <a href="/album/${album.id}" class="tag general tag-text overflow-hidden whitespace-nowrap text-ellipsis">${this.app.escapeHtml(album.name)}</a>
                     </div>
+                    <div class="flex justify-between items-center gap-2 flex-1">
+                        <span class="text-xs text-secondary">(${album.media_count || 0})</span>
+                        ${dateStr ? `<span class="text-xs text-secondary text-center">${dateStr}</span>` : ''}
+                        <span class="text-xs text-secondary uppercase flex-1 text-right truncate" title="${this.app.escapeHtml(pathDisplay)}">${this.app.escapeHtml(pathDisplay)}</span>
+                    </div>
+                </div>
                 `;
-            }
-
-            resultsDiv.innerHTML = html;
+            }).join('');
+            resultsDiv.scrollTop = 0;
 
             // Add event listeners for Manage buttons
             resultsDiv.querySelectorAll('.manage-album-btn').forEach(btn => {
@@ -1763,6 +1808,7 @@ class AdminContent {
             });
 
         } catch (error) {
+            if (error.name === 'AbortError') return;
             console.error('Error searching albums:', error);
             resultsDiv.innerHTML = '<p class="text-xs text-danger p-3">Error searching albums</p>';
         }

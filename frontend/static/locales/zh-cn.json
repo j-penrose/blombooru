@@ -76,10 +76,14 @@
             "album_name": "相册名称",
             "album_name_placeholder": "我的相册",
             "create_album": "创建相册",
+            "maintenance": {
+                "title": "相册维护",
+                "search_manage": "搜索并管理相册",
+                "search_manage_description": ""
+            },
             "none_root": "无（根相册）",
             "parent_album": "父级相册（可选）",
             "root_albums": "根相册",
-            "search_manage": "搜索并管理相册",
             "title": "相册管理",
             "total_albums": "相册总数",
             "manage_album": "管理相册",

@@ -76,10 +76,14 @@
             "album_name": "Album Name",
             "album_name_placeholder": "My Album",
             "create_album": "Create Album",
+            "maintenance": {
+                "title": "Album Maintenance",
+                "search_manage": "Search & Manage Albums",
+                "search_manage_description": "Use this to quickly find, rename, change parent hierarchy, or delete albums."
+            },
             "none_root": "None (Root Album)",
             "parent_album": "Parent Album (Optional)",
             "root_albums": "Root Albums",
-            "search_manage": "Search & Manage Albums",
             "title": "Albums Management",
             "total_albums": "Total Albums",
             "manage_album": "Manage Album",

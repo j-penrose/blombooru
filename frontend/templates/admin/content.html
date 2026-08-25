@@ -420,19 +420,24 @@
         </div>
     </div>
 
-    <div>
-        <h3 class="text-sm font-bold mb-3">{{ t('admin.albums_management.search_manage') }}</h3>
-        <div class="flex flex-col gap-3">
-            <div class="flex gap-2">
-                <div class="w-full">
-                    <input type="text" id="album-search-input" placeholder="{{ t('common.search_albums_placeholder') }}"
-                        class="flex-1 w-full bg px-3 py-2 border text-xs focus:outline-none hover:border-primary transition-colors focus:border-primary">
+    <!-- Album Maintenance -->
+    <div id="albums-maintenance-section" class="mb-4">
+        <h3 class="text-sm font-bold mb-3">{{ t('admin.albums_management.maintenance.title') }}</h3>
+        <div class="bg p-4 border space-y-4">
+            <div>
+                <h4 class="text-xs font-bold mb-1">{{ t('admin.albums_management.maintenance.search_manage') }}</h4>
+                <p class="text-xs text-secondary mb-3">
+                    {{ t('admin.albums_management.maintenance.search_manage_description') }}
+                </p>
+                <div class="flex flex-col gap-3">
+                    <div class="relative w-full">
+                        <input type="text" id="album-search-input" placeholder="{{ t('common.search_albums_placeholder') }}"
+                            autocomplete="off" spellcheck="false"
+                            class="w-full bg px-3 py-2 border text-xs focus:outline-none hover:border-primary transition-colors focus:border-primary">
+                    </div>
+                    <div id="album-search-results" class="border max-h-72 overflow-y-auto empty:hidden"></div>
                 </div>
-                <button id="album-search-btn" class="btn-primary cursor-pointer">
-                    {{ t('common.search') }}
-                </button>
             </div>
-            <div id="album-search-results" class="max-h-96 overflow-y-auto empty:hidden"></div>
         </div>
     </div>
 </div>
