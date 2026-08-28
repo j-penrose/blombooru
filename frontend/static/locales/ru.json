@@ -607,6 +607,7 @@
         }
     },
     "common": {
+        "all": "",
         "cancel": "Отмена",
         "clear_selection": "Очистить выбор",
         "close": "Закрыть",

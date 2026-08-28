@@ -607,6 +607,7 @@
         }
     },
     "common": {
+        "all": "",
         "cancel": "取消",
         "clear_selection": "清除选择",
         "close": "关闭",

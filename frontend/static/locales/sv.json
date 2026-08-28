@@ -607,6 +607,7 @@
         }
     },
     "common": {
+        "all": "Alla",
         "cancel": "Avbryt",
         "clear_selection": "Rensa urval",
         "close": "Stäng",

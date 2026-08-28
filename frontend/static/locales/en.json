@@ -607,6 +607,7 @@
         }
     },
     "common": {
+        "all": "All",
         "cancel": "Cancel",
         "clear_selection": "Clear Selection",
         "close": "Close",

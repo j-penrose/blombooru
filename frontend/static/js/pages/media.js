@@ -109,6 +109,7 @@ class MediaViewer extends MediaViewerBase {
         this.el('admin-actions').style.display = 'flex';
         this.setupTagInput();
         this.setupEditTagsToggle();
+        this.setupSuggestedTags();
 
         // Set source input value
         const sourceInput = this.el('source-input');
@@ -129,7 +130,10 @@ class MediaViewer extends MediaViewerBase {
                 multipleValues: true,
                 allowCreate: true,
                 onSelect: () => {
-                    setTimeout(() => this.validateAndStyleTags(), 100);
+                    setTimeout(() => {
+                        this.validateAndStyleTags();
+                        this.updateSuggestedTags();
+                    }, 100);
                 }
             });
 
@@ -144,7 +148,10 @@ class MediaViewer extends MediaViewerBase {
                 return a.name.localeCompare(b.name);
             });
             tagsInput.textContent = sortedTags.map(t => t.name).join(' ');
-            setTimeout(() => this.validateAndStyleTags(), 100);
+            setTimeout(() => {
+                this.validateAndStyleTags();
+                this.updateSuggestedTags();
+            }, 100);
         }
 
         // Initialize custom select for rating
@@ -202,6 +209,10 @@ class MediaViewer extends MediaViewerBase {
             const activeChevron = newToggle.querySelector('#edit-tags-chevron');
             if (activeChevron) {
                 activeChevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+            }
+
+            if (isHidden) {
+                this.updateSuggestedTags();
             }
         });
     }
@@ -316,6 +327,163 @@ class MediaViewer extends MediaViewerBase {
             checkFunction: (tag) => this.tagInputHelper.checkTagExists(tag),
             highlightTags: highlightTags
         });
+    }
+
+    setupSuggestedTags() {
+        // Setup accordion toggle
+        const toggle = this.el('suggested-tags-toggle');
+        const content = this.el('suggested-tags-content');
+        if (toggle && content) {
+            const newToggle = toggle.cloneNode(true);
+            toggle.parentNode.replaceChild(newToggle, toggle);
+            newToggle.addEventListener('click', () => {
+                const isHidden = content.style.display === 'none';
+                content.style.display = isHidden ? 'block' : 'none';
+                const activeChevron = newToggle.querySelector('#suggested-tags-chevron');
+                if (activeChevron) {
+                    activeChevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+                }
+            });
+        }
+
+        // Setup category select
+        const selectEl = this.el('suggested-tags-category-select');
+        if (selectEl) {
+            this.suggestedCategorySelect = new CustomSelect(selectEl);
+            this.suggestedCategorySelect.element.addEventListener('change', (e) => {
+                this._suggestedTagsCategory = e.detail.value === 'all' ? null : e.detail.value;
+                this.renderSuggestedTagsList();
+            });
+        }
+
+        let debounceTimer = null;
+        this.el('tags-input')?.addEventListener('input', () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => this.updateSuggestedTags(), 400);
+        });
+    }
+
+    async updateSuggestedTags() {
+        const tagsInput = this.el('tags-input');
+        const section = this.el('suggested-tags-section');
+        const listEl = this.el('suggested-tags-list');
+        if (!tagsInput || !section || !listEl) return;
+
+        const currentTags = this.tagInputHelper.getPlainTextFromDiv(tagsInput)
+            .split(/\s+/).map(t => t.trim()).filter(Boolean);
+
+        if (currentTags.length === 0) {
+            section.style.display = 'none';
+            listEl.innerHTML = '';
+            this._suggestedItems = [];
+            return;
+        }
+
+        if (this._suggestedTagsAbort) {
+            this._suggestedTagsAbort.abort();
+        }
+        this._suggestedTagsAbort = new AbortController();
+
+        const params = new URLSearchParams({ tags: currentTags.join(','), limit: '40' });
+
+        try {
+            const res = await fetch(`/api/tags/suggested?${params.toString()}`, {
+                signal: this._suggestedTagsAbort.signal
+            });
+            if (!res.ok) return;
+
+            const data = await res.json();
+            const lowerCurrentTags = new Set(currentTags.map(t => t.toLowerCase()));
+            this._suggestedItems = (data.items || []).filter(t => !lowerCurrentTags.has(t.name.toLowerCase()));
+
+            if (this._suggestedItems.length === 0) {
+                section.style.display = 'none';
+                listEl.innerHTML = '';
+                return;
+            }
+
+            section.style.display = 'block';
+            this.renderSuggestedTagsList();
+        } catch (e) {
+            if (e.name !== 'AbortError') {
+                console.error('Error fetching suggested tags:', e);
+            }
+        }
+    }
+
+    renderSuggestedTagsList() {
+        const listEl = this.el('suggested-tags-list');
+        const section = this.el('suggested-tags-section');
+        if (!listEl || !section) return;
+
+        listEl.innerHTML = '';
+
+        let items = this._suggestedItems || [];
+        if (this._suggestedTagsCategory) {
+            items = items.filter(t => (t.category || 'general') === this._suggestedTagsCategory);
+        }
+
+        if (items.length === 0) {
+            listEl.innerHTML = `<p class="text-xs text-secondary py-2 text-center">${window.i18n.t('gallery.no_tags_found')}</p>`;
+            return;
+        }
+
+        for (const tag of items) {
+            const item = document.createElement('div');
+            item.className = 'popular-tag-item';
+            item.style.borderBottom = 'none';
+            item.style.padding = '0.25rem 0';
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = `popular-tag-name tag ${tag.category} tag-text w-full text-xs px-2 py-1 cursor-pointer hover:opacity-75 transition-opacity`;
+            btn.title = `${tag.name} (${tag.category})`;
+
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'truncate';
+            nameSpan.textContent = tag.name;
+
+            const countSpan = document.createElement('span');
+            countSpan.className = 'popular-tag-count ml-2 font-bold';
+            countSpan.textContent = tag.post_count;
+
+            btn.appendChild(nameSpan);
+            btn.appendChild(countSpan);
+
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.appendSuggestedTag(tag.name);
+                this._suggestedItems = (this._suggestedItems || []).filter(t => t.name !== tag.name);
+                item.remove();
+                if (listEl.querySelectorAll('.popular-tag-item').length === 0) {
+                    if (!this._suggestedTagsCategory) {
+                        section.style.display = 'none';
+                    } else {
+                        listEl.innerHTML = `<p class="text-xs text-secondary py-2 text-center">${window.i18n.t('gallery.no_tags_found')}</p>`;
+                    }
+                }
+            });
+
+            item.appendChild(btn);
+            listEl.appendChild(item);
+        }
+    }
+
+    async appendSuggestedTag(tagName) {
+        const tagsInput = this.el('tags-input');
+        if (!tagsInput) return;
+
+        const currentText = this.tagInputHelper.getPlainTextFromDiv(tagsInput).trim();
+        const currentTags = currentText ? currentText.split(/\s+/) : [];
+        const existingTagsSet = new Set(currentTags.map(t => t.toLowerCase()));
+
+        if (!existingTagsSet.has(tagName.toLowerCase())) {
+            currentTags.push(tagName);
+            tagsInput.textContent = currentTags.join(' ');
+            this.prefilledTags.add(tagName.toLowerCase());
+            await this.validateAndStyleTags();
+            this.updateSuggestedTags();
+        }
     }
 
     async getTagOrAlias(tagName) {
@@ -659,6 +827,7 @@ class MediaViewer extends MediaViewerBase {
                 tagsInput.textContent = allTags.join(' ');
                 validTags.forEach(t => this.prefilledTags.add(t.toLowerCase()));
                 await this.validateAndStyleTags();
+                this.updateSuggestedTags();
                 app.showNotification(window.i18n.t('notifications.media.tags_added', { count: validTags.length }), 'success');
             }
 
@@ -1261,6 +1430,7 @@ class MediaViewer extends MediaViewerBase {
             newTags.forEach(t => this.prefilledTags.add(t.toLowerCase()));
 
             await this.validateAndStyleTags();
+            this.updateSuggestedTags();
             app.showNotification(window.i18n.t('media.ai_tags.appended_count', { count: newTags.length }), 'success');
 
         } catch (e) {
@@ -1270,8 +1440,6 @@ class MediaViewer extends MediaViewerBase {
             this.setButtonState(btn, window.i18n.t('media.tags.append_ai_tags'), false);
         }
     }
-
-
 
     // ==================== Hierarchy Methods ====================
     async renderHierarchy(items) {
