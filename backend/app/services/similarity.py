@@ -50,6 +50,14 @@ class SimilarityData:
         self.b_csr = b_csr
         self.b_csc = b_csc
 
+SUGGESTED_TAGS_CATEGORY_WEIGHTS: Dict[str, float] = {
+    TagCategoryEnum.character.value: 10.0,
+    TagCategoryEnum.copyright.value: 8.0,
+    TagCategoryEnum.artist.value: 6.0,
+    TagCategoryEnum.general.value: 1.0,
+    TagCategoryEnum.meta.value: 0.05,
+}
+
 class SimilarityIndex:
     """
     In-memory TF-IDF similarity index for fast media and tag recommendations.
@@ -412,6 +420,103 @@ class SimilarityIndex:
                 "jaccard_similarity": jaccard_similarity,
                 "overlap_coefficient": overlap_coefficient,
                 "frequency": frequency,
+            })
+
+        return results
+
+    def get_suggested_tags(
+        self,
+        tag_names: List[str],
+        limit: int = 20,
+        category_filter: Optional[str] = None,
+    ) -> Optional[List[dict]]:
+        """
+        Given a list of tag names, return suggested tags ranked by aggregated
+        TF-IDF column cosine similarity across all input tags using category weights.
+
+        Returns None if index is not ready, or a list of dicts if ready.
+        """
+        data = self._data
+        if data is None or not tag_names:
+            return None if data is None else []
+
+        name_to_tid = {name.lower(): tid for tid, name in data.tag_names.items()}
+
+        resolved_cols = []
+        for name in tag_names:
+            if not isinstance(name, str):
+                continue
+            cleaned = name.strip().lower()
+            if not cleaned:
+                continue
+            tid = name_to_tid.get(cleaned)
+            if tid is not None:
+                col = data.tag_id_to_col.get(tid)
+                if col is not None and col not in resolved_cols:
+                    resolved_cols.append(col)
+
+        if not resolved_cols:
+            return []
+
+        # Weighted combination of input query vectors
+        weights_in = np.array([
+            SUGGESTED_TAGS_CATEGORY_WEIGHTS.get(data.tag_categories.get(int(data.tag_ids[col]), "general"), 1.0)
+            for col in resolved_cols
+        ], dtype=np.float32)
+
+        query_cols = data.m_col_norm[:, resolved_cols]
+        query_vec = np.asarray(query_cols.dot(weights_in))
+
+        # Dot product against all tags
+        raw_cosine = np.asarray(data.m_col_norm.T.dot(query_vec)).ravel()
+
+        # Scale candidate scores by target category weights
+        cat_weights_target = np.array([
+            SUGGESTED_TAGS_CATEGORY_WEIGHTS.get(data.tag_categories.get(int(tid), "general"), 1.0)
+            for tid in data.tag_ids
+        ], dtype=np.float32)
+
+        cosine_scores = raw_cosine * cat_weights_target
+
+        for col in resolved_cols:
+            cosine_scores[col] = -1.0
+
+        candidate_indices = np.where(cosine_scores > 1e-6)[0]
+        if len(candidate_indices) == 0:
+            return []
+
+        if category_filter:
+            cat_lower = category_filter.lower()
+            candidate_indices = np.array(
+                [
+                    idx
+                    for idx in candidate_indices
+                    if data.tag_categories.get(int(data.tag_ids[idx])) == cat_lower
+                ],
+                dtype=np.int32,
+            )
+            if len(candidate_indices) == 0:
+                return []
+
+        if len(candidate_indices) > limit:
+            partition_idx = np.argpartition(cosine_scores[candidate_indices], -limit)[-limit:]
+            top_candidates = candidate_indices[partition_idx]
+            sorted_top = top_candidates[np.argsort(cosine_scores[top_candidates])[::-1]]
+        else:
+            sorted_top = candidate_indices[np.argsort(cosine_scores[candidate_indices])[::-1]]
+
+        results = []
+        for c in sorted_top[:limit]:
+            target_tid = int(data.tag_ids[c])
+            t_count = float(data.df[c])
+            cos_sim = float(cosine_scores[c])
+
+            results.append({
+                "id": target_tid,
+                "name": data.tag_names.get(target_tid, ""),
+                "category": data.tag_categories.get(target_tid, "general"),
+                "post_count": int(t_count),
+                "cosine_similarity": cos_sim,
             })
 
         return results

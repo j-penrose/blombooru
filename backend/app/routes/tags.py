@@ -304,6 +304,39 @@ async def search_related_tags(
         if tag.name.lower() not in excluded_tag_names
     ][:limit]
 
+@router.get("/suggested")
+async def get_suggested_tags(
+    tags: str = Query(default="", description="Comma-separated list of tag names"),
+    limit: int = Query(default=20, ge=1, le=50),
+    category: Optional[str] = Query(default=None),
+):
+    """
+    Get suggested tags based on category-weighted TF-IDF similarity index.
+    NOTE: Do not confuse with the autocomplete endpoint!
+    """
+    from ..services.similarity import similarity_index
+
+    if similarity_index.rebuild_pending:
+        await similarity_index.wait_for_build(timeout=10.0)
+
+    if not similarity_index.is_ready:
+        return {"items": [], "status": "building"}
+
+    tag_list = [t.strip() for t in tags.split(",") if t.strip()]
+    if not tag_list:
+        return {"items": [], "status": "ready"}
+
+    results = similarity_index.get_suggested_tags(
+        tag_names=tag_list,
+        limit=limit,
+        category_filter=category,
+    )
+
+    if results is None:
+        return {"items": [], "status": "building"}
+
+    return {"items": results, "status": "ready"}
+
 @router.get("/{tag_name}", response_model=TagResponse)
 @cache_response(expire=3600, key_prefix="tag_detail")
 async def get_tag(request: Request, tag_name: str, db: Session = Depends(get_db)):
