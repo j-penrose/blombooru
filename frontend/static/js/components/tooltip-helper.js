@@ -22,56 +22,78 @@ class TooltipHelper {
 
     createTooltip() {
         // Check if tooltip already exists
-        if (!document.getElementById(this.options.id)) {
-            const tooltip = document.createElement('div');
+        let tooltip = document.getElementById(this.options.id);
+        if (!tooltip) {
+            tooltip = document.createElement('div');
             tooltip.id = this.options.id;
-            tooltip.style.cssText = `
-                position: absolute;
-                background: rgba(0, 0, 0, 0.95);
-                color: white;
-                padding: 8px 12px;
-                font-size: 13px;
-                pointer-events: none;
-                z-index: 10000;
-                max-width: ${this.options.maxWidth}px;
-                word-wrap: break-word;
-                display: none;
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-            `;
             document.body.appendChild(tooltip);
         }
-        this.tooltipElement = document.getElementById(this.options.id);
+        tooltip.className = 'absolute pointer-events-none z-[10000] px-3 py-2 text-xs leading-normal border border-border shadow-lg break-words hidden';
+        tooltip.style.backgroundColor = 'var(--tag-text)';
+        tooltip.style.color = 'var(--tag-general)';
+        tooltip.style.maxWidth = `${this.options.maxWidth}px`;
+        this.tooltipElement = tooltip;
         return this.tooltipElement;
+    }
+
+    _escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
     }
 
     show(element, content) {
         if (!content) return;
 
-        // Handle different content types
-        let displayText = '';
-
         if (typeof content === 'string') {
-            displayText = content;
+            this.tooltipElement.textContent = content;
         } else if (Array.isArray(content)) {
-            // Assume array of tag objects or strings
-            const items = content.map(item => {
-                if (typeof item === 'string') return item;
-                if (item.name) return item.name;
-                return String(item);
+            if (content.length === 0) return;
+
+            const categoryOrder = ['artist', 'character', 'copyright', 'general', 'meta'];
+
+            const sortedTags = [...content].sort((a, b) => {
+                const nameA = typeof a === 'string' ? a : (a.name || String(a));
+                const nameB = typeof b === 'string' ? b : (b.name || String(b));
+                const catA = typeof a === 'object' && a.category ? a.category.toLowerCase() : 'general';
+                const catB = typeof b === 'object' && b.category ? b.category.toLowerCase() : 'general';
+
+                const catIndexA = categoryOrder.indexOf(catA);
+                const catIndexB = categoryOrder.indexOf(catB);
+                const orderA = catIndexA === -1 ? 99 : catIndexA;
+                const orderB = catIndexB === -1 ? 99 : catIndexB;
+
+                if (orderA !== orderB) {
+                    return orderA - orderB;
+                }
+                return nameA.localeCompare(nameB);
             });
 
-            // Sort alphabetically
-            items.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
-            displayText = items.join(', ');
-        } else if (typeof content === 'object' && content.text) {
-            displayText = content.text;
+            const html = sortedTags.map(item => {
+                const name = typeof item === 'string' ? item : (item.name || String(item));
+                const category = typeof item === 'object' && item.category ? item.category.toLowerCase() : 'general';
+                const validCategory = categoryOrder.includes(category) ? category : 'general';
+                return `<span class="font-medium" style="color: var(--tag-${validCategory});">${this._escapeHtml(name)}</span>`;
+            }).join(' ');
+
+            this.tooltipElement.innerHTML = html;
+        } else if (typeof content === 'object') {
+            if (content.html) {
+                this.tooltipElement.innerHTML = content.html;
+            } else if (content.text) {
+                this.tooltipElement.textContent = content.text;
+            } else {
+                return;
+            }
+        } else {
+            return;
         }
 
-        if (!displayText) return;
-
-        this.tooltipElement.textContent = displayText;
-        this.tooltipElement.style.display = 'block';
+        this.tooltipElement.classList.remove('hidden');
         this.position(element);
         this.activeElement = element;
     }
@@ -106,7 +128,7 @@ class TooltipHelper {
 
     hide() {
         if (this.tooltipElement) {
-            this.tooltipElement.style.display = 'none';
+            this.tooltipElement.classList.add('hidden');
         }
         this.activeElement = null;
     }
@@ -150,7 +172,7 @@ class TooltipHelper {
     // Setup scroll handler to reposition tooltip if visible
     setupScrollHandler() {
         this.scrollHandler = () => {
-            if (this.activeElement && this.tooltipElement.style.display === 'block') {
+            if (this.activeElement && !this.tooltipElement.classList.contains('hidden')) {
                 this.position(this.activeElement);
             }
         };
