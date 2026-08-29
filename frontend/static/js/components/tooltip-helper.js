@@ -28,7 +28,7 @@ class TooltipHelper {
             tooltip.id = this.options.id;
             document.body.appendChild(tooltip);
         }
-        tooltip.className = 'absolute pointer-events-none z-[10000] px-3 py-2 text-xs leading-normal border border-border shadow-lg break-words hidden';
+        tooltip.className = 'fixed pointer-events-none z-[10000] px-3 py-2 text-xs leading-normal border border-border shadow-lg break-words hidden';
         tooltip.style.backgroundColor = 'var(--tag-text)';
         tooltip.style.color = 'var(--tag-general)';
         tooltip.style.maxWidth = `${this.options.maxWidth}px`;
@@ -102,7 +102,15 @@ class TooltipHelper {
         const rect = element.getBoundingClientRect();
         const tooltipRect = this.tooltipElement.getBoundingClientRect();
 
-        // Calculate position (above the element by default)
+        // If target element is hidden or scrolled out of view, hide tooltip
+        if ((rect.width === 0 && rect.height === 0) ||
+            rect.bottom < 0 || rect.top > window.innerHeight ||
+            rect.right < 0 || rect.left > window.innerWidth) {
+            this.hide();
+            return;
+        }
+
+        // Calculate viewport position (above the element by default)
         let top = rect.top - tooltipRect.height - 10;
         let left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
 
@@ -117,10 +125,6 @@ class TooltipHelper {
         } else if (left + tooltipRect.width > window.innerWidth - 10) {
             left = window.innerWidth - tooltipRect.width - 10;
         }
-
-        // Add scroll offset
-        top += window.scrollY;
-        left += window.scrollX;
 
         this.tooltipElement.style.top = `${top}px`;
         this.tooltipElement.style.left = `${left}px`;
@@ -171,13 +175,23 @@ class TooltipHelper {
 
     // Setup scroll handler to reposition tooltip if visible
     setupScrollHandler() {
+        let ticking = false;
         this.scrollHandler = () => {
             if (this.activeElement && !this.tooltipElement.classList.contains('hidden')) {
-                this.position(this.activeElement);
+                if (!ticking) {
+                    requestAnimationFrame(() => {
+                        if (this.activeElement && !this.tooltipElement.classList.contains('hidden')) {
+                            this.position(this.activeElement);
+                        }
+                        ticking = false;
+                    });
+                    ticking = true;
+                }
             }
         };
 
-        window.addEventListener('scroll', this.scrollHandler, { passive: true });
+        window.addEventListener('scroll', this.scrollHandler, { capture: true, passive: true });
+        window.addEventListener('resize', this.scrollHandler, { passive: true });
     }
 
     // Cleanup method
@@ -190,7 +204,8 @@ class TooltipHelper {
 
         // Remove scroll handler
         if (this.scrollHandler) {
-            window.removeEventListener('scroll', this.scrollHandler);
+            window.removeEventListener('scroll', this.scrollHandler, { capture: true });
+            window.removeEventListener('resize', this.scrollHandler);
         }
 
         // Remove tooltip element
