@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% from "components/macros.html" import loading_indicator %}
-{% from "components/icons.html" import chevron_down_icon, chevron_left_icon, chevron_right_icon, arrow_left_icon, download_icon, share_icon, select_arrow_icon %}
+{% from "components/icons.html" import chevron_down_icon, chevron_left_icon, chevron_right_icon, arrow_left_icon,
+download_icon, share_icon, select_arrow_icon %}
 
 {% block title %}{{ t('media.title') }} - {{ app_name }}{% endblock %}
 
@@ -26,7 +27,8 @@
                     <h2 id="hierarchy-media-title" class="text-base font-bold">
                         {{ t('media.hierarchy.title') }}
                     </h2>
-                    {{ chevron_down_icon(size=16, id="hierarchy-media-chevron", class="transition-transform duration-200") }}
+                    {{ chevron_down_icon(size=16, id="hierarchy-media-chevron", class="transition-transform
+                    duration-200") }}
                 </button>
                 <div id="hierarchy-media-content" class="p-4 border-t relative group">
                     <div class="carousel-wrapper relative overflow-hidden">
@@ -157,7 +159,8 @@
                     <button type="button" id="edit-tags-toggle"
                         class="w-full flex justify-between items-center text-left py-2 hover:text-primary transition-colors cursor-pointer">
                         <span class="text-xs font-bold">{{ t('media.tags.edit_tags') }}</span>
-                        {{ chevron_down_icon(size=14, id="edit-tags-chevron", class="transition-transform duration-200") }}
+                        {{ chevron_down_icon(size=14, id="edit-tags-chevron",
+                        class="transition-transform duration-200") }}
                     </button>
 
                     <div id="edit-tags-content" style="display: none;" class="mt-2">
@@ -171,11 +174,13 @@
                                 <button type="button" id="suggested-tags-toggle"
                                     class="w-full flex justify-between items-center text-left hover:text-primary transition-colors cursor-pointer">
                                     <span class="text-xs font-bold">{{ t('gallery.related_tags') }}</span>
-                                    {{ chevron_down_icon(size=14, id="suggested-tags-chevron", class="transition-transform duration-200") }}
+                                    {{ chevron_down_icon(size=14, id="suggested-tags-chevron",
+                                    class="transition-transform duration-200") }}
                                 </button>
                                 <div id="suggested-tags-content" style="display: none;" class="mt-2 pt-2 border-t">
                                     <div class="grid grid-cols-2 gap-2 mb-2">
-                                        <div id="suggested-tags-category-select" class="custom-select w-full" data-value="all" title="{{ t('media.tags.filter_results') }}">
+                                        <div id="suggested-tags-category-select" class="custom-select w-full"
+                                            data-value="all">
                                             <button
                                                 class="custom-select-trigger w-full flex items-center justify-between gap-1 px-2 py-1 bg border text-xs cursor-pointer hover:border-primary transition-colors focus:outline-none focus:border-primary"
                                                 type="button">
@@ -184,16 +189,26 @@
                                                 </span>
                                                 {{ select_arrow_icon(size=12) }}
                                             </button>
-                                            <div class="custom-select-dropdown bg border border-primary max-h-48 overflow-y-auto shadow-lg z-20">
-                                                <div class="custom-select-option px-2.5 py-1.5 cursor-pointer hover:surface text text-xs selected" data-value="all">{{ t('media.tags.filter_results') }}</div>
-                                                <div class="custom-select-option px-2.5 py-1.5 cursor-pointer hover:surface text text-xs" data-value="artist">{{ t('common.tag_category_artist') }}</div>
-                                                <div class="custom-select-option px-2.5 py-1.5 cursor-pointer hover:surface text text-xs" data-value="character">{{ t('common.tag_category_character') }}</div>
-                                                <div class="custom-select-option px-2.5 py-1.5 cursor-pointer hover:surface text text-xs" data-value="copyright">{{ t('common.tag_category_copyright') }}</div>
-                                                <div class="custom-select-option px-2.5 py-1.5 cursor-pointer hover:surface text text-xs" data-value="general">{{ t('common.tag_category_general') }}</div>
-                                                <div class="custom-select-option px-2.5 py-1.5 cursor-pointer hover:surface text text-xs" data-value="meta">{{ t('common.tag_category_meta') }}</div>
+                                            <div
+                                                class="custom-select-dropdown bg border border-primary max-h-48 overflow-y-auto shadow-lg z-20">
+                                                <div class="custom-select-option px-2.5 py-1.5 cursor-pointer hover:surface text text-xs selected"
+                                                    data-value="all">{{ t('media.tags.filter_results') }}</div>
+                                                <div class="custom-select-option px-2.5 py-1.5 cursor-pointer hover:surface text text-xs"
+                                                    data-value="artist">{{ t('common.tag_category_artist') }}</div>
+                                                <div class="custom-select-option px-2.5 py-1.5 cursor-pointer hover:surface text text-xs"
+                                                    data-value="character">{{ t('common.tag_category_character') }}
+                                                </div>
+                                                <div class="custom-select-option px-2.5 py-1.5 cursor-pointer hover:surface text text-xs"
+                                                    data-value="copyright">{{ t('common.tag_category_copyright') }}
+                                                </div>
+                                                <div class="custom-select-option px-2.5 py-1.5 cursor-pointer hover:surface text text-xs"
+                                                    data-value="general">{{ t('common.tag_category_general') }}</div>
+                                                <div class="custom-select-option px-2.5 py-1.5 cursor-pointer hover:surface text text-xs"
+                                                    data-value="meta">{{ t('common.tag_category_meta') }}</div>
                                             </div>
                                         </div>
-                                        <div id="suggested-tags-search-category-select" class="custom-select w-full" data-value="all" title="{{ t('media.tags.search_by') }}">
+                                        <div id="suggested-tags-search-category-select" class="custom-select w-full"
+                                            data-value="all">
                                             <button
                                                 class="custom-select-trigger w-full flex items-center justify-between gap-1 px-2 py-1 bg border text-xs cursor-pointer hover:border-primary transition-colors focus:outline-none focus:border-primary"
                                                 type="button">
@@ -202,21 +217,24 @@
                                                 </span>
                                                 {{ select_arrow_icon(size=12) }}
                                             </button>
-                                            <div class="custom-select-dropdown bg border border-primary max-h-48 overflow-y-auto shadow-lg z-20">
-                                                <div class="custom-select-option px-2.5 py-1.5 cursor-pointer hover:surface text text-xs selected" data-value="all">{{ t('media.tags.search_by') }}</div>
+                                            <div
+                                                class="custom-select-dropdown bg border border-primary max-h-48 overflow-y-auto shadow-lg z-20">
+                                                <div class="custom-select-option px-2.5 py-1.5 cursor-pointer hover:surface text text-xs selected"
+                                                    data-value="all">{{ t('media.tags.search_by') }}</div>
                                             </div>
                                         </div>
                                     </div>
-                                    <div id="suggested-tags-list" class="overflow-y-auto max-h-43 text-xs flex flex-col"></div>
+                                    <div id="suggested-tags-list"
+                                        class="overflow-y-auto max-h-43 text-xs flex flex-col"></div>
                                 </div>
                             </div>
                             <div class="flex gap-2 mb-2">
-                                <button type="button" id="append-ai-tags-btn" class="btn flex-1 px-3 py-1 cursor-pointer"
-                                    style="display: none;">
+                                <button type="button" id="append-ai-tags-btn"
+                                    class="btn flex-1 px-3 py-1 cursor-pointer" style="display: none;">
                                     <span class="btn-text">{{ t('media.tags.append_ai_tags') }}</span>
                                 </button>
-                                <button type="button" id="predict-wd-tags-btn" class="btn flex-1 px-3 py-1 cursor-pointer"
-                                    style="display: none;">
+                                <button type="button" id="predict-wd-tags-btn"
+                                    class="btn flex-1 px-3 py-1 cursor-pointer" style="display: none;">
                                     <span class="btn-text">{{ t('media.tags.predict_tags') }}</span>
                                 </button>
                             </div>
@@ -233,7 +251,8 @@
                 <button type="button" id="ai-metadata-toggle"
                     class="w-full p-3 flex justify-between items-center text-left hover:text-primary transition-colors cursor-pointer">
                     <h3 class="text-sm font-bold">{{ t('media.ai_metadata.title') }}</h3>
-                    {{ chevron_down_icon(size=16, id="ai-metadata-chevron", class="transition-transform duration-200") }}
+                    {{ chevron_down_icon(size=16, id="ai-metadata-chevron",
+                    class="transition-transform duration-200") }}
                 </button>
                 <div id="ai-metadata-content" class="text-xs px-3 pb-3" style="display: none;"></div>
             </div>
@@ -246,8 +265,7 @@
                     <!-- Primary Action -->
                     <a id="download-btn" href="#" download
                         class="btn-primary flex items-center justify-center gap-2 w-full text-sm font-medium cursor-pointer">
-                        {{ download_icon(size=16) }}
-                        {{ t('common.download') }}
+                        {{ download_icon(size=16) }} {{ t('common.download') }}
                     </a>
 
                     <!-- Admin Actions -->
