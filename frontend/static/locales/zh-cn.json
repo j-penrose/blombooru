@@ -607,7 +607,6 @@
         }
     },
     "common": {
-        "all": "",
         "cancel": "取消",
         "clear_selection": "清除选择",
         "close": "关闭",
@@ -825,8 +824,10 @@
         "tags": {
             "append_ai_tags": "追加 AI 标签",
             "edit_tags": "编辑标签",
+            "filter_results": "",
             "predict_tags": "预测标签 (AI)",
             "save_tags": "保存标签",
+            "search_by": "",
             "tags_saved": "标签保存成功"
         },
         "ai_tags": {

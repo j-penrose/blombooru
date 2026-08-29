@@ -607,7 +607,6 @@
         }
     },
     "common": {
-        "all": "Alla",
         "cancel": "Avbryt",
         "clear_selection": "Rensa urval",
         "close": "Stäng",
@@ -825,8 +824,10 @@
         "tags": {
             "append_ai_tags": "Lägg till AI-taggar",
             "edit_tags": "Redigera taggar",
+            "filter_results": "Filtrera Resultat",
             "predict_tags": "Förutsäg taggar (AI)",
             "save_tags": "Spara taggar",
+            "search_by": "Sök med",
             "tags_saved": "Taggar sparade"
         },
         "ai_tags": {

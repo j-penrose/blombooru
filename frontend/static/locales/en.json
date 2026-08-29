@@ -607,7 +607,6 @@
         }
     },
     "common": {
-        "all": "All",
         "cancel": "Cancel",
         "clear_selection": "Clear Selection",
         "close": "Close",
@@ -825,8 +824,10 @@
         "tags": {
             "append_ai_tags": "Append AI Tags",
             "edit_tags": "Edit Tags",
+            "filter_results": "Filter Results",
             "predict_tags": "Predict Tags (AI)",
             "save_tags": "Save Tags",
+            "search_by": "Search By",
             "tags_saved": "Tags saved successfully"
         },
         "ai_tags": {

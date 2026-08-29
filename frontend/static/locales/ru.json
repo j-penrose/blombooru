@@ -607,7 +607,6 @@
         }
     },
     "common": {
-        "all": "",
         "cancel": "Отмена",
         "clear_selection": "Очистить выбор",
         "close": "Закрыть",
@@ -825,8 +824,10 @@
         "tags": {
             "append_ai_tags": "Дополнить AI теги",
             "edit_tags": "Редактировать теги",
+            "filter_results": "",
             "predict_tags": "Предсказать теги (AI)",
             "save_tags": "Сохранить теги",
+            "search_by": "",
             "tags_saved": "Теги успешно сохранены"
         },
         "ai_tags": {
