@@ -174,22 +174,37 @@
                                     {{ chevron_down_icon(size=14, id="suggested-tags-chevron", class="transition-transform duration-200") }}
                                 </button>
                                 <div id="suggested-tags-content" style="display: none;" class="mt-2 pt-2 border-t">
-                                    <div id="suggested-tags-category-select" class="custom-select w-full mb-2" data-value="all">
-                                        <button
-                                            class="custom-select-trigger w-full flex items-center justify-between gap-2 px-2 py-1 bg border text-xs cursor-pointer hover:border-primary transition-colors focus:outline-none focus:border-primary"
-                                            type="button">
-                                            <span class="custom-select-value text truncate">
-                                                {{ t('common.all') }}
-                                            </span>
-                                            {{ select_arrow_icon(size=12) }}
-                                        </button>
-                                        <div class="custom-select-dropdown bg border border-primary max-h-48 overflow-y-auto shadow-lg z-20">
-                                            <div class="custom-select-option px-2.5 py-1.5 cursor-pointer hover:surface text text-xs selected" data-value="all">{{ t('common.all') }}</div>
-                                            <div class="custom-select-option px-2.5 py-1.5 cursor-pointer hover:surface text text-xs" data-value="character">{{ t('common.tag_category_character') }}</div>
-                                            <div class="custom-select-option px-2.5 py-1.5 cursor-pointer hover:surface text text-xs" data-value="copyright">{{ t('common.tag_category_copyright') }}</div>
-                                            <div class="custom-select-option px-2.5 py-1.5 cursor-pointer hover:surface text text-xs" data-value="artist">{{ t('common.tag_category_artist') }}</div>
-                                            <div class="custom-select-option px-2.5 py-1.5 cursor-pointer hover:surface text text-xs" data-value="general">{{ t('common.tag_category_general') }}</div>
-                                            <div class="custom-select-option px-2.5 py-1.5 cursor-pointer hover:surface text text-xs" data-value="meta">{{ t('common.tag_category_meta') }}</div>
+                                    <div class="grid grid-cols-2 gap-2 mb-2">
+                                        <div id="suggested-tags-category-select" class="custom-select w-full" data-value="all" title="{{ t('media.tags.filter_results') }}">
+                                            <button
+                                                class="custom-select-trigger w-full flex items-center justify-between gap-1 px-2 py-1 bg border text-xs cursor-pointer hover:border-primary transition-colors focus:outline-none focus:border-primary"
+                                                type="button">
+                                                <span class="custom-select-value text truncate">
+                                                    {{ t('media.tags.filter_results') }}
+                                                </span>
+                                                {{ select_arrow_icon(size=12) }}
+                                            </button>
+                                            <div class="custom-select-dropdown bg border border-primary max-h-48 overflow-y-auto shadow-lg z-20">
+                                                <div class="custom-select-option px-2.5 py-1.5 cursor-pointer hover:surface text text-xs selected" data-value="all">{{ t('media.tags.filter_results') }}</div>
+                                                <div class="custom-select-option px-2.5 py-1.5 cursor-pointer hover:surface text text-xs" data-value="artist">{{ t('common.tag_category_artist') }}</div>
+                                                <div class="custom-select-option px-2.5 py-1.5 cursor-pointer hover:surface text text-xs" data-value="character">{{ t('common.tag_category_character') }}</div>
+                                                <div class="custom-select-option px-2.5 py-1.5 cursor-pointer hover:surface text text-xs" data-value="copyright">{{ t('common.tag_category_copyright') }}</div>
+                                                <div class="custom-select-option px-2.5 py-1.5 cursor-pointer hover:surface text text-xs" data-value="general">{{ t('common.tag_category_general') }}</div>
+                                                <div class="custom-select-option px-2.5 py-1.5 cursor-pointer hover:surface text text-xs" data-value="meta">{{ t('common.tag_category_meta') }}</div>
+                                            </div>
+                                        </div>
+                                        <div id="suggested-tags-search-category-select" class="custom-select w-full" data-value="all" title="{{ t('media.tags.search_by') }}">
+                                            <button
+                                                class="custom-select-trigger w-full flex items-center justify-between gap-1 px-2 py-1 bg border text-xs cursor-pointer hover:border-primary transition-colors focus:outline-none focus:border-primary"
+                                                type="button">
+                                                <span class="custom-select-value text truncate">
+                                                    {{ t('media.tags.search_by') }}
+                                                </span>
+                                                {{ select_arrow_icon(size=12) }}
+                                            </button>
+                                            <div class="custom-select-dropdown bg border border-primary max-h-48 overflow-y-auto shadow-lg z-20">
+                                                <div class="custom-select-option px-2.5 py-1.5 cursor-pointer hover:surface text text-xs selected" data-value="all">{{ t('media.tags.search_by') }}</div>
+                                            </div>
                                         </div>
                                     </div>
                                     <div id="suggested-tags-list" class="overflow-y-auto max-h-43 text-xs flex flex-col"></div>

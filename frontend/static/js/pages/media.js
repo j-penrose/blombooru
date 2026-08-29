@@ -15,6 +15,11 @@ class MediaViewer extends MediaViewerBase {
         this.tooltipHelper = null;
         this.ratingSelect = null;
         this.shareLanguageSelect = null;
+        this.suggestedCategorySelect = null;
+        this.suggestedSearchCategorySelect = null;
+        this.tagCategoryCache = new Map();
+        this._suggestedTagsCategory = null;
+        this._suggestedSearchCategory = null;
 
         // WD Tagger settings
         this.wdTaggerSettings = {
@@ -63,6 +68,13 @@ class MediaViewer extends MediaViewerBase {
         try {
             const res = await fetch(`/api/media/${this.mediaId}`);
             this.currentMedia = await res.json();
+            if (this.currentMedia && Array.isArray(this.currentMedia.tags)) {
+                for (const tag of this.currentMedia.tags) {
+                    if (tag.name && tag.category) {
+                        this.tagCategoryCache.set(tag.name.toLowerCase().trim(), tag.category);
+                    }
+                }
+            }
             this.renderMedia(this.currentMedia);
             this.renderInfo(this.currentMedia);
             this.renderTags(this.currentMedia, { clickable: true });
@@ -346,13 +358,23 @@ class MediaViewer extends MediaViewerBase {
             });
         }
 
-        // Setup category select
-        const selectEl = this.el('suggested-tags-category-select');
-        if (selectEl) {
-            this.suggestedCategorySelect = new CustomSelect(selectEl);
+        // Setup filter category select (left dropdown)
+        const filterSelectEl = this.el('suggested-tags-category-select');
+        if (filterSelectEl) {
+            this.suggestedCategorySelect = new CustomSelect(filterSelectEl);
             this.suggestedCategorySelect.element.addEventListener('change', (e) => {
                 this._suggestedTagsCategory = e.detail.value === 'all' ? null : e.detail.value;
                 this.renderSuggestedTagsList();
+            });
+        }
+
+        // Setup search category select (right dropdown)
+        const searchSelectEl = this.el('suggested-tags-search-category-select');
+        if (searchSelectEl) {
+            this.suggestedSearchCategorySelect = new CustomSelect(searchSelectEl);
+            this.suggestedSearchCategorySelect.element.addEventListener('change', (e) => {
+                this._suggestedSearchCategory = e.detail.value === 'all' ? null : e.detail.value;
+                this.updateSuggestedTags();
             });
         }
 
@@ -376,6 +398,73 @@ class MediaViewer extends MediaViewerBase {
             section.style.display = 'none';
             listEl.innerHTML = '';
             this._suggestedItems = [];
+            if (this.suggestedSearchCategorySelect) {
+                this.suggestedSearchCategorySelect.setOptions([
+                    { value: 'all', text: window.i18n.t('media.tags.search_by'), selected: true }
+                ]);
+            }
+            return;
+        }
+
+        // Fetch categories for any tags not yet in cache
+        const uncachedTags = currentTags.filter(t => !this.tagCategoryCache.has(t.toLowerCase()));
+        if (uncachedTags.length > 0) {
+            try {
+                const batchResults = await this.tagInputHelper.checkTagsBatch(uncachedTags);
+                for (const [lowerName, tagObj] of Object.entries(batchResults)) {
+                    if (tagObj && tagObj.category) {
+                        this.tagCategoryCache.set(lowerName, tagObj.category);
+                    }
+                }
+            } catch (e) {
+                console.error('Error fetching tag categories:', e);
+            }
+        }
+
+        // Find categories used on the post
+        const activeCategories = new Set();
+        for (const t of currentTags) {
+            const cat = this.tagCategoryCache.get(t.toLowerCase());
+            if (cat) {
+                activeCategories.add(cat);
+            }
+        }
+
+        const categoryOrder = ['artist', 'character', 'copyright', 'general', 'meta'];
+        const availableSearchCats = categoryOrder.filter(cat => activeCategories.has(cat));
+
+        let currentSearchVal = this.suggestedSearchCategorySelect ? this.suggestedSearchCategorySelect.getValue() : 'all';
+        if (!currentSearchVal || (currentSearchVal !== 'all' && !activeCategories.has(currentSearchVal))) {
+            currentSearchVal = 'all';
+        }
+        this._suggestedSearchCategory = currentSearchVal === 'all' ? null : currentSearchVal;
+
+        if (this.suggestedSearchCategorySelect) {
+            const searchOptions = [
+                {
+                    value: 'all',
+                    text: window.i18n.t('media.tags.search_by'),
+                    selected: currentSearchVal === 'all'
+                },
+                ...availableSearchCats.map(cat => ({
+                    value: cat,
+                    text: window.i18n.t(`common.tag_category_${cat}`),
+                    selected: currentSearchVal === cat
+                }))
+            ];
+            this.suggestedSearchCategorySelect.setOptions(searchOptions);
+        }
+
+        // Filter tags to send to /suggested endpoint based on selected search category
+        let tagsToSend = currentTags;
+        if (this._suggestedSearchCategory) {
+            tagsToSend = currentTags.filter(t => this.tagCategoryCache.get(t.toLowerCase()) === this._suggestedSearchCategory);
+        }
+
+        if (tagsToSend.length === 0) {
+            this._suggestedItems = [];
+            section.style.display = 'block';
+            this.renderSuggestedTagsList();
             return;
         }
 
@@ -384,7 +473,7 @@ class MediaViewer extends MediaViewerBase {
         }
         this._suggestedTagsAbort = new AbortController();
 
-        const params = new URLSearchParams({ tags: currentTags.join(','), limit: '40' });
+        const params = new URLSearchParams({ tags: tagsToSend.join(','), limit: '40' });
 
         try {
             const res = await fetch(`/api/tags/suggested?${params.toString()}`, {
@@ -396,10 +485,19 @@ class MediaViewer extends MediaViewerBase {
             const lowerCurrentTags = new Set(currentTags.map(t => t.toLowerCase()));
             this._suggestedItems = (data.items || []).filter(t => !lowerCurrentTags.has(t.name.toLowerCase()));
 
+            // Cache categories of returned suggestions
+            for (const item of (data.items || [])) {
+                if (item.name && item.category) {
+                    this.tagCategoryCache.set(item.name.toLowerCase(), item.category);
+                }
+            }
+
             if (this._suggestedItems.length === 0) {
-                section.style.display = 'none';
-                listEl.innerHTML = '';
-                return;
+                if (!this._suggestedTagsCategory && !this._suggestedSearchCategory) {
+                    section.style.display = 'none';
+                    listEl.innerHTML = '';
+                    return;
+                }
             }
 
             section.style.display = 'block';
@@ -456,7 +554,7 @@ class MediaViewer extends MediaViewerBase {
                 this._suggestedItems = (this._suggestedItems || []).filter(t => t.name !== tag.name);
                 item.remove();
                 if (listEl.querySelectorAll('.popular-tag-item').length === 0) {
-                    if (!this._suggestedTagsCategory) {
+                    if (!this._suggestedTagsCategory && !this._suggestedSearchCategory) {
                         section.style.display = 'none';
                     } else {
                         listEl.innerHTML = `<p class="text-xs text-secondary py-2 text-center">${window.i18n.t('gallery.no_tags_found')}</p>`;
