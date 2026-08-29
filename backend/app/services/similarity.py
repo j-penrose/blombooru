@@ -93,9 +93,24 @@ class SimilarityIndex:
         Returns True when the index is ready, False if the timeout expired
         before the rebuild completed.
         """
+        global _pending_rebuild_task
         if not self.rebuild_pending:
             return True
-        loop = asyncio.get_event_loop()
+
+        # Execute rebuild immediately since a request needs it now
+        if _pending_rebuild_task is not None and not _pending_rebuild_task.done() and not self._is_building:
+            _pending_rebuild_task.cancel()
+            self._rebuild_pending = True
+            try:
+                from ..database import SessionLocal
+                await asyncio.to_thread(
+                    self.rebuild_from_session_factory, SessionLocal
+                )
+            finally:
+                self._rebuild_pending = False
+            return True
+
+        loop = asyncio.get_running_loop() if hasattr(asyncio, "get_running_loop") else asyncio.get_event_loop()
         deadline = loop.time() + timeout
         while self.rebuild_pending:
             remaining = deadline - loop.time()

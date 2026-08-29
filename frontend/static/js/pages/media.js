@@ -20,6 +20,7 @@ class MediaViewer extends MediaViewerBase {
         this.tagCategoryCache = new Map();
         this._suggestedTagsCategory = null;
         this._suggestedSearchCategory = null;
+        this._suggestedTagsRetryTimeout = null;
 
         // WD Tagger settings
         this.wdTaggerSettings = {
@@ -160,10 +161,8 @@ class MediaViewer extends MediaViewerBase {
                 return a.name.localeCompare(b.name);
             });
             tagsInput.textContent = sortedTags.map(t => t.name).join(' ');
-            setTimeout(() => {
-                this.validateAndStyleTags();
-                this.updateSuggestedTags();
-            }, 100);
+            this.validateAndStyleTags();
+            this.updateSuggestedTags();
         }
 
         // Initialize custom select for rating
@@ -391,6 +390,11 @@ class MediaViewer extends MediaViewerBase {
         const listEl = this.el('suggested-tags-list');
         if (!tagsInput || !section || !listEl) return;
 
+        if (this._suggestedTagsRetryTimeout) {
+            clearTimeout(this._suggestedTagsRetryTimeout);
+            this._suggestedTagsRetryTimeout = null;
+        }
+
         const currentTags = this.tagInputHelper.getPlainTextFromDiv(tagsInput)
             .split(/\s+/).map(t => t.trim()).filter(Boolean);
 
@@ -482,6 +486,19 @@ class MediaViewer extends MediaViewerBase {
             if (!res.ok) return;
 
             const data = await res.json();
+
+            // If the similarity index is rebuilding in backend, keep section visible and retry
+            if (data.status === 'building') {
+                section.style.display = 'block';
+                if (!this._suggestedItems || this._suggestedItems.length === 0) {
+                    listEl.innerHTML = `<p class="text-xs text-secondary py-2 text-center">${window.i18n.t('media.progress.validating') || 'Loading...'}</p>`;
+                }
+                this._suggestedTagsRetryTimeout = setTimeout(() => {
+                    this.updateSuggestedTags();
+                }, 1000);
+                return;
+            }
+
             const lowerCurrentTags = new Set(currentTags.map(t => t.toLowerCase()));
             this._suggestedItems = (data.items || []).filter(t => !lowerCurrentTags.has(t.name.toLowerCase()));
 
@@ -2112,6 +2129,14 @@ class MediaViewer extends MediaViewerBase {
 
     // Cleanup method
     destroy() {
+        if (this._suggestedTagsRetryTimeout) {
+            clearTimeout(this._suggestedTagsRetryTimeout);
+            this._suggestedTagsRetryTimeout = null;
+        }
+        if (this._suggestedTagsAbort) {
+            this._suggestedTagsAbort.abort();
+            this._suggestedTagsAbort = null;
+        }
         if (this.tooltipHelper) {
             this.tooltipHelper.destroy();
         }
