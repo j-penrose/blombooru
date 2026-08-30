@@ -263,3 +263,72 @@ class BulkTagUpdateResponse(BaseModel):
     status: str = "success"
     updated_count: int
     updated_media_ids: List[int]
+
+class ProposedTag(BaseModel):
+    name: str
+    category: TagCategoryEnum = TagCategoryEnum.general
+    is_new: bool = False
+    source: Optional[str] = "user"
+    user_assigned: Optional[bool] = False
+
+class UploadSessionItemUpdate(BaseModel):
+    rating: Optional[RatingEnum] = None
+    tags: Optional[List[ProposedTag]] = None
+    source: Optional[str] = None
+    description: Optional[str] = None
+    album_ids: Optional[List[int]] = None
+    suggested_album_path: Optional[str] = None
+
+class UploadSessionItem(BaseModel):
+    item_id: str
+    filename: str
+    relative_path: Optional[str] = None
+    file_size: int = 0
+    width: Optional[int] = None
+    height: Optional[int] = None
+    duration: Optional[float] = None
+    file_type: Optional[FileTypeEnum] = None
+    mime_type: Optional[str] = None
+    hash: Optional[str] = None
+    rating: RatingEnum = RatingEnum.safe
+    source: Optional[str] = None
+    description: Optional[str] = None
+    tags: List[ProposedTag] = []
+    album_ids: List[int] = []
+    suggested_album_path: Optional[str] = None
+    is_duplicate: bool = False
+    duplicate_of: Optional[str] = None
+
+class PendingTagEntity(BaseModel):
+    name: str
+    category: TagCategoryEnum = TagCategoryEnum.general
+    used_by: List[str] = []
+    merge_into: Optional[str] = None
+    user_assigned: bool = False
+
+class PendingAlbumEntity(BaseModel):
+    path: str
+    used_by: List[str] = []
+
+class PendingEntitiesResponse(BaseModel):
+    pending_tags: List[PendingTagEntity] = []
+    pending_albums: List[PendingAlbumEntity] = []
+
+class PendingTagUpdate(BaseModel):
+    new_name: Optional[str] = None
+    category: Optional[TagCategoryEnum] = None
+    merge_into: Optional[str] = None
+    remove: Optional[bool] = False
+
+class UploadSessionCommitItemResult(BaseModel):
+    item_id: str
+    filename: str
+    media_id: Optional[int] = None
+    status: str
+    error: Optional[str] = None
+
+class UploadSessionCommitResponse(BaseModel):
+    results: List[UploadSessionCommitItemResult]
+    total_created: int
+    total_duplicates: int
+    total_failed: int
