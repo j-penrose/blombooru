@@ -52,7 +52,7 @@ from .database import get_db, init_db, init_engine
 from .models import Media, Album
 from .routes import (admin, ai_tagger, albums, booru_config, booru_import,
                      changelog, danbooru, media, search, sharing, system,
-                     tag_implications, tags, instance_info, url_import)
+                     tag_implications, tags, instance_info, uploads, url_import)
 from .translations import language_registry, translation_helper
 from .utils.logger import logger
 from .utils.search_parser import canonicalize_query
@@ -101,8 +101,10 @@ async def lifespan(app: FastAPI):
 
             # Clean up any leftover chunks from abandoned uploads
             from .routes.media import cleanup_archive_chunks, cleanup_media_chunks
+            from .routes.uploads import cleanup_upload_sessions
             cleanup_archive_chunks()
             cleanup_media_chunks()
+            cleanup_upload_sessions()
 
             # Start periodic cleanup task for abandoned uploads
             async def periodic_upload_chunks_cleanup():
@@ -111,6 +113,7 @@ async def lifespan(app: FastAPI):
                     try:
                         cleanup_archive_chunks(max_age_seconds=3600)
                         cleanup_media_chunks(max_age_seconds=3600)
+                        cleanup_upload_sessions(max_age_seconds=3600)
                     except asyncio.CancelledError:
                         break
                     except Exception as e:
@@ -304,6 +307,7 @@ app.include_router(url_import.router)
 app.include_router(booru_config.router)
 app.include_router(tag_implications.router)
 app.include_router(changelog.router)
+app.include_router(uploads.router)
 
 def _get_theme_for_context(is_admin: bool = False):
     """Return the theme dict to inject into template context. Uses the theme's backup theme in the Admin Panel."""
