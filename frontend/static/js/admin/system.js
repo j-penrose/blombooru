@@ -1764,7 +1764,7 @@ class AdminSystem {
                 ? ' <span class="text-[10px] text-primary">&#9679;</span>' : '';
 
             const tr = document.createElement('tr');
-            tr.className = 'border-b last:border-b-0 hover:surface transition-colors';
+            tr.className = 'border-b last:border-b-0';
             tr.innerHTML = `
                 <td class="py-2 px-3 text-xs"></td>
                 <td class="py-2 px-3 text-xs">${typeBadge}</td>

@@ -138,7 +138,7 @@ class TagImplicationManager {
         }
 
         this.tableBody.innerHTML = implications.map(imp => `
-            <tr class="border-b last:border-b-0 hover:surface transition-colors">
+            <tr class="border-b last:border-b-0">
                 <td class="py-2 px-3 text-xs font-mono">${this._buildTargetDisplay(imp)}</td>
                 <td class="py-2 px-3 text-xs font-mono">${imp.implied_tags.map(t => this.escapeHtml(t.name)).join(' ')}</td>
                 <td class="py-2 px-3 text-xs text-right whitespace-nowrap">
