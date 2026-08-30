@@ -1084,6 +1084,8 @@ class AdminSystem {
 
         const modal = new ModalHelper({
             id: 'api-key-name-modal',
+            confirmId: 'api-key-name-confirm-btn',
+            cancelId: 'api-key-name-cancel-btn',
             title: window.i18n.t('modal.api_key_name.title'),
             message: `
                 <div class="text-left">
@@ -1294,6 +1296,8 @@ class AdminSystem {
         const modal = new ModalHelper({
             id: 'revoke-api-key-modal',
             type: 'danger',
+            confirmId: 'revoke-api-key-confirm-yes',
+            cancelId: 'revoke-api-key-confirm-no',
             title: window.i18n.t('modal.revoke_api_key.title'),
             message: window.i18n.t('modal.revoke_api_key.message'),
             confirmText: window.i18n.t('modal.revoke_api_key.confirm'),
@@ -1560,6 +1564,7 @@ class AdminSystem {
         const modal = new ModalHelper({
             id: 'changelog-modal',
             type: 'info',
+            confirmId: 'changelog-confirm-btn',
             title: window.i18n ? window.i18n.t('modal.changelog.title') : 'Changelog',
             message: tabsHtml,
             confirmText: window.i18n ? window.i18n.t('common.got_it') : 'Got it',
@@ -1603,6 +1608,8 @@ class AdminSystem {
         const modal = new ModalHelper({
             id: 'update-confirm-modal',
             type: 'warning',
+            confirmId: 'update-confirm-yes',
+            cancelId: 'update-confirm-no',
             title: window.i18n ? window.i18n.t('common.system_update') : 'System Update',
             message: window.i18n ? window.i18n.t('modal.system_update.message', { target: 'latest' }) : 'Are you sure you want to update?',
             confirmText: window.i18n ? window.i18n.t('modal.system_update.confirm') : 'Update Now',
