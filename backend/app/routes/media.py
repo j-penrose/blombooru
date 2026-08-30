@@ -323,8 +323,15 @@ def update_tag_counts(db: Session, tag_ids: List[int]):
             synchronize_session=False
         )
 
-def get_or_create_tags(db: Session, tag_names: List[str], category_hints: Optional[dict] = None, expand: bool = True) -> List[Tag]:
-    """Get or create tags by name, resolving aliases and applying implications.
+def preview_or_create_tags(
+    db: Session,
+    tag_names: List[str],
+    category_hints: Optional[dict] = None,
+    expand: bool = True,
+    dry_run: bool = False
+):
+    """Get or create tags by name (or preview them without creating if dry_run=True).
+    Resolves aliases and applies tag implications.
 
     Args:
         db: Database session
@@ -334,6 +341,8 @@ def get_or_create_tags(db: Session, tag_names: List[str], category_hints: Option
                        When a tag doesn't exist and a hint is provided, the tag
                        is created with that category instead of the default "general".
         expand: Whether to recursively expand tag implications. Defaults to True.
+        dry_run: When True, do not create new Tag rows in the database;
+                 instead return proposed tag objects with is_new boolean.
     """
     from ..models import TagAlias
     from ..utils.tag_utils import expand_implications, resolve_aliases
@@ -350,29 +359,95 @@ def get_or_create_tags(db: Session, tag_names: List[str], category_hints: Option
 
     alias_map = resolve_aliases(db, unique_names)
 
+    if not dry_run:
+        tag_set: dict[int, Tag] = {}
+
+        for name in unique_names:
+            if name in alias_map:
+                alias = db.query(TagAlias).filter(TagAlias.alias_name == name).first()
+                tag = alias.target_tag if alias else None
+            else:
+                tag = db.query(Tag).filter(Tag.name == name).first()
+                if not tag:
+                    category = "general"
+                    if category_hints and name in category_hints:
+                        category = category_hints[name]
+                    tag = Tag(name=name, post_count=0, category=category)
+                    db.add(tag)
+                    db.flush()
+
+            if tag and tag.id not in tag_set:
+                tag_set[tag.id] = tag
+
+        if expand:
+            expand_implications(db, tag_set)
+
+        return list(tag_set.values())
+
+    # Dry run
+    import fnmatch
+    from ..models import TagImplication
+    from ..schemas import ProposedTag
+
     tag_set: dict[int, Tag] = {}
+    new_tags: list[ProposedTag] = []
+    seen_canonical: set[str] = set()
 
     for name in unique_names:
         if name in alias_map:
-            alias = db.query(TagAlias).filter(TagAlias.alias_name == name).first()
-            tag = alias.target_tag if alias else None
+            canonical_name, canonical_category = alias_map[name]
+            if canonical_name in seen_canonical:
+                continue
+            seen_canonical.add(canonical_name)
+            tag = db.query(Tag).filter(Tag.name == canonical_name).first()
+            if tag:
+                tag_set[tag.id] = tag
         else:
+            if name in seen_canonical:
+                continue
+            seen_canonical.add(name)
             tag = db.query(Tag).filter(Tag.name == name).first()
-            if not tag:
+            if tag:
+                tag_set[tag.id] = tag
+            else:
                 category = "general"
                 if category_hints and name in category_hints:
                     category = category_hints[name]
-                tag = Tag(name=name, post_count=0, category=category)
-                db.add(tag)
-                db.flush()
-
-        if tag and tag.id not in tag_set:
-            tag_set[tag.id] = tag
+                new_tags.append(ProposedTag(
+                    name=name,
+                    category=category,
+                    is_new=True,
+                    source="user"
+                ))
 
     if expand:
         expand_implications(db, tag_set)
+        implications = db.query(TagImplication).all()
+        for imp in implications:
+            if imp.target_tag_patterns:
+                for n_tag in new_tags:
+                    if any(fnmatch.fnmatch(n_tag.name, pat) for pat in imp.target_tag_patterns):
+                        for implied in imp.implied_tags:
+                            if implied.id not in tag_set:
+                                tag_set[implied.id] = implied
 
-    return list(tag_set.values())
+    result: list[ProposedTag] = []
+    for tag in tag_set.values():
+        result.append(ProposedTag(
+            name=tag.name,
+            category=tag.category,
+            is_new=False,
+            source="user"
+        ))
+    for n_tag in new_tags:
+        if not any(r.name == n_tag.name for r in result):
+            result.append(n_tag)
+
+    return result
+
+def get_or_create_tags(db: Session, tag_names: List[str], category_hints: Optional[dict] = None, expand: bool = True) -> List[Tag]:
+    """Get or create tags by name, resolving aliases and applying implications."""
+    return preview_or_create_tags(db, tag_names, category_hints=category_hints, expand=expand, dry_run=False)
 
 def process_and_save_media(
     db: Session,
@@ -1585,6 +1660,7 @@ async def extract_archive(
                 mime_type, _ = mimetypes.guess_type(extracted_file.name)
                 if mime_type in valid_types:
                     # Rename to a predictable indexed name for serving
+                    original_name = extracted_file.name
                     ext = extracted_file.suffix
                     indexed_name = f"{file_index}{ext}"
                     target = extract_dir / indexed_name
@@ -1593,8 +1669,9 @@ async def extract_archive(
 
                     file_list.append({
                         'file_id': file_index,
-                        'filename': extracted_file.name,
+                        'filename': original_name,
                         'mime_type': mime_type,
+                        'url': f"/api/media/archive-file/{upload_id}/{file_index}",
                     })
                     file_index += 1
 
