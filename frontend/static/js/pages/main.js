@@ -54,6 +54,13 @@ class I18n {
      * @returns {string} Translated string or the key itself if not found
      */
     t(key, params = {}) {
+        if (!key) return '';
+        if (typeof key === 'string' && key.includes(':::')) {
+            const [baseKey, arg] = key.split(':::');
+            const mergedParams = { error: arg, filename: arg, ...params };
+            return this.t(baseKey, mergedParams);
+        }
+
         const keys = key.split('.');
         let value = this.translations;
 
