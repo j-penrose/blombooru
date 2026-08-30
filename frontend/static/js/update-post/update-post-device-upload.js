@@ -22,7 +22,7 @@ class UpdatePostDeviceUpload extends UpdatePostModalBase {
             <div class="surface w-full h-full sm:h-auto sm:max-h-[85vh] sm:max-w-lg sm:mx-4 flex flex-col border-t sm:border shadow-2xl safe-area-bottom">
                 <!-- Header -->
                 <div class="flex items-center p-4 border-b border-color flex-shrink-0">
-                    <h2 class="text-base sm:text-lg font-bold truncate">${this._t('modal.update_post.from_device')}</h2>
+                    <h2 class="text-base sm:text-lg font-bold truncate">${window.i18n.t('modal.update_post.from_device')}</h2>
                 </div>
 
                 <!-- Body -->
@@ -31,7 +31,7 @@ class UpdatePostDeviceUpload extends UpdatePostModalBase {
                     <div id="upm-drop-zone" class="upload-area bg flex flex-col items-center justify-center gap-2 p-6 mb-3" style="min-height:120px;">
                         ${window.Icons ? window.Icons.upload({ size: 28, class: 'text-secondary' }) : ''}
                         <p id="upm-drop-label" class="text-xs text-secondary text-center">
-                            ${this._t('modal.update_post.drop_file_here')}
+                            ${window.i18n.t('modal.update_post.drop_file_here')}
                         </p>
                         <!-- accept restricts to image/video only; no directory selection -->
                         <input id="upm-file-input" type="file" accept="image/*,video/*" style="display:none;">
@@ -61,10 +61,10 @@ class UpdatePostDeviceUpload extends UpdatePostModalBase {
                     <div class="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3">
                         <div class="flex gap-2 sm:ml-auto">
                             <button id="upm-device-apply" class="flex-1 sm:flex-none min-h-[48px] sm:min-h-0 px-5 py-3 sm:py-2 btn-primary text-sm font-medium cursor-pointer" disabled>
-                                ${this._t('modal.update_post.apply')}
+                                ${window.i18n.t('modal.update_post.apply')}
                             </button>
                             <button id="upm-device-cancel" class="flex-1 sm:flex-none min-h-[48px] sm:min-h-0 px-5 py-3 sm:py-2 btn text-sm font-medium cursor-pointer">
-                                ${this._t('common.cancel')}
+                                ${window.i18n.t('common.cancel')}
                             </button>
                         </div>
                     </div>
@@ -126,7 +126,7 @@ class UpdatePostDeviceUpload extends UpdatePostModalBase {
         const img = this._modal?.querySelector('#upm-device-preview-img');
         const video = this._modal?.querySelector('#upm-device-preview-video');
 
-        if (label) label.textContent = this._t('modal.update_post.file_selected', { name: file.name });
+        if (label) label.textContent = window.i18n.t('modal.update_post.file_selected', { name: file.name });
         if (apply) apply.disabled = false;
 
         if (preview && img && video) {
@@ -162,7 +162,7 @@ class UpdatePostDeviceUpload extends UpdatePostModalBase {
         const applyBtn = this._modal?.querySelector('#upm-device-apply');
         if (applyBtn) {
             applyBtn.disabled = true;
-            applyBtn.textContent = this._t('modal.update_post.applying');
+            applyBtn.textContent = window.i18n.t('modal.update_post.applying');
         }
 
         const file = this._deviceFile;
@@ -200,7 +200,7 @@ class UpdatePostDeviceUpload extends UpdatePostModalBase {
             }
 
             // Finalize
-            this._setProgress(95, this._t('modal.update_post.applying'));
+            this._setProgress(95, window.i18n.t('modal.update_post.applying'));
 
             const finalizeForm = new FormData();
             finalizeForm.append('upload_id', uploadId);
@@ -215,9 +215,9 @@ class UpdatePostDeviceUpload extends UpdatePostModalBase {
                 const detail = err.detail || finalRes.statusText;
                 if (finalRes.status === 409) {
                     if (detail.includes('identical')) {
-                        throw new Error(this._t('modal.update_post.error_identical_file'));
+                        throw new Error(window.i18n.t('modal.update_post.error_identical_file'));
                     }
-                    throw new Error(this._t('modal.update_post.error_duplicate_file'));
+                    throw new Error(window.i18n.t('modal.update_post.error_duplicate_file'));
                 }
                 throw new Error(detail);
             }
@@ -225,7 +225,7 @@ class UpdatePostDeviceUpload extends UpdatePostModalBase {
             this._setProgress(100, '');
 
             if (typeof app !== 'undefined' && app.showNotification) {
-                app.showNotification(this._t('modal.update_post.success'), 'success');
+                app.showNotification(window.i18n.t('modal.update_post.success'), 'success');
             }
 
             this.hide();
@@ -233,13 +233,13 @@ class UpdatePostDeviceUpload extends UpdatePostModalBase {
             setTimeout(() => window.location.reload(), 800);
         } catch (e) {
             if (typeof app !== 'undefined' && app.showNotification) {
-                app.showNotification(this._t(e.message), 'error');
+                app.showNotification(window.i18n.t(e.message), 'error');
             }
         } finally {
             this._isUploading = false;
             if (applyBtn) {
                 applyBtn.disabled = false;
-                applyBtn.textContent = this._t('modal.update_post.apply');
+                applyBtn.textContent = window.i18n.t('modal.update_post.apply');
             }
         }
     }

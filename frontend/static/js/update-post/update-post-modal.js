@@ -22,15 +22,15 @@ class UpdatePostModal extends UpdatePostModalBase {
         modal.innerHTML = `
             <div class="surface p-2 sm:p-6 border shadow-2xl w-full max-w-sm mx-4 relative">
                 <div class="flex items-center mb-4 flex-shrink-0">
-                    <h2 class="text-base sm:text-lg font-bold truncate">${this._t('media.actions.update_post')}</h2>
+                    <h2 class="text-base sm:text-lg font-bold truncate">${window.i18n.t('media.actions.update_post')}</h2>
                 </div>
 
                 <div class="flex flex-col gap-3">
                     <button class="action-btn text-left p-4 bg hover:border-primary hover:text-primary transition-colors border flex items-center gap-3 cursor-pointer" data-action="url">
                         ${window.Icons ? window.Icons.link({ size: 20 }) : ''}
                         <div class="flex-1">
-                            <div class="font-bold text-sm">${this._t('modal.update_post.from_url')}</div>
-                            <div class="text-xs opacity-70">${this._t('modal.update_post.from_url_desc')}</div>
+                            <div class="font-bold text-sm">${window.i18n.t('modal.update_post.from_url')}</div>
+                            <div class="text-xs opacity-70">${window.i18n.t('modal.update_post.from_url_desc')}</div>
                         </div>
                         ${window.Icons ? window.Icons.chevronRight({ size: 16, class: 'opacity-50' }) : ''}
                     </button>
@@ -38,14 +38,14 @@ class UpdatePostModal extends UpdatePostModalBase {
                     <button class="action-btn text-left p-4 bg hover:border-primary hover:text-primary transition-colors border flex items-center gap-3 cursor-pointer" data-action="device">
                         ${window.Icons ? window.Icons.upload({ size: 20 }) : ''}
                         <div class="flex-1">
-                            <div class="font-bold text-sm">${this._t('modal.update_post.from_device')}</div>
-                            <div class="text-xs opacity-70">${this._t('modal.update_post.from_device_desc')}</div>
+                            <div class="font-bold text-sm">${window.i18n.t('modal.update_post.from_device')}</div>
+                            <div class="text-xs opacity-70">${window.i18n.t('modal.update_post.from_device_desc')}</div>
                         </div>
                         ${window.Icons ? window.Icons.chevronRight({ size: 16, class: 'opacity-50' }) : ''}
                     </button>
                 </div>
                 <div class="flex gap-2 mt-4">
-                    <button class="close-btn flex-1 px-4 py-2 border bg hover:border-primary hover:text-primary text text-xs transition-colors cursor-pointer">${this._t('common.close')}</button>
+                    <button class="close-btn flex-1 px-4 py-2 border bg hover:border-primary hover:text-primary text text-xs transition-colors cursor-pointer">${window.i18n.t('common.close')}</button>
                 </div>
             </div>
         `;

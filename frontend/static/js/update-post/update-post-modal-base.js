@@ -8,15 +8,6 @@ class UpdatePostModalBase {
         this._fullscreenViewer = null;
     }
 
-    _t(keyOrString, vars) {
-        if (!window.i18n || !keyOrString) return keyOrString || '';
-        if (typeof keyOrString === 'string' && keyOrString.includes(':::')) {
-            const [key, arg] = keyOrString.split(':::');
-            return window.i18n.t(key, { error: arg });
-        }
-        return window.i18n.t(keyOrString, vars);
-    }
-
     hide() {
         if (this._modal) {
             this._modal.remove();
