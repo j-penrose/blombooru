@@ -1,15 +1,16 @@
 class ModalHelper {
     constructor(options = {}) {
+        const modalId = options.id || 'modal-helper';
         this.options = {
-            id: options.id || 'modal-helper',
+            id: modalId,
             type: options.type || 'info', // 'info', 'warning', 'danger'
             title: options.title || this.getDefaultTitle(options.type),
             message: options.message || '',
             showIcon: options.showIcon !== false,
             confirmText: options.confirmText || window.i18n.t('common.yes'),
             cancelText: options.cancelText || window.i18n.t('common.no'),
-            confirmId: options.confirmId || 'modal-confirm-yes',
-            cancelId: options.cancelId || 'modal-confirm-no',
+            confirmId: options.confirmId || `${modalId}-confirm-yes`,
+            cancelId: options.cancelId || `${modalId}-confirm-no`,
             onConfirm: options.onConfirm || null,
             onCancel: options.onCancel || null,
             blurTarget: options.blurTarget || null, // CSS selector for element to blur
@@ -20,6 +21,7 @@ class ModalHelper {
 
         this.modalElement = null;
         this.isVisible = false;
+        this._escapeHandler = null;
 
         this.init();
     }
@@ -118,8 +120,12 @@ class ModalHelper {
     }
 
     setupEventListeners() {
-        const confirmBtn = document.getElementById(this.options.confirmId);
-        const cancelBtn = document.getElementById(this.options.cancelId);
+        const confirmBtn = this.modalElement
+            ? this.modalElement.querySelector(`#${CSS.escape(this.options.confirmId)}`)
+            : document.getElementById(this.options.confirmId);
+        const cancelBtn = this.modalElement
+            ? this.modalElement.querySelector(`#${CSS.escape(this.options.cancelId)}`)
+            : document.getElementById(this.options.cancelId);
 
         if (confirmBtn) {
             confirmBtn.addEventListener('click', () => this.confirm());
@@ -130,11 +136,15 @@ class ModalHelper {
         }
 
         if (this.options.closeOnEscape) {
-            document.addEventListener('keydown', (e) => {
+            if (this._escapeHandler) {
+                document.removeEventListener('keydown', this._escapeHandler);
+            }
+            this._escapeHandler = (e) => {
                 if (e.key === 'Escape' && this.isVisible) {
                     this.cancel();
                 }
-            });
+            };
+            document.addEventListener('keydown', this._escapeHandler);
         }
 
         if (this.options.closeOnOutsideClick) {
@@ -207,6 +217,11 @@ class ModalHelper {
             this.options.type = options.type;
         }
 
+        if (this._escapeHandler) {
+            document.removeEventListener('keydown', this._escapeHandler);
+            this._escapeHandler = null;
+        }
+
         // Recreate modal with new content
         if (this.modalElement && this.modalElement.parentNode) {
             this.modalElement.parentNode.removeChild(this.modalElement);
@@ -219,6 +234,10 @@ class ModalHelper {
 
     destroy() {
         this.hide();
+        if (this._escapeHandler) {
+            document.removeEventListener('keydown', this._escapeHandler);
+            this._escapeHandler = null;
+        }
         if (this.modalElement && this.modalElement.parentNode) {
             this.modalElement.parentNode.removeChild(this.modalElement);
         }
