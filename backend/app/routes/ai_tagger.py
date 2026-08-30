@@ -373,7 +373,7 @@ async def delete_model(
     except ImportError as e:
         raise HTTPException(status_code=503, detail=f"AI Tagger dependencies not installed: {str(e)}")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=safe_error_detail(e))
+        raise HTTPException(status_code=500, detail=safe_error_detail("AI tagger error", e))
 
 @router.post("/download/{model_name}")
 async def download_model(
