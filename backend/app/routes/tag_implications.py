@@ -2,8 +2,11 @@ import asyncio
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
-from sqlalchemy.orm import Session, joinedload
+from pydantic import BaseModel, model_validator
+from pydantic.types import conset, StringConstraints
+from sqlalchemy import cast, select, Text
+from sqlalchemy.orm import Session 
+from typing import Annotated, Self
 
 from ..auth import require_admin_mode
 from ..database import get_db
@@ -29,12 +32,21 @@ class TagImplicationResponse(BaseModel):
     class Config:
         from_attributes = True
 
-class TagImplicationCreate(BaseModel):
-    target_tags: List[str]
-    target_tag_patterns: Optional[List[str]] = []
-    implied_tags: List[str]
+# Ensure a lower-case string stripped from whitespace with a minimum length of 1
+Tag_Or_Pattern = Annotated[str, StringConstraints(strip_whitespace=True, to_lower=True, min_length=1)]
 
-def _resolve_tag_names(db: Session, tag_names: List[str]) -> List[Tag]:
+class TagImplicationCreate(BaseModel):
+    target_tags: set[Tag_Or_Pattern] = set()
+    target_tag_patterns: set[Tag_Or_Pattern] = set()
+    implied_tags: conset(Tag_Or_Pattern, min_length=1)
+
+    @model_validator(mode="after")
+    def validate_target_presence(self) -> Self:
+        if not self.target_tags and not self.target_tag_patterns:
+            raise ValueError("either 'target_tags' or 'target_tag_patterns' is required")
+        return self
+
+def _resolve_tag_names(db: Session, tag_names: set[str]) -> List[Tag]:
     """Look up Tag objects by name. Raises 400 if any tag is not found."""
     tags = []
     for name in tag_names:
@@ -96,22 +108,31 @@ async def create_implication(
     db: Session = Depends(get_db)
 ):
     """Create a new tag implication."""
-    patterns = _clean_patterns(data.target_tag_patterns)
 
-    if not data.target_tags and not patterns:
-        raise HTTPException(status_code=400, detail="At least one target tag or target pattern is required")
-    if not data.implied_tags:
-        raise HTTPException(status_code=400, detail="At least one implied tag is required")
-
-    target_tags = _resolve_tag_names(db, data.target_tags)
+    target_tags = _resolve_tag_names(db, data.target_tags) if data.target_tags else []
     implied_tags = _resolve_tag_names(db, data.implied_tags)
 
-    if not implied_tags:
-        raise HTTPException(status_code=400, detail="At least one implied tag is required")
+    # Check whether there already exist an implication with these specific parameters
+    stmt = select(TagImplication.id)
+
+    for tag in implied_tags:
+        stmt = stmt.where(TagImplication.implied_tags.any(Tag.id == tag.id))
+
+    if data.target_tags:
+        for tag in target_tags:
+            stmt = stmt.where(TagImplication.target_tags.any(Tag.id == tag.id))
+
+    if data.target_tag_patterns:
+        for pattern in data.target_tag_patterns:
+            stmt = stmt.where(cast(TagImplication.target_tag_patterns, Text).contains(pattern))
+
+    exists = db.scalar(stmt)
+    if exists:
+        raise HTTPException(status_code=409, detail="Implication already exist")
 
     implication = TagImplication()
     implication.target_tags = target_tags
-    implication.target_tag_patterns = patterns if patterns else None
+    implication.target_tag_patterns = list(data.target_tag_patterns) if data.target_tag_patterns else None
     implication.implied_tags = implied_tags
 
     db.add(implication)
