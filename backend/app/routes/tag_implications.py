@@ -1,7 +1,7 @@
 import asyncio
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, model_validator
 from pydantic.types import conset, StringConstraints
 from sqlalchemy import cast, func, select, Text
@@ -12,7 +12,8 @@ from ..auth import require_admin_mode
 from ..database import get_db
 from ..models import blombooru_implication_implied, blombooru_implication_targets, Media, Tag, TagImplication, User 
 from ..utils.cache import invalidate_tag_cache
-from ..utils.tag_utils import expand_implications
+from ..utils.logger import logger
+from ..utils.tag_utils import expand_implications, resolve_implications
 
 router = APIRouter(prefix="/api/tag-implications", tags=["tag-implications"])
 
@@ -34,6 +35,9 @@ class TagImplicationResponse(BaseModel):
 
 # Ensure a lower-case string stripped from whitespace with a minimum length of 1
 Tag_Or_Pattern = Annotated[str, StringConstraints(strip_whitespace=True, to_lower=True, min_length=1)]
+
+class TagImplicationResolveRequest(BaseModel):
+    tags: conset(Tag_Or_Pattern, min_length=1)
 
 class TagImplicationCreate(BaseModel):
     target_tags: set[Tag_Or_Pattern] = set()
@@ -269,3 +273,13 @@ async def simulate_apply_all_implications(
     affected_media = await loop.run_in_executor(None, do_simulate_apply_all)
     return {"affected_media": affected_media}
 
+@router.post("/resolve")
+async def implications_for(
+    request: TagImplicationResolveRequest,
+    current_user: User = Depends(require_admin_mode),
+    db: Session = Depends(get_db)
+) -> dict:
+    """Resolve and return all implied tags for the given a tag set."""
+
+    implied_tags = resolve_implications(db, request.tags)
+    return {"tags": implied_tags}
