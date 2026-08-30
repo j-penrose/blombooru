@@ -212,6 +212,7 @@
                 "error_download_failed": "Kunde inte ladda ned mediefil: {error}",
                 "error_save_failed": "Kunde inte spara nedladdad fil: {error}",
                 "error_duplicate": "Media finns redan (duplikat av {filename})",
+                "error_duplicate_session": "Exakt dubblett av befintlig fil i nuvarande session: {filename}",
                 "error_invalid_url": "Ogiltig URL",
                 "error_redirect_not_followed": "Omdirigeringar är inte tillåtna",
                 "error_ssrf_blocked": "Åtkomst till interna nätverk är förbjuden",
@@ -607,6 +608,8 @@
         }
     },
     "common": {
+        "add": "Lägg till",
+        "apply": "Verkställ",
         "cancel": "Avbryt",
         "clear_selection": "Rensa urval",
         "close": "Stäng",
@@ -620,6 +623,7 @@
         "database": "Databas",
         "default": "Standard",
         "delete": "Radera",
+        "description": "Beskrivning",
         "disconnected": "Frånkopplad",
         "edit": "Redigera",
         "error": "Fel",
@@ -641,6 +645,7 @@
         "password_placeholder": "Lämna tomt för inget",
         "port": "Port",
         "previous": "Föregående",
+        "remove": "Ta bort",
         "save": "Spara",
         "search": "Sök",
         "success": "Lyckades",
@@ -766,7 +771,6 @@
             "uploaded": "Uppladdad",
             "duration": "Varaktighet",
             "source": "Källa",
-            "description": "Beskrivning",
             "description_placeholder": "Lägg till en personlig anteckning eller bildtext...",
             "save_description": "Spara beskrivning"
         },
@@ -1189,23 +1193,38 @@
     },
     "upload": {
         "base_settings": {
-            "base_albums": "Basalbum",
-            "base_badge": "(Bas)",
-            "base_rating": "Basbetyg",
-            "base_source": "Baskäll-URL (valfritt)",
-            "base_tags": "Bastaggar (läggs till före all media)",
-            "select_album": "Välj album att lägga till...",
-            "title": "Basinställningar (gäller för all media)"
+            "select_album": "Välj album att lägga till..."
+        },
+        "pending": {
+            "title": "Väntande tillägg",
+            "description": "Granska taggar och album som inte finns i databasen ännu. Du kan ändra kategorier innan du importerar.",
+            "new_tags": "Väntande nya taggar",
+            "no_new_tags": "Inga nya taggar väntar.",
+            "new_albums": "Väntande nya album",
+            "no_new_albums": "Inga nya album väntar.",
+            "used_in_media": "Använt i {count} medieobjekt. Klicka för att välja dem.",
+            "media_count": "{count} medieobjekt"
         },
         "preview": {
-            "additional_tags": "Ytterligare taggar (bastaggar läggs till automatiskt)",
-            "editing": "Redigerar: ",
-            "final_tags": "Slutliga taggar: ",
-            "individual_albums": "Individuella album",
-            "individual_rating": "Individuellt betyg",
-            "individual_source": "Individuell käll-URL (valfritt)",
-            "remove_media": "Ta bort denna media",
-            "title": "Uppladdad media (klicka för att redigera individuellt betyg, källa och taggar)"
+            "select_hint": "Välj ett medieobjekt ovan för att redigera detaljer, eller välj flera för massredigering.",
+            "additional_tags": "Ytterligare taggar",
+            "editing": "Redigerar:",
+            "final_tags": "Slutliga taggar",
+            "title": "Förberedd media",
+            "remove_confirm": "Är du säker på att du vill ta bort det här medieobjektet från uppladdningskön?",
+            "remove_item_title": "Ta bort media"
+        },
+        "bulk": {
+            "editing_selected": "Redigerar: {count} valda objekt",
+            "remove_selected": "Ta bort {count} objekt",
+            "delete_confirm": "Ta bort {count} mediaobjekt från uppladdningskön?",
+            "choose_rating": "Välj betyg...",
+            "source_applied": "Käll-URL applicerad på valda objekt",
+            "description_applied": "Beskrivning applicerad på valda objekt",
+            "album_added": "Album lades till för valda objekt",
+            "tags_added": "Lade till {count} tagg(ar) till valda objekt",
+            "common_tags": "Gemensamma taggar",
+            "tags_removed": "Tog bort {count} tagg(ar) från valda objekt"
         },
         "progress": {
             "duplicates_skipped": "{count} dubblett(er) hoppades över.",
@@ -1219,7 +1238,9 @@
         },
         "submit": {
             "cancel_all": "Avbryt & rensa alla",
-            "submit_all": "Skicka all media"
+            "submit_all": "Ladda upp all media",
+            "cancel_confirm": "Är du säker på att du vill avbryta och rensa alla förberedda objekt?",
+            "cancel_title": "Avbryt uppladdningssession"
         }
     },
     "media_picker": {

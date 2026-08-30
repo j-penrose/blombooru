@@ -212,6 +212,7 @@
                 "error_download_failed": "Failed to download media file: {error}",
                 "error_save_failed": "Failed to save downloaded file: {error}",
                 "error_duplicate": "Media already exists (duplicate of {filename})",
+                "error_duplicate_session": "Exact duplicate of existing file in current session: {filename}",
                 "error_invalid_url": "Invalid URL",
                 "error_redirect_not_followed": "Redirects are not allowed",
                 "error_ssrf_blocked": "Access to internal networks is forbidden",
@@ -607,6 +608,8 @@
         }
     },
     "common": {
+        "add": "Add",
+        "apply": "Apply",
         "cancel": "Cancel",
         "clear_selection": "Clear Selection",
         "close": "Close",
@@ -620,6 +623,7 @@
         "database": "Database",
         "default": "Default",
         "delete": "Delete",
+        "description": "Description",
         "disconnected": "Disconnected",
         "edit": "Edit",
         "error": "Error",
@@ -641,6 +645,7 @@
         "password_placeholder": "Leave empty for none",
         "port": "Port",
         "previous": "Previous",
+        "remove": "Remove",
         "save": "Save",
         "search": "Search",
         "success": "Success",
@@ -766,7 +771,6 @@
             "uploaded": "Uploaded",
             "duration": "Duration",
             "source": "Source",
-            "description": "Description",
             "description_placeholder": "Add a personal note or caption...",
             "save_description": "Save Description"
         },
@@ -1189,23 +1193,38 @@
     },
     "upload": {
         "base_settings": {
-            "base_albums": "Base Albums",
-            "base_badge": "(Base)",
-            "base_rating": "Base Rating",
-            "base_source": "Base Source URL (optional)",
-            "base_tags": "Base Tags (prefixed to all media)",
-            "select_album": "Select album to add...",
-            "title": "Base Settings (applies to all media)"
+            "select_album": "Select album to add..."
+        },
+        "pending": {
+            "title": "Pending Additions",
+            "description": "Review tags and albums that do not exist in the database yet. You can change categories before importing.",
+            "new_tags": "Pending New Tags",
+            "no_new_tags": "No new tags pending.",
+            "new_albums": "Pending New Albums",
+            "no_new_albums": "No new albums pending.",
+            "used_in_media": "Used in {count} media item(s). Click to select them.",
+            "media_count": "{count} media"
         },
         "preview": {
-            "additional_tags": "Additional Tags (base tags are prefixed automatically)",
-            "editing": "Editing: ",
-            "final_tags": "Final tags: ",
-            "individual_albums": "Individual Albums",
-            "individual_rating": "Individual Rating",
-            "individual_source": "Individual Source URL (optional)",
-            "remove_media": "Remove This Media",
-            "title": "Uploaded Media (click to edit individual rating, source, and tags)"
+            "select_hint": "Select a media item above to edit details, or select multiple items to edit in bulk.",
+            "additional_tags": "Additional Tags",
+            "editing": "Editing:",
+            "final_tags": "Final Tags",
+            "title": "Staged Media",
+            "remove_confirm": "Are you sure you want to remove this item from the upload queue?",
+            "remove_item_title": "Remove item"
+        },
+        "bulk": {
+            "editing_selected": "Editing: {count} selected items",
+            "remove_selected": "Remove {count} items",
+            "delete_confirm": "Remove {count} media item(s) from upload queue?",
+            "choose_rating": "Choose rating...",
+            "source_applied": "Source URL applied to selected items",
+            "description_applied": "Description applied to selected items",
+            "album_added": "Album added to selected items",
+            "tags_added": "Added {count} tag(s) to selected items",
+            "common_tags": "Common Tags",
+            "tags_removed": "Removed {count} tag(s) from selected items"
         },
         "progress": {
             "duplicates_skipped": "{count} duplicate(s) skipped.",
@@ -1219,7 +1238,9 @@
         },
         "submit": {
             "cancel_all": "Cancel & Clear All",
-            "submit_all": "Submit All Media"
+            "submit_all": "Submit All Media",
+            "cancel_confirm": "Are you sure you want to cancel and clear all staged items?",
+            "cancel_title": "Cancel upload session"
         }
     },
     "media_picker": {

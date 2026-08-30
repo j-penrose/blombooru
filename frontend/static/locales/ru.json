@@ -212,6 +212,7 @@
                 "error_download_failed": "Не удалось загрузить медиафайл: {error}",
                 "error_save_failed": "Не удалось сохранить загруженный файл: {error}",
                 "error_duplicate": "Медиафайл с таким же хэшем уже существует (дубль {filename})",
+                "error_duplicate_session": "",
                 "error_invalid_url": "Неверный URL",
                 "error_redirect_not_followed": "Редиректы запрещены",
                 "error_ssrf_blocked": "Доступ к внутренним сетям запрещен",
@@ -607,6 +608,8 @@
         }
     },
     "common": {
+        "add": "",
+        "apply": "Применить",
         "cancel": "Отмена",
         "clear_selection": "Очистить выбор",
         "close": "Закрыть",
@@ -620,6 +623,7 @@
         "database": "База данных",
         "default": "По умолчанию",
         "delete": "Удалить",
+        "description": "Описание",
         "disconnected": "Отключено",
         "edit": "Редактировать",
         "error": "Ошибка",
@@ -641,6 +645,7 @@
         "password_placeholder": "Оставьте пустым, если не используется",
         "port": "Порт",
         "previous": "",
+        "remove": "",
         "save": "Сохранить",
         "search": "Поиск",
         "success": "Успешно",
@@ -766,7 +771,6 @@
             "uploaded": "Загружено",
             "duration": "Длительность",
             "source": "Источник",
-            "description": "Описание",
             "description_placeholder": "Добавить персональную заметку или описание...",
             "save_description": "Сохранить описание"
         },
@@ -1189,23 +1193,38 @@
     },
     "upload": {
         "base_settings": {
-            "base_albums": "Базовые Альбомы",
-            "base_badge": "(Базовый)",
-            "base_rating": "Базовый Рейтинг",
-            "base_source": "Базовый URL источника (опционально)",
-            "base_tags": "Базовые теги (применимы ко всем медиафайлам)",
-            "select_album": "Выберите альбом для добавления...",
-            "title": "Базовые настройки (применимы ко всем медиафайлам)"
+            "select_album": "Выберите альбом для добавления..."
+        },
+        "pending": {
+            "title": "",
+            "description": "",
+            "new_tags": "",
+            "no_new_tags": "",
+            "new_albums": "",
+            "no_new_albums": "",
+            "used_in_media": "",
+            "media_count": ""
         },
         "preview": {
+            "select_hint": "",
             "additional_tags": "Дополнительные теги (базовые теги добавляются автоматически)",
-            "editing": "Редактирование: ",
-            "final_tags": "Финальные теги: ",
-            "individual_albums": "Индивидуальные Альбомы",
-            "individual_rating": "Индивидуальный Рейтинг",
-            "individual_source": "Индивидуальный URL источника (опционально)",
-            "remove_media": "Удалить медиафайл",
-            "title": "Загруженные медиафайлы (кликните, чтобы изменить рейтинг, источник и теги)"
+            "editing": "Редактирование:",
+            "final_tags": "Финальные теги",
+            "title": "Загруженные медиафайлы (кликните, чтобы изменить рейтинг, источник и теги)",
+            "remove_confirm": "",
+            "remove_item_title": ""
+        },
+        "bulk": {
+            "editing_selected": "",
+            "remove_selected": "",
+            "delete_confirm": "",
+            "choose_rating": "",
+            "source_applied": "",
+            "description_applied": "",
+            "album_added": "",
+            "tags_added": "",
+            "common_tags": "",
+            "tags_removed": ""
         },
         "progress": {
             "duplicates_skipped": "{count} дублей пропущено",
@@ -1219,7 +1238,9 @@
         },
         "submit": {
             "cancel_all": "Отменить и очистить всё",
-            "submit_all": "Принять все медиафайлы"
+            "submit_all": "Принять все медиафайлы",
+            "cancel_confirm": "",
+            "cancel_title": ""
         }
     },
     "media_picker": {

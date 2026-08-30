@@ -212,6 +212,7 @@
                 "error_download_failed": "下载媒体文件失败：{error}",
                 "error_save_failed": "保存已下载的文件失败：{error}",
                 "error_duplicate": "媒体已存在（与 {filename} 重复）",
+                "error_duplicate_session": "",
                 "error_invalid_url": "无效的 URL",
                 "error_redirect_not_followed": "",
                 "error_ssrf_blocked": "",
@@ -607,6 +608,8 @@
         }
     },
     "common": {
+        "add": "",
+        "apply": "",
         "cancel": "取消",
         "clear_selection": "清除选择",
         "close": "关闭",
@@ -620,6 +623,7 @@
         "database": "数据库",
         "default": "默认",
         "delete": "删除",
+        "description": "",
         "disconnected": "断开连接",
         "edit": "编辑",
         "error": "错误",
@@ -641,6 +645,7 @@
         "password_placeholder": "留空则不设密码",
         "port": "端口",
         "previous": "",
+        "remove": "",
         "save": "保存",
         "search": "搜索",
         "success": "成功",
@@ -766,7 +771,6 @@
             "uploaded": "上传时间",
             "duration": "时长",
             "source": "来源",
-            "description": "",
             "description_placeholder": "",
             "save_description": ""
         },
@@ -1189,23 +1193,38 @@
     },
     "upload": {
         "base_settings": {
-            "base_albums": "基础相册",
-            "base_badge": "(基础)",
-            "base_rating": "基础分级",
-            "base_source": "基础来源 URL (可选)",
-            "base_tags": "基础标签 (前置于所有媒体)",
-            "select_album": "选择要添加的相册...",
-            "title": "基础设置 (应用于所有上传媒体)"
+            "select_album": "选择要添加的相册..."
+        },
+        "pending": {
+            "title": "",
+            "description": "",
+            "new_tags": "",
+            "no_new_tags": "",
+            "new_albums": "",
+            "no_new_albums": "",
+            "used_in_media": "",
+            "media_count": ""
         },
         "preview": {
+            "select_hint": "",
             "additional_tags": "额外标签 (基础标签会自动前置)",
-            "editing": "正在编辑: ",
-            "final_tags": "最终标签: ",
-            "individual_albums": "单独相册",
-            "individual_rating": "单独分级",
-            "individual_source": "单独来源 URL (可选)",
-            "remove_media": "移除此媒体",
-            "title": "已上传媒体 (点击以编辑单个媒体的分级、来源和标签)"
+            "editing": "正在编辑:",
+            "final_tags": "最终标签",
+            "title": "已上传媒体 (点击以编辑单个媒体的分级、来源和标签)",
+            "remove_confirm": "",
+            "remove_item_title": ""
+        },
+        "bulk": {
+            "editing_selected": "",
+            "remove_selected": "",
+            "delete_confirm": "",
+            "choose_rating": "",
+            "source_applied": "",
+            "description_applied": "",
+            "album_added": "",
+            "tags_added": "",
+            "common_tags": "",
+            "tags_removed": ""
         },
         "progress": {
             "duplicates_skipped": "已跳过 {count} 个重复项。",
@@ -1219,7 +1238,9 @@
         },
         "submit": {
             "cancel_all": "取消并全部清空",
-            "submit_all": "提交所有媒体"
+            "submit_all": "提交所有媒体",
+            "cancel_confirm": "",
+            "cancel_title": ""
         }
     },
     "media_picker": {
