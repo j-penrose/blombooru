@@ -101,42 +101,8 @@ class BooruImporter {
         if (!this.previewArea || !this.currentPost) return;
 
         const post = this.currentPost;
-
-        const sortedTags = this.sortPostTags(post.tags);
+        const sortedTags = TagPreview.sortTags(post.tags);
         const tagsText = sortedTags.map(t => t.name).join(' ');
-
-        const unconfirmedTags = sortedTags.filter(t => t.is_new && !t.user_assigned);
-        const categorizedTags = sortedTags.filter(t => !t.is_new || t.user_assigned);
-
-        const tagsByCategory = {};
-        for (const tag of categorizedTags) {
-            if (!tagsByCategory[tag.category]) {
-                tagsByCategory[tag.category] = [];
-            }
-            tagsByCategory[tag.category].push(tag);
-        }
-
-        const categoryOrder = ['artist', 'copyright', 'character', 'general', 'meta'];
-        let tagCategoryHtml = '';
-
-        if (unconfirmedTags.length > 0) {
-            tagCategoryHtml += `
-                <div class="flex flex-wrap gap-1 w-full mb-3 pb-2 border-b">
-                    ${unconfirmedTags.map(t => this.renderDropdownTag(t, 'grayscale ' + t.category)).join('')}
-                </div>
-            `;
-        }
-
-        for (const cat of categoryOrder) {
-            const catTags = tagsByCategory[cat];
-            if (catTags && catTags.length > 0) {
-                tagCategoryHtml += `
-                    <div class="flex flex-wrap gap-1 w-full">
-                        ${catTags.map(t => t.is_new ? this.renderDropdownTag(t, cat) : `<span class="text-xs tag-text tag ${cat}">${this.escapeHtml(t.name)}</span>`).join('')}
-                    </div>
-                `;
-            }
-        }
 
         this.previewArea.innerHTML = `
             <div class="bg p-4 border">
@@ -193,8 +159,7 @@ class BooruImporter {
 
                         <div class="mb-3">
                             <div class="text-xs font-bold mb-1">${window.i18n.t('common.tags')}</div>
-                            <div class="p-2 surface border flex flex-wrap gap-2">
-                                ${tagCategoryHtml}
+                            <div id="booru-tags-preview" class="p-2 surface border flex flex-wrap gap-2">
                             </div>
                         </div>
                     </div>
@@ -229,26 +194,28 @@ class BooruImporter {
 
         this.previewArea.style.display = 'block';
 
+        const tagsPreviewContainer = this.previewArea.querySelector('#booru-tags-preview');
+        if (tagsPreviewContainer) {
+            this.tagPreview = new TagPreview(tagsPreviewContainer, {
+                allowCategoryChange: true,
+                onCategoryChange: (tag, newCategory) => {
+                    // Update the tag in currentPost.tags
+                    if (this.currentPost && this.currentPost.tags) {
+                        const existing = this.currentPost.tags.find(t => t.name.toLowerCase() === tag.name.toLowerCase());
+                        if (existing) {
+                            existing.category = newCategory;
+                            existing.user_assigned = true;
+                            existing.is_new = true;
+                        }
+                    }
+                }
+            });
+            this.tagPreview.setTags(post.tags);
+        }
+
         const ratingSelectEl = this.previewArea.querySelector('#booru-rating-select');
         if (ratingSelectEl && typeof CustomSelect !== 'undefined') {
             new CustomSelect(ratingSelectEl);
-        }
-
-        const tagSelects = this.previewArea.querySelectorAll('.booru-tag-select');
-        if (typeof CustomSelect !== 'undefined') {
-            tagSelects.forEach(el => {
-                new CustomSelect(el);
-                el.addEventListener('change', (e) => {
-                    const tagName = el.dataset.tag;
-                    const newCategory = e.detail.value;
-                    const tag = this.currentPost.tags.find(t => t.name === tagName);
-                    if (tag) {
-                        tag.category = newCategory;
-                        tag.user_assigned = true;
-                        this.renderPreview();
-                    }
-                });
-            });
         }
 
         // Setup fullscreen click on image
@@ -267,6 +234,11 @@ class BooruImporter {
         if (tagsInput && this.tagInputHelper) {
             this.tagInputHelper.setupTagInput(tagsInput, 'booru-import-tags', {
                 validateDelay: 500,
+                onValidate: () => {
+                    if (this.currentPost) {
+                        this.updateTagsPreview();
+                    }
+                }
             });
             setTimeout(() => {
                 this.tagInputHelper.validateAndStyleTags(tagsInput);
@@ -306,8 +278,32 @@ class BooruImporter {
     getEditedTags() {
         const tagsInput = this.previewArea?.querySelector('#booru-tags-input');
         if (!tagsInput) return [];
-        const text = this.tagInputHelper.getPlainTextFromDiv(tagsInput);
+        const text = this.tagInputHelper ? this.tagInputHelper.getPlainTextFromDiv(tagsInput) : tagsInput.textContent;
         return text.split(/\s+/).filter(t => t.length > 0);
+    }
+
+    updateTagsPreview() {
+        if (!this.tagPreview || !this.currentPost) return;
+        const currentTagNames = this.getEditedTags();
+        const newTagsList = [];
+
+        for (const name of currentTagNames) {
+            const lower = name.toLowerCase();
+            const existing = (this.currentPost.tags || []).find(t => t.name.toLowerCase() === lower);
+            if (existing) {
+                newTagsList.push(existing);
+            } else {
+                const isConfirmedInDb = this.tagInputHelper?.tagValidationCache?.get(lower);
+                if (isConfirmedInDb === true) {
+                    newTagsList.push({ name, category: 'general', is_new: false, user_assigned: false });
+                } else {
+                    newTagsList.push({ name, category: 'general', is_new: true, user_assigned: false });
+                }
+            }
+        }
+
+        this.currentPost.tags = newTagsList;
+        this.tagPreview.setTags(newTagsList);
     }
 
     getCategoryHints() {
@@ -438,6 +434,16 @@ class BooruImporter {
             const file = new File([blob], post.filename, { type: blob.type });
 
             const tags = this.getEditedTags();
+            const userAssignedTags = [];
+            if (this.currentPost && this.currentPost.tags) {
+                const tagNamesLower = new Set(tags.map(t => t.toLowerCase()));
+                for (const t of this.currentPost.tags) {
+                    if (tagNamesLower.has(t.name.toLowerCase()) && t.user_assigned) {
+                        userAssignedTags.push(t.name);
+                    }
+                }
+            }
+
             const ratingSelect = this.previewArea?.querySelector('#booru-rating-select');
             const rating = ratingSelect ? ratingSelect.dataset.value : post.rating;
 
@@ -446,6 +452,7 @@ class BooruImporter {
                 source: post.source || post.booru_url,
                 tags: tags,
                 categoryHints: this.getCategoryHints(),
+                userAssignedTags: userAssignedTags,
                 autoCreateTags: this.autoCreateCheckbox?.checked || false,
             });
 

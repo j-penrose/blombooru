@@ -167,41 +167,6 @@ class UpdatePostUrlImport extends UpdatePostModalBase {
         const preview = this._modal.querySelector('#upm-url-preview');
         if (!preview) return;
 
-        const sortedTags = this._sortPostTags(post.tags || []);
-        const unconfirmedTags = sortedTags.filter(t => t.is_new && !t.user_assigned);
-        const categorizedTags = sortedTags.filter(t => !t.is_new || t.user_assigned);
-
-        const tagsByCategory = {};
-        for (const tag of categorizedTags) {
-            if (!tagsByCategory[tag.category]) tagsByCategory[tag.category] = [];
-            tagsByCategory[tag.category].push(tag);
-        }
-
-        const categoryOrder = ['artist', 'copyright', 'character', 'general', 'meta'];
-        let tagCategoryHtml = '';
-
-        if (unconfirmedTags.length > 0) {
-            tagCategoryHtml += `
-                <div class="flex flex-wrap gap-1 w-full mb-3 pb-2 border-b">
-                    ${unconfirmedTags.map(t => this._renderDropdownTag(t, 'grayscale ' + t.category)).join('')}
-                </div>
-            `;
-        }
-
-        for (const cat of categoryOrder) {
-            const catTags = tagsByCategory[cat];
-            if (catTags && catTags.length > 0) {
-                tagCategoryHtml += `
-                    <div class="flex flex-wrap gap-1 w-full">
-                        ${catTags.map(t => t.is_new
-                    ? this._renderDropdownTag(t, cat)
-                    : `<span class="text-xs tag-text tag ${cat}">${this._escapeHtml(t.name)}</span>`
-                ).join('')}
-                    </div>
-                `;
-            }
-        }
-
         const tagsText = this._getTagsText(post.tags || []);
 
         // Resolution comparison
@@ -278,8 +243,7 @@ class UpdatePostUrlImport extends UpdatePostModalBase {
 
                         <div class="mb-3">
                             <div class="text-xs font-bold mb-1">${window.i18n.t('common.tags')}</div>
-                            <div class="p-2 surface border flex flex-wrap gap-2">
-                                ${tagCategoryHtml || `<span class="text-xs text-secondary">${this._t('common.no_tags')}</span>`}
+                            <div id="upm-tags-preview" class="p-2 surface border flex flex-wrap gap-2">
                             </div>
                         </div>
                     </div>
@@ -336,26 +300,19 @@ class UpdatePostUrlImport extends UpdatePostModalBase {
 
         this._modal.querySelector('#upm-url-apply').style.display = '';
 
+        const tagsPreviewContainer = preview.querySelector('#upm-tags-preview');
+        if (tagsPreviewContainer && typeof TagPreview !== 'undefined') {
+            new TagPreview(tagsPreviewContainer, {
+                allowCategoryChange: true,
+                onCategoryChange: (tag, newCategory) => {
+                    this._renderPreview(this._fetchedPost);
+                }
+            }).setTags(post.tags);
+        }
+
         const ratingSelectEl = preview.querySelector('#upm-rating-select');
         if (ratingSelectEl && typeof CustomSelect !== 'undefined') {
             new CustomSelect(ratingSelectEl);
-        }
-
-        const tagSelects = preview.querySelectorAll('.booru-tag-select');
-        if (typeof CustomSelect !== 'undefined') {
-            tagSelects.forEach(el => {
-                new CustomSelect(el);
-                el.addEventListener('change', (e) => {
-                    const tagName = el.dataset.tag;
-                    const newCategory = e.detail.value;
-                    const tag = this._fetchedPost.tags.find(t => t.name === tagName);
-                    if (tag) {
-                        tag.category = newCategory;
-                        tag.user_assigned = true;
-                        this._renderPreview(this._fetchedPost);
-                    }
-                });
-            });
         }
 
         const tagsInput = preview.querySelector('#upm-tags-input');
