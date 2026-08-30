@@ -302,12 +302,20 @@ class UpdatePostUrlImport extends UpdatePostModalBase {
 
         const tagsPreviewContainer = preview.querySelector('#upm-tags-preview');
         if (tagsPreviewContainer && typeof TagPreview !== 'undefined') {
-            new TagPreview(tagsPreviewContainer, {
+            this.tagPreview = new TagPreview(tagsPreviewContainer, {
                 allowCategoryChange: true,
                 onCategoryChange: (tag, newCategory) => {
-                    this._renderPreview(this._fetchedPost);
+                    if (this._fetchedPost && this._fetchedPost.tags) {
+                        const existing = this._fetchedPost.tags.find(t => t.name.toLowerCase() === tag.name.toLowerCase());
+                        if (existing) {
+                            existing.category = newCategory;
+                            existing.user_assigned = true;
+                            existing.is_new = true;
+                        }
+                    }
                 }
-            }).setTags(post.tags);
+            });
+            this.tagPreview.setTags(post.tags);
         }
 
         const ratingSelectEl = preview.querySelector('#upm-rating-select');
@@ -317,9 +325,16 @@ class UpdatePostUrlImport extends UpdatePostModalBase {
 
         const tagsInput = preview.querySelector('#upm-tags-input');
         if (tagsInput && typeof TagInputHelper !== 'undefined') {
-            const helper = new TagInputHelper();
-            helper.setupTagInput(tagsInput, 'upm-tags', { validateDelay: 500 });
-            setTimeout(() => helper.validateAndStyleTags(tagsInput), 200);
+            this.tagInputHelper = new TagInputHelper();
+            this.tagInputHelper.setupTagInput(tagsInput, 'upm-tags', {
+                validateDelay: 500,
+                onValidate: () => {
+                    if (this._fetchedPost) {
+                        this.updateTagsPreview();
+                    }
+                }
+            });
+            setTimeout(() => this.tagInputHelper.validateAndStyleTags(tagsInput), 200);
         }
         if (tagsInput && typeof TagAutocomplete !== 'undefined') {
             new TagAutocomplete(tagsInput, {
@@ -348,6 +363,27 @@ class UpdatePostUrlImport extends UpdatePostModalBase {
                 );
             });
         }
+    }
+
+    updateTagsPreview() {
+        if (!this.tagPreview || !this._fetchedPost) return;
+        const tagsInput = this._modal.querySelector('#upm-tags-input');
+        
+        let currentTagNames = [];
+        if (this.tagInputHelper) {
+            const text = this.tagInputHelper.getPlainTextFromDiv(tagsInput);
+            currentTagNames = text.split(/\s+/).filter(t => t.length > 0);
+        } else {
+            const text = tagsInput.innerText || tagsInput.textContent || '';
+            currentTagNames = text.trim().split(/\s+/).filter(t => t.length > 0);
+        }
+        
+        const newTagsList = currentTagNames.map(n => {
+            const existing = (this._fetchedPost.tags || []).find(t => t.name.toLowerCase() === n.toLowerCase());
+            return existing ? existing : { name: n };
+        });
+
+        this.tagPreview.setTags(newTagsList);
     }
 
     // ==================== Apply ====================

@@ -47,9 +47,9 @@ async def batch_validate_tags(
     chk_list = list(resolved_names_to_check)
     for i in range(0, len(chk_list), CHUNK_SIZE):
         chunk = chk_list[i:i + CHUNK_SIZE]
-        tags = db.query(Tag.name).filter(Tag.name.in_(chunk)).all()
+        tags = db.query(Tag.name, Tag.category).filter(Tag.name.in_(chunk)).all()
         for t in tags:
-            existing_tags[t[0].lower()] = t[0]
+            existing_tags[t.name.lower()] = {"name": t.name, "category": t.category.value if t.category else 'general'}
 
     results = {}
     for name in unique_names:
@@ -58,7 +58,7 @@ async def batch_validate_tags(
             if target_name.lower() in existing_tags:
                 results[name] = existing_tags[target_name.lower()]
             else:
-                results[name] = target_name
+                results[name] = {"name": target_name, "category": None}
         elif name in existing_tags:
             results[name] = existing_tags[name]
         else:

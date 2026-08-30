@@ -4,14 +4,81 @@ class TagPreview {
         this.options = {
             onCategoryChange: options.onCategoryChange || null,
             allowCategoryChange: options.allowCategoryChange !== false,
+            resolveAliases: options.resolveAliases !== false,
             ...options
         };
         this.tags = [];
         this.customSelects = [];
     }
 
-    setTags(tags) {
-        this.tags = tags || [];
+    async setTags(tags) {
+        const seq = (this._tagUpdateSeq = (this._tagUpdateSeq || 0) + 1);
+
+        if (!tags || tags.length === 0) {
+            this.tags = [];
+            this.render();
+            return;
+        }
+
+        const dedupedTags = [];
+        const seenNames = new Set();
+        
+        for (const t of tags) {
+            if (!t || !t.name) continue;
+            const lower = t.name.toLowerCase();
+            if (!seenNames.has(lower)) {
+                seenNames.add(lower);
+                dedupedTags.push({...t}); // Clone to avoid mutating caller's objects
+            }
+        }
+        
+        if (this.options.resolveAliases) {
+            try {
+                const names = dedupedTags.map(t => t.name);
+                const response = await fetch('/api/tags/batch-validate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ names })
+                });
+                
+                if (seq !== this._tagUpdateSeq) return;
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const resolved = data.resolved || {};
+                    
+                    for (const t of dedupedTags) {
+                        const originalName = t.name.toLowerCase();
+                        if (resolved[originalName] !== undefined) {
+                            if (resolved[originalName] !== null) {
+                                t.name = resolved[originalName].name;
+                                if (resolved[originalName].category) {
+                                    t.category = resolved[originalName].category;
+                                }
+                                t.is_new = false;
+                            } else {
+                                t.is_new = true;
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to resolve aliases in TagPreview', e);
+                if (seq !== this._tagUpdateSeq) return;
+            }
+        }
+
+        // Dedupe again after alias resolution
+        this.tags = [];
+        const finalSeen = new Set();
+        for (const t of dedupedTags) {
+            const lower = t.name.toLowerCase();
+            if (!finalSeen.has(lower)) {
+                finalSeen.add(lower);
+                this.tags.push(t);
+            }
+        }
+        
         this.render();
     }
 

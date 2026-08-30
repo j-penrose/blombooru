@@ -285,22 +285,11 @@ class BooruImporter {
     updateTagsPreview() {
         if (!this.tagPreview || !this.currentPost) return;
         const currentTagNames = this.getEditedTags();
-        const newTagsList = [];
-
-        for (const name of currentTagNames) {
-            const lower = name.toLowerCase();
-            const existing = (this.currentPost.tags || []).find(t => t.name.toLowerCase() === lower);
-            if (existing) {
-                newTagsList.push(existing);
-            } else {
-                const isConfirmedInDb = this.tagInputHelper?.tagValidationCache?.get(lower);
-                if (isConfirmedInDb === true) {
-                    newTagsList.push({ name, category: 'general', is_new: false, user_assigned: false });
-                } else {
-                    newTagsList.push({ name, category: 'general', is_new: true, user_assigned: false });
-                }
-            }
-        }
+        
+        const newTagsList = currentTagNames.map(n => {
+            const existing = (this.currentPost.tags || []).find(t => t.name.toLowerCase() === n.toLowerCase());
+            return existing ? existing : { name: n };
+        });
 
         this.currentPost.tags = newTagsList;
         this.tagPreview.setTags(newTagsList);
