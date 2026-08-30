@@ -133,13 +133,13 @@ download_icon, share_icon, select_arrow_icon %}
 
                 <!-- View Description (Non-admin Mode Only) -->
                 <div id="description-display-section" style="display: none;" class="pt-3 border-t">
-                    <p class="block text-xs font-bold mb-2">{{ t('media.info.description') }}</p>
+                    <p class="block text-xs font-bold mb-2">{{ t('common.description') }}</p>
                     <p id="description-display-text"
                         class="w-full bg px-2 py-1 border text-xs whitespace-pre-wrap break-words"></p>
                 </div>
                 <!-- Edit Description (Admin Mode Only) -->
                 <div id="edit-description-section" style="display: none;" class="pt-2 mt-3 border-t">
-                    <label class="block text-xs font-bold mb-2">{{ t('media.info.description') }}</label>
+                    <label class="block text-xs font-bold mb-2">{{ t('common.description') }}</label>
                     <textarea id="description-input" rows="4"
                         placeholder="{{ t('media.info.description_placeholder') }}"
                         class="w-full bg px-2 py-1 border text-xs focus:outline-none hover:border-primary transition-colors focus:border-primary mb-2 resize-y"></textarea>
@@ -278,7 +278,7 @@ download_icon, share_icon, select_arrow_icon %}
                                     class="custom-select-trigger w-full flex items-center justify-between gap-2 px-3 py-1.5 bg border text-xs cursor-pointer hover:border-primary transition-colors focus:outline-none focus:border-primary"
                                     type="button">
                                     <span class="custom-select-value text truncate">
-                                        {{ t('media.actions.safe') }}
+                                        {{ t('common.safe') }}
                                     </span>
                                     {{ select_arrow_icon(size=12) }}
                                 </button>
