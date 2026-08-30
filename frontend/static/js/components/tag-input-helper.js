@@ -232,7 +232,11 @@ class TagInputHelper {
 
         // Update content if changed
         if (inputElement.innerHTML !== html) {
+            const isFocused = document.activeElement === inputElement;
             inputElement.innerHTML = html || '';
+            if (isFocused) {
+                inputElement.focus();
+            }
             this.setCursorPosition(inputElement, cursorPos);
         }
     }
