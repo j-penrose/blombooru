@@ -239,7 +239,7 @@ async def download_and_import(
             tmp_path.unlink(missing_ok=True)
             raise HTTPException(
                 status_code=409,
-                detail=f"admin.media_management.booru_import.error_duplicate:::{existing.filename}"
+                detail=f"admin.media_management.booru_import.error_duplicate:::{safe_error_detail('Duplicate file', existing.filename)}"
             )
 
         unique_filename = get_unique_filename(settings.ORIGINAL_DIR, post.filename)
