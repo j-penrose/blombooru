@@ -55,15 +55,6 @@ class UrlImporter {
         }
     }
 
-    _t(keyOrString) {
-        if (!keyOrString) return '';
-        if (keyOrString.includes(':::')) {
-            const [key, arg] = keyOrString.split(':::');
-            return window.i18n.t(key, { error: arg });
-        }
-        return window.i18n.t(keyOrString);
-    }
-
     async fetchMedia() {
         const url = this.urlInput?.value?.trim();
         if (!url) return;
@@ -94,7 +85,7 @@ class UrlImporter {
         } catch (e) {
             console.error('URL import fetch error:', e);
             this.showStatus(
-                window.i18n.t('admin.media_management.url_import.fetch_error') + ': ' + this._t(e.message),
+                window.i18n.t('admin.media_management.url_import.fetch_error') + ': ' + window.i18n.t(e.message),
                 'error'
             );
         } finally {
@@ -219,7 +210,7 @@ class UrlImporter {
             if (this.urlInput) this.urlInput.value = '';
         } catch (e) {
             console.error('URL import queue error:', e);
-            this.showStatus(this._t(e.message), 'error');
+            this.showStatus(window.i18n.t(e.message), 'error');
         } finally {
             this.isAdding = false;
             if (queueBtn) {

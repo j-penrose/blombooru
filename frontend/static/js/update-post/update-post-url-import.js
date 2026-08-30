@@ -21,7 +21,7 @@ class UpdatePostUrlImport extends UpdatePostModalBase {
             <div class="surface w-full h-full sm:h-auto sm:max-h-[85vh] sm:max-w-4xl sm:mx-4 flex flex-col border-t sm:border shadow-2xl safe-area-bottom">
                 <!-- Header -->
                 <div class="flex items-center p-4 border-b border-color flex-shrink-0">
-                    <h2 class="text-base sm:text-lg font-bold truncate">${this._t('modal.update_post.from_url')}</h2>
+                    <h2 class="text-base sm:text-lg font-bold truncate">${window.i18n.t('modal.update_post.from_url')}</h2>
                 </div>
 
                 <!-- Body -->
@@ -33,7 +33,7 @@ class UpdatePostUrlImport extends UpdatePostModalBase {
                             placeholder="https://danbooru.donmai.us/posts/..."
                             value="${this._escapeHtml(this.currentMedia?.source || '')}">
                         <button id="upm-url-fetch" class="btn-primary whitespace-nowrap cursor-pointer">
-                            ${this._t('admin.media_management.booru_import.fetch')}
+                            ${window.i18n.t('admin.media_management.booru_import.fetch')}
                         </button>
                     </div>
 
@@ -48,10 +48,10 @@ class UpdatePostUrlImport extends UpdatePostModalBase {
                     <div class="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3">
                         <div class="flex gap-2 sm:ml-auto">
                             <button id="upm-url-apply" class="flex-1 sm:flex-none min-h-[48px] sm:min-h-0 px-5 py-3 sm:py-2 btn-primary text-sm font-medium cursor-pointer" style="display:none;">
-                                ${this._t('modal.update_post.apply')}
+                                ${window.i18n.t('modal.update_post.apply')}
                             </button>
                             <button id="upm-url-cancel" class="flex-1 sm:flex-none min-h-[48px] sm:min-h-0 px-5 py-3 sm:py-2 btn text-sm font-medium cursor-pointer">
-                                ${this._t('common.cancel')}
+                                ${window.i18n.t('common.cancel')}
                             </button>
                         </div>
                     </div>
@@ -96,7 +96,7 @@ class UpdatePostUrlImport extends UpdatePostModalBase {
         if (!url) return;
 
         this._isFetching = true;
-        this._setStatus(this._t('admin.media_management.booru_import.fetching'));
+        this._setStatus(window.i18n.t('admin.media_management.booru_import.fetching'));
         this._modal.querySelector('#upm-url-preview').style.display = 'none';
         this._modal.querySelector('#upm-url-apply').style.display = 'none';
         this._modal.querySelector('#upm-url-fetch').disabled = true;
@@ -118,7 +118,7 @@ class UpdatePostUrlImport extends UpdatePostModalBase {
             this._renderPreview(this._fetchedPost);
             this._setStatus('');
         } catch (e) {
-            this._setStatus(this._t(e.message), 'error');
+            this._setStatus(window.i18n.t(e.message), 'error');
         } finally {
             this._isFetching = false;
             const fetchBtn = this._modal?.querySelector('#upm-url-fetch');
@@ -212,12 +212,12 @@ class UpdatePostUrlImport extends UpdatePostModalBase {
 
         if (post.width && post.height) {
             if (post.width > cw || post.height > ch) {
-                resolutionHtml = `<span class="text-success">${this._t('modal.update_post.resolution_upgrade', { w: post.width, h: post.height, cw, ch })}</span>`;
+                resolutionHtml = `<span class="text-success">${window.i18n.t('modal.update_post.resolution_upgrade', { w: post.width, h: post.height, cw, ch })}</span>`;
                 autoCheckFile = true;
             } else if (post.width === cw && post.height === ch) {
-                resolutionHtml = `<span class="text-secondary">${this._t('modal.update_post.resolution_same', { w: post.width, h: post.height })}</span>`;
+                resolutionHtml = `<span class="text-secondary">${window.i18n.t('modal.update_post.resolution_same', { w: post.width, h: post.height })}</span>`;
             } else {
-                resolutionHtml = `<span class="text-warning">${this._t('modal.update_post.resolution_smaller', { w: post.width, h: post.height })}</span>`;
+                resolutionHtml = `<span class="text-warning">${window.i18n.t('modal.update_post.resolution_smaller', { w: post.width, h: post.height })}</span>`;
             }
         }
 
@@ -232,7 +232,7 @@ class UpdatePostUrlImport extends UpdatePostModalBase {
                                         class="w-full h-full object-contain cursor-pointer opacity-0 transition-opacity duration-300"
                                         onload="this.style.opacity='1'; this.closest('#upm-thumb-wrap').style.animation='none'; this.closest('#upm-thumb-wrap').style.backgroundImage='none';"
                                         onerror="this.style.display='none'; this.closest('#upm-thumb-wrap').style.animation='none'; this.closest('#upm-thumb-wrap').style.backgroundImage='none';"></div>`
-                : `<div class="w-32 h-32 surface border flex items-center justify-center text-xs text-secondary">${this._t('common.none')}</div>`
+                : `<div class="w-32 h-32 surface border flex items-center justify-center text-xs text-secondary">${window.i18n.t('common.none')}</div>`
             }
                     </div>
 
@@ -240,7 +240,7 @@ class UpdatePostUrlImport extends UpdatePostModalBase {
                     <div class="flex-1 min-w-0">
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs mb-3">
                             <div class="flex items-center gap-2">
-                                <span class="text-secondary shrink-0">${this._t('media.info.rating')}</span>
+                                <span class="text-secondary shrink-0">${window.i18n.t('media.info.rating')}</span>
                                 <div id="upm-rating-select" class="custom-select w-32" data-value="${post.rating || 'safe'}">
                                     <div class="custom-select-trigger w-full flex items-center justify-between gap-2 px-2 py-1 bg border text-xs cursor-pointer focus:outline-none hover:border-primary transition-colors">
                                         <span class="custom-select-value text capitalize">${post.rating || 'safe'}</span>
@@ -254,7 +254,7 @@ class UpdatePostUrlImport extends UpdatePostModalBase {
                                 </div>
                             </div>
                             <div class="flex items-center min-w-0">
-                                <span class="text-secondary shrink-0 mr-1">${this._t('media.info.source')}</span>
+                                <span class="text-secondary shrink-0 mr-1">${window.i18n.t('media.info.source')}</span>
                                 ${post.source
                 ? `<strong class="truncate min-w-0 flex-1 font-normal text-right">
                                         <a href="${this._escapeHtml(post.source)}" target="_blank" class="text-primary hover:underline block truncate" title="${this._escapeHtml(post.source)}">
@@ -265,19 +265,19 @@ class UpdatePostUrlImport extends UpdatePostModalBase {
             }
                             </div>
                             <div>
-                                <span class="text-secondary">${this._t('media.info.dimensions')}</span>
+                                <span class="text-secondary">${window.i18n.t('media.info.dimensions')}</span>
                                 <span class="font-medium ml-1">${post.width || '?'}x${post.height || '?'}</span>
                                 ${resolutionHtml ? `<span class="ml-1 text-xs">${resolutionHtml}</span>` : ''}
                             </div>
                             ${post.file_size ? `
                             <div>
-                                <span class="text-secondary">${this._t('media.info.size')}</span>
+                                <span class="text-secondary">${window.i18n.t('media.info.size')}</span>
                                 <span class="font-medium ml-1">${this._formatFileSize(post.file_size)}</span>
                             </div>` : ''}
                         </div>
 
                         <div class="mb-3">
-                            <div class="text-xs font-bold mb-1">${this._t('common.tags')}</div>
+                            <div class="text-xs font-bold mb-1">${window.i18n.t('common.tags')}</div>
                             <div class="p-2 surface border flex flex-wrap gap-2">
                                 ${tagCategoryHtml || `<span class="text-xs text-secondary">${this._t('common.no_tags')}</span>`}
                             </div>
@@ -287,7 +287,7 @@ class UpdatePostUrlImport extends UpdatePostModalBase {
 
                 <!-- Editable tags input -->
                 <div class="mt-3 relative">
-                    <label class="text-xs font-bold block mb-1">${this._t('media.tags.edit_tags')}</label>
+                    <label class="text-xs font-bold block mb-1">${window.i18n.t('media.tags.edit_tags')}</label>
                     <div id="upm-tags-input"
                         class="bg w-full px-3 py-2 border text-xs focus:outline-none focus:border-primary hover:border-primary transition-colors"
                         contenteditable="true"
@@ -297,34 +297,34 @@ class UpdatePostUrlImport extends UpdatePostModalBase {
                 <!-- Update options -->
                 <div class="mt-3 flex flex-col gap-1.5">
                     <p class="text-xs font-bold text-secondary uppercase tracking-wide mb-1">
-                        ${this._t('modal.update_post.what_to_update')}
+                        ${window.i18n.t('modal.update_post.what_to_update')}
                     </p>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                        ${this._checkboxRow('upm-upd-tags', this._t('common.tags'), true)}
-                        ${this._checkboxRow('upm-upd-rating', this._t('media.info.rating'), true)}
-                        ${this._checkboxRow('upm-upd-file', this._t('modal.update_post.update_file'), autoCheckFile)}
-                        ${this._checkboxRow('upm-upd-source', this._t('media.info.source_url'), true)}
-                        ${this._checkboxRow('upm-upd-desc', this._t('media.info.description'), false)}
-                        ${this._checkboxRow('upm-upd-filename', this._t('media.info.filename'), false)}
+                        ${this._checkboxRow('upm-upd-tags', window.i18n.t('common.tags'), true)}
+                        ${this._checkboxRow('upm-upd-rating', window.i18n.t('media.info.rating'), true)}
+                        ${this._checkboxRow('upm-upd-file', window.i18n.t('modal.update_post.update_file'), autoCheckFile)}
+                        ${this._checkboxRow('upm-upd-source', window.i18n.t('media.info.source_url'), true)}
+                        ${this._checkboxRow('upm-upd-desc', window.i18n.t('common.description'), false)}
+                        ${this._checkboxRow('upm-upd-filename', window.i18n.t('media.info.filename'), false)}
                     </div>
                 </div>
 
                 <!-- Tag mode -->
                 <div id="upm-tag-mode-section" class="mt-3">
                     <p class="text-xs font-bold text-secondary uppercase tracking-wide mb-2">
-                        ${this._t('modal.update_post.tag_mode')}
+                        ${window.i18n.t('modal.update_post.tag_mode')}
                     </p>
                     <div class="grid grid-cols-1 gap-2">
                         <label>
                             <input type="radio" name="upm-tag-mode" id="upm-merge-tags" class="hidden" checked>
                             <span class="block text-center px-3 py-1 border cursor-pointer bg hover:border-primary transition-colors text-xs">
-                                ${this._t('modal.update_post.merge_tags')}
+                                ${window.i18n.t('modal.update_post.merge_tags')}
                             </span>
                         </label>
                         <label>
                             <input type="radio" name="upm-tag-mode" id="upm-replace-tags" class="hidden">
                             <span class="block text-center px-3 py-1 border cursor-pointer bg hover:border-primary transition-colors text-xs">
-                                ${this._t('modal.update_post.replace_tags')}
+                                ${window.i18n.t('modal.update_post.replace_tags')}
                             </span>
                         </label>
                     </div>
@@ -410,7 +410,7 @@ class UpdatePostUrlImport extends UpdatePostModalBase {
 
         if (!updateTags && !updateRating && !updateFile && !updateSource && !updateDesc && !updateFilename) {
             if (typeof app !== 'undefined' && app.showNotification) {
-                app.showNotification(this._t('modal.update_post.error_no_changes'), 'error');
+                app.showNotification(window.i18n.t('modal.update_post.error_no_changes'), 'error');
             }
             return;
         }
@@ -419,7 +419,7 @@ class UpdatePostUrlImport extends UpdatePostModalBase {
         const applyBtn = q('upm-url-apply');
         if (applyBtn) {
             applyBtn.disabled = true;
-            applyBtn.textContent = this._t('modal.update_post.applying');
+            applyBtn.textContent = window.i18n.t('modal.update_post.applying');
         }
 
         const tagsInput = q('upm-tags-input');
@@ -480,15 +480,15 @@ class UpdatePostUrlImport extends UpdatePostModalBase {
 
                 if (res.status === 409) {
                     if (detail.includes('identical')) {
-                        throw new Error(this._t('modal.update_post.error_identical_file'));
+                        throw new Error(window.i18n.t('modal.update_post.error_identical_file'));
                     }
-                    throw new Error(this._t('modal.update_post.error_duplicate_file'));
+                    throw new Error(window.i18n.t('modal.update_post.error_duplicate_file'));
                 }
                 throw new Error(detail);
             }
 
             if (typeof app !== 'undefined' && app.showNotification) {
-                app.showNotification(this._t('modal.update_post.success'), 'success');
+                app.showNotification(window.i18n.t('modal.update_post.success'), 'success');
             }
 
             this.hide();
@@ -496,13 +496,13 @@ class UpdatePostUrlImport extends UpdatePostModalBase {
             setTimeout(() => window.location.reload(), 800);
         } catch (e) {
             if (typeof app !== 'undefined' && app.showNotification) {
-                app.showNotification(this._t(e.message), 'error');
+                app.showNotification(window.i18n.t(e.message), 'error');
             }
         } finally {
             this._isApplying = false;
             if (applyBtn) {
                 applyBtn.disabled = false;
-                applyBtn.textContent = this._t('modal.update_post.apply');
+                applyBtn.textContent = window.i18n.t('modal.update_post.apply');
             }
         }
     }

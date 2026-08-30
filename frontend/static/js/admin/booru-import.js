@@ -52,15 +52,6 @@ class BooruImporter {
         this.statusArea.innerHTML = '';
     }
 
-    _t(keyOrString) {
-        if (!keyOrString) return '';
-        if (keyOrString.includes(':::')) {
-            const [key, arg] = keyOrString.split(':::');
-            return window.i18n.t(key, { error: arg });
-        }
-        return window.i18n.t(keyOrString);
-    }
-
     async fetchPost() {
         const url = this.urlInput?.value?.trim();
         if (!url) return;
@@ -97,7 +88,7 @@ class BooruImporter {
         } catch (e) {
             console.error('Booru fetch error:', e);
             this.showStatus(
-                window.i18n.t('admin.media_management.booru_import.fetch_error') + ': ' + this._t(e.message),
+                window.i18n.t('admin.media_management.booru_import.fetch_error') + ': ' + window.i18n.t(e.message),
                 'error'
             );
         } finally {
@@ -401,7 +392,7 @@ class BooruImporter {
             console.error('Booru import error:', e);
             const errorMsg = e.message.includes('duplicate')
                 ? window.i18n.t('admin.media_management.booru_import.already_exists')
-                : this._t(e.message);
+                : window.i18n.t(e.message);
             this.showStatus(errorMsg, 'error');
 
             if (typeof app !== 'undefined' && app.showNotification) {
@@ -470,7 +461,7 @@ class BooruImporter {
 
         } catch (e) {
             console.error('Error adding to queue:', e);
-            this.showStatus(e.message, 'error');
+            this.showStatus(window.i18n.t(e.message), 'error');
         } finally {
             if (queueBtn) {
                 queueBtn.disabled = false;
