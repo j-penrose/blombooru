@@ -38,6 +38,27 @@
                 <input type="file" id="file-input" multiple accept="image/*,video/*,.zip,.tar.gz,.tgz">
             </div>
 
+            <!-- Upload Review Queue & Pending Entities Section -->
+            <div id="upload-review-section" class="my-4" style="display: none;">
+                <div id="upload-pending-container"></div>
+
+                <div class="mb-3">
+                    <h4 class="text-xs font-bold uppercase tracking-wider mb-2">{{ t('upload.preview.title') }}</h4>
+                    <div id="upload-queue-container"></div>
+                </div>
+
+                <div id="submit-controls" class="flex flex-col sm:flex-row gap-2">
+                    <button type="button" id="upload-submit-btn"
+                        class="btn-primary flex-1 px-4 py-2 font-medium cursor-pointer text-xs">
+                        {{ t('upload.submit.submit_all') }}
+                    </button>
+                    <button type="button" id="upload-cancel-btn"
+                        class="btn-danger px-4 py-2 font-medium cursor-pointer text-xs">
+                        {{ t('upload.submit.cancel_all') }}
+                    </button>
+                </div>
+            </div>
+
             <div id="url-import-section" class="mt-4 pt-4 border-t">
                 <p class="text-xs text-secondary mb-3">
                     {{ t('admin.media_management.url_import.hint') }}
@@ -231,7 +252,8 @@
                         <button type="submit" class="btn-primary cursor-pointer">
                             {{ t('common.save') }}
                         </button>
-                        <button type="button" id="tag-implication-cancel" class="btn cursor-pointer" style="display: none;">
+                        <button type="button" id="tag-implication-cancel" class="btn cursor-pointer"
+                            style="display: none;">
                             {{ t('common.cancel') }}
                         </button>
                     </div>
@@ -431,8 +453,9 @@
                 </p>
                 <div class="flex flex-col gap-3">
                     <div class="relative w-full">
-                        <input type="text" id="album-search-input" placeholder="{{ t('common.search_albums_placeholder') }}"
-                            autocomplete="off" spellcheck="false"
+                        <input type="text" id="album-search-input"
+                            placeholder="{{ t('common.search_albums_placeholder') }}" autocomplete="off"
+                            spellcheck="false"
                             class="w-full bg px-3 py-2 border text-xs focus:outline-none hover:border-primary transition-colors focus:border-primary">
                     </div>
                     <div id="album-search-results" class="border max-h-72 overflow-y-auto empty:hidden"></div>
