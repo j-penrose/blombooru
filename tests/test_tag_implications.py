@@ -1,6 +1,7 @@
 import asyncio
 import unittest
 from fastapi import HTTPException
+from pydantic import ValidationError
 
 from backend.app.enums import FileTypeEnum, RatingEnum, TagCategoryEnum
 from backend.app.models import Media, Tag, TagImplication, User
@@ -151,31 +152,23 @@ class TestTagImplications(BackupTestBase):
         self.assertEqual(res.target_tag_patterns, ["*girl*"])
         self.assertEqual({t.name for t in res.implied_tags}, {"1girl"})
 
-    def test_create_implication_validation_errors(self):
+    def test_implication_validation_errors(self):
         """Test validation error cases when target tags or implied tags are missing."""
-        # Neither target tags nor patterns provided
-        data_no_targets = TagImplicationCreate(
-            target_tags=[],
-            target_tag_patterns=[],
-            implied_tags=["animal"]
-        )
-        with self.assertRaises((HTTPException, ValueError)) as ctx:
-            asyncio.run(create_implication(data_no_targets, current_user=self.admin_user, db=self.db))
-        if isinstance(ctx.exception, HTTPException):
-            self.assertEqual(ctx.exception.status_code, 400)
-
+        # Validation thrown error when either target_tags or target_tag_parrents are provided
+        with self.assertRaises(ValidationError) as ctx:
+            data_no_targets = TagImplicationCreate(
+                target_tags=[],
+                target_tag_patterns=[],
+                implied_tags=["animal"]
+            )
+    
         # No implied tags provided
-        try:
+        with self.assertRaises(ValidationError) as ctx:
             data_no_implied = TagImplicationCreate(
                 target_tags=["cat"],
                 target_tag_patterns=[],
                 implied_tags=[]
             )
-            with self.assertRaises(HTTPException) as ctx:
-                asyncio.run(create_implication(data_no_implied, current_user=self.admin_user, db=self.db))
-            self.assertEqual(ctx.exception.status_code, 400)
-        except ValueError:
-            pass
 
     def test_list_implications(self):
         """Test listing all implications returns formatted records and normalizes patterns to list."""

@@ -4,13 +4,13 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, model_validator
 from pydantic.types import conset, StringConstraints
-from sqlalchemy import cast, select, Text
-from sqlalchemy.orm import Session 
+from sqlalchemy import cast, func, select, Text
+from sqlalchemy.orm import joinedload, Session
 from typing import Annotated, Self
 
 from ..auth import require_admin_mode
 from ..database import get_db
-from ..models import Media, Tag, TagImplication, User
+from ..models import blombooru_implication_implied, blombooru_implication_targets, Media, Tag, TagImplication, User 
 from ..utils.cache import invalidate_tag_cache
 from ..utils.tag_utils import expand_implications
 
@@ -112,21 +112,52 @@ async def create_implication(
     target_tags = _resolve_tag_names(db, data.target_tags) if data.target_tags else []
     implied_tags = _resolve_tag_names(db, data.implied_tags)
 
-    # Check whether there already exist an implication with these specific parameters
-    stmt = select(TagImplication.id)
+    target_ids = [tag.id for tag in target_tags]
+    implied_ids = [tag.id for tag in implied_tags]
 
-    for tag in implied_tags:
-        stmt = stmt.where(TagImplication.implied_tags.any(Tag.id == tag.id))
+    def matching_count_sq(table, tag_set):
+        """Generate a subquery selecting the count of matching tags (target or implied) for each implication"""
+        return (
+            select(func.count(table.c.tag_id))
+            .where(
+                table.c.implication_id == TagImplication.id,
+                table.c.tag_id.in_([tag.id for tag in tag_set])
+            )
+            .scalar_subquery()
+        )
 
-    if data.target_tags:
-        for tag in target_tags:
-            stmt = stmt.where(TagImplication.target_tags.any(Tag.id == tag.id))
+    def total_count_sq(table):
+        """Generate a subquery selecting the total count of tags (target or implied) for each implication"""
+        return (
+            select(func.count(table.c.tag_id))
+            .where(
+                table.c.implication_id == TagImplication.id
+            )
+            .scalar_subquery()
+        )
 
-    if data.target_tag_patterns:
-        for pattern in data.target_tag_patterns:
-            stmt = stmt.where(cast(TagImplication.target_tag_patterns, Text).contains(pattern))
+    matching_implied_count = matching_count_sq(blombooru_implication_implied, implied_tags)
+    total_implied_count = total_count_sq(blombooru_implication_implied)
+    matching_target_count = matching_count_sq(blombooru_implication_targets, target_tags)
+    total_target_count = total_count_sq(blombooru_implication_targets)
 
-    exists = db.scalar(stmt)
+    stmt = (
+        select(TagImplication)
+        .where(
+            matching_implied_count == len(implied_tags), # it must contain at least the implied tags
+            total_implied_count == len(implied_tags),  # but it must not contain any more then those
+            matching_target_count == len(target_tags),
+            total_target_count == len(target_tags),
+        )
+    )
+
+    implications = db.execute(stmt).scalars().all()
+    print(data.target_tag_patterns)
+    exists = any(
+        set(imp.target_tag_patterns or ()) == data.target_tag_patterns
+        for imp in implications
+    )
+
     if exists:
         raise HTTPException(status_code=409, detail="Implication already exist")
 
