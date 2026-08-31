@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from ..config import APP_VERSION, settings
 from ..themes import theme_registry
+from ..utils.format_registry import format_registry
 
 router = APIRouter(prefix="/api", tags=["instance-info"])
 
@@ -32,4 +33,5 @@ async def get_instance_info():
             "native_name": lang.native_name if lang else lang_id,
         },
         "keybindings": settings.KEYBINDINGS,
+        "supported_formats": format_registry.to_json_dict(),
     }

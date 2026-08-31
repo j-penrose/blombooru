@@ -46,6 +46,9 @@
     <script id="keybindings-data" type="application/json">
         {{ get_keybindings_json() | safe }}
     </script>
+    <script id="format-registry-data" type="application/json">
+        {{ get_supported_formats_json() | safe }}
+    </script>
     {% if not current_theme %}
     <script>
         // Load theme on page load
@@ -307,6 +310,7 @@
         <script src="/static/js/components/changelog-modal.js?v={{ cache_buster }}"></script>
         <script src="/static/js/components/search-query.js?v={{ cache_buster }}"></script>
         <script src="/static/js/components/tag-preview.js?v={{ cache_buster }}"></script>
+        <script src="/static/js/format-registry.js?v={{ cache_buster }}"></script>
         <script src="/static/js/pages/main.js?v={{ cache_buster }}"></script>
         <script src="/static/js/components/tag-autocomplete.js?v={{ cache_buster }}"></script>
 

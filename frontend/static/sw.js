@@ -31,6 +31,7 @@ const STATIC_ASSETS = [
     '/static/locales/ru.json',
     '/static/locales/sv.json',
     '/static/locales/zh-cn.json',
+    '/static/js/format-registry.js',
     '/static/js/pages/login.js',
     '/static/js/pages/main.js',
     '/static/js/pages/gallery.js',

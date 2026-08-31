@@ -56,6 +56,7 @@ from .routes import (admin, ai_tagger, albums, booru_config, booru_import,
 from .translations import language_registry, translation_helper
 from .utils.logger import logger
 from .utils.search_parser import canonicalize_query
+from .utils.format_registry import format_registry
 
 def get_cache_buster():
     """Get the current git commit hash to use as a cache buster, fallback to APP_VERSION"""
@@ -270,6 +271,7 @@ templates.env.globals['available_languages'] = lambda: [lang.to_dict() for lang 
 templates.env.globals['custom_background'] = lambda: settings.CUSTOM_BACKGROUND
 templates.env.globals['require_auth'] = lambda: settings.REQUIRE_AUTH
 templates.env.globals['canonicalize_query'] = canonicalize_query
+templates.env.globals['get_supported_formats_json'] = lambda: json.dumps(format_registry.to_json_dict())
 
 def _is_authenticated_admin(request) -> bool:
     """Verify that the request has a valid admin_token JWT. Used by templates to show/hide
