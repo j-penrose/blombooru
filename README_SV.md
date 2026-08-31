@@ -15,11 +15,11 @@
 
 <a href="./README.md">English</a> • <a href="./README_RU.md">Русский</a> • <a href="./README_ZH_CN.md">简体中文</a> • **Svenska**
 
-<b>Ditt personliga, egenhostade verktyg för mediataggning.</b>
+<b>Din Personliga, Egenhostade Booru.</b>
 
 </div>
 
-Blombooru är ett privat enanvändaralternativ till boorus som Danbooru och Gelbooru. Det är utformat för individer som vill ha en kraftfull, lättanvänd och modern lösning för att organisera och tagga sina personliga mediasamlingar. Med fokus på en stilren användarupplevelse, robust administration och enkel anpassning ger Blombooru dig full kontroll över ditt bibliotek.
+Blombooru är ett privat, enanvändarorienterat alternativ till publika boorus som Danbooru och Gelbooru. Det är utformat för individer som önskar en kraftfull, användarvänlig och modern lösning för att organisera och tagga sina personliga mediasamlingar. Med fokus på en ren användarupplevelse, robust administration och enkel anpassning ger Blombooru dig fullständig kontroll över ditt bibliotek.
 
 > [!NOTE]
 > Lokalisering till svenska: @mrblomblo  

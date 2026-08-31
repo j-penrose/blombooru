@@ -15,7 +15,7 @@
 
 **English** • <a href="./README_RU.md">Русский</a> • <a href="./README_ZH_CN.md">简体中文</a> • <a href="./README_SV.md">Svenska</a>
 
-<b>Your Personal, Self-Hosted Media Tagging Tool.</b>
+<b>Your Personal, Self-Hosted Booru.</b>
 
 </div>
 
