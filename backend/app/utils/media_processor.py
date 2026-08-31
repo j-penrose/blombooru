@@ -46,27 +46,8 @@ def get_mime_type(file_path: Path) -> str:
 
 def determine_file_type(mime_type: str, filename: str, file_path: Path = None) -> FileTypeEnum:
     """Determine if file is image, video, or gif"""
-    if mime_type.startswith('video/'):
-        return FileTypeEnum.video
-    elif mime_type == 'image/gif':
-        return FileTypeEnum.gif
-    elif mime_type == 'image/webp':
-        if file_path and is_animated_webp(file_path):
-            return FileTypeEnum.gif
-        else:
-            return FileTypeEnum.image
-    elif mime_type.startswith('image/'):
-        return FileTypeEnum.image
-    else:
-        ext = filename.lower().split('.')[-1]
-        if ext in ['mp4', 'webm', 'mov', 'avi', 'mkv']:
-            return FileTypeEnum.video
-        elif ext == 'gif':
-            return FileTypeEnum.gif
-        elif ext == 'webp' and file_path and is_animated_webp(file_path):
-            return FileTypeEnum.gif
-        else:
-            return FileTypeEnum.image
+    from .format_registry import format_registry
+    return format_registry.determine_file_type(mime_type, filename, file_path)
 
 def is_animated_webp(file_path: Path) -> bool:
     """Check if a WebP file is animated by looking for the ANIM chunk"""

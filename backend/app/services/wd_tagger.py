@@ -699,11 +699,12 @@ class WDTagger:
     def _prepare_image_from_path(self, file_path: str) -> Tuple[str, Optional[np.ndarray]]:
         """Load and prepare an image from file path."""
         try:
+            from ..utils.format_registry import format_registry
             ext = Path(file_path).suffix.lower()
             
             if ext == '.gif':
                 image = self._extract_gif_frame(file_path)
-            elif ext in ['.mp4', '.webm', '.mov', '.avi', '.mkv']:
+            elif format_registry.is_video(file_path):
                 image = self._extract_video_frame(file_path)
             else:
                 image = Image.open(file_path)

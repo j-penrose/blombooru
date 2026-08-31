@@ -1650,7 +1650,11 @@ async def extract_archive(
         archive_path.unlink(missing_ok=True)
 
         # Collect metadata for valid extracted files
-        valid_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm']
+        from ..utils.format_registry import format_registry, FormatCategory
+        valid_types = set(
+            format_registry.get_supported_mime_types(FormatCategory.IMAGE)
+            + format_registry.get_supported_mime_types(FormatCategory.VIDEO)
+        )
         file_index = 0
         for extracted_file in extract_dir.rglob('*'):
             if extracted_file.is_symlink():
@@ -1658,7 +1662,10 @@ async def extract_archive(
 
             if extracted_file.is_file():
                 mime_type, _ = mimetypes.guess_type(extracted_file.name)
-                if mime_type in valid_types:
+                fmt = format_registry.get_format(extracted_file.name)
+                if mime_type in valid_types or (fmt and fmt.category in (FormatCategory.IMAGE, FormatCategory.VIDEO)):
+                    if not mime_type and fmt:
+                        mime_type = fmt.mime_type
                     # Rename to a predictable indexed name for serving
                     original_name = extracted_file.name
                     ext = extracted_file.suffix

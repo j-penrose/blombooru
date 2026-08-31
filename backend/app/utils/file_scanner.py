@@ -6,21 +6,13 @@ from sqlalchemy.orm import Session
 from ..config import settings
 from ..models import Media
 from .logger import logger
+from .format_registry import format_registry, FormatCategory
 from .media_processor import calculate_file_hash, get_mime_type
 
-SUPPORTED_EXTENSIONS = {
-    'image': ['.jpg', '.jpeg', '.png', '.webp', '.bmp', '.tiff'],
-    'gif': ['.gif'],
-    'video': ['.mp4', '.webm', '.mov', '.avi', '.mkv']
-}
-
 def is_supported_file(filename: str) -> bool:
-    """Check if file extension is supported"""
-    ext = Path(filename).suffix.lower()
-    for extensions in SUPPORTED_EXTENSIONS.values():
-        if ext in extensions:
-            return True
-    return False
+    """Check if file extension is supported for media gallery"""
+    fmt = format_registry.get_format(filename)
+    return fmt is not None and fmt.category in (FormatCategory.IMAGE, FormatCategory.VIDEO)
 
 def natural_sort_key(s: str) -> list:
     """Key function for natural (human-friendly) alphanumeric sort."""

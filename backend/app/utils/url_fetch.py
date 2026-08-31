@@ -8,17 +8,14 @@ from urllib.parse import unquote, urlparse
 import requests
 
 from ..enums import FileTypeEnum
+from .format_registry import format_registry, FormatCategory
 from .media_processor import determine_file_type
 from .url_security import UrlValidationError, validate_url_not_ssrf
 
-SUPPORTED_MIME_TYPES = {
-    "image/jpeg",
-    "image/png",
-    "image/gif",
-    "image/webp",
-    "video/mp4",
-    "video/webm",
-}
+SUPPORTED_MIME_TYPES = set(
+    format_registry.get_supported_mime_types(FormatCategory.IMAGE)
+    + format_registry.get_supported_mime_types(FormatCategory.VIDEO)
+)
 
 DEFAULT_TIMEOUT = 60
 
@@ -81,13 +78,8 @@ def _filename_from_url(url: str) -> str:
 def _is_supported_media(mime_type: str, filename: str) -> bool:
     if mime_type in SUPPORTED_MIME_TYPES:
         return True
-    if mime_type in ("application/octet-stream", "binary/octet-stream"):
-        ext = Path(filename).suffix.lower()
-        return ext in {
-            ".jpg", ".jpeg", ".png", ".gif", ".webp",
-            ".mp4", ".webm",
-        }
-    return False
+    fmt = format_registry.get_format(filename)
+    return fmt is not None and fmt.category in (FormatCategory.IMAGE, FormatCategory.VIDEO)
 
 def _request_headers(url: str) -> dict:
     parsed = urlparse(url)
