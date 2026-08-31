@@ -152,7 +152,6 @@ async def create_implication(
     )
 
     implications = db.execute(stmt).scalars().all()
-    print(data.target_tag_patterns)
     exists = any(
         set(imp.target_tag_patterns or ()) == data.target_tag_patterns
         for imp in implications
