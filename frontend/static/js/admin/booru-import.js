@@ -224,7 +224,7 @@ class BooruImporter {
             img.style.cursor = 'pointer';
             img.addEventListener('click', () => {
                 if (this.uploader && this.uploader.fullscreenViewer) {
-                    const isVideo = post.file_url.endsWith('.mp4') || post.file_url.endsWith('.webm'); // Could be better
+                    const isVideo = window.FormatRegistry.isVideo(post.file_url);
                     this.uploader.fullscreenViewer.open(`/api/booru-import/proxy-image?url=${encodeURIComponent(post.file_url)}`, isVideo);
                 }
             });
@@ -285,7 +285,7 @@ class BooruImporter {
     updateTagsPreview() {
         if (!this.tagPreview || !this.currentPost) return;
         const currentTagNames = this.getEditedTags();
-        
+
         const newTagsList = currentTagNames.map(n => {
             const existing = (this.currentPost.tags || []).find(t => t.name.toLowerCase() === n.toLowerCase());
             return existing ? existing : { name: n };

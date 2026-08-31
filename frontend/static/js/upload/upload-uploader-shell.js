@@ -215,8 +215,7 @@ class UploadUploaderShell {
         try {
             for (const file of files) {
                 // Check if archive
-                const nameLower = file.name.toLowerCase();
-                if (nameLower.endsWith('.zip') || nameLower.endsWith('.tar.gz') || nameLower.endsWith('.tgz')) {
+                if (window.FormatRegistry.isArchive(file.name)) {
                     await this.handleArchive(file);
                     continue;
                 }
@@ -242,10 +241,7 @@ class UploadUploaderShell {
     }
 
     isValidFile(file) {
-        const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm'];
-        if (validTypes.includes(file.type)) return true;
-        const ext = file.name.toLowerCase().split('.').pop();
-        return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'webm'].includes(ext);
+        return FormatRegistry.isValidFile(file);
     }
 
     async handleArchive(archiveFile) {

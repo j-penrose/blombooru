@@ -355,7 +355,7 @@ class UpdatePostUrlImport extends UpdatePostModalBase {
 
         const thumb = preview.querySelector('img');
         if (thumb && post.file_url) {
-            const isVideo = /\.(mp4|webm|mov|avi|mkv)$/i.test(post.file_url);
+            const isVideo = window.FormatRegistry.isVideo(post.file_url);
             thumb.addEventListener('click', () => {
                 this._openFullscreen(
                     `/api/booru-import/proxy-image?url=${encodeURIComponent(post.file_url)}`,
@@ -368,7 +368,7 @@ class UpdatePostUrlImport extends UpdatePostModalBase {
     updateTagsPreview() {
         if (!this.tagPreview || !this._fetchedPost) return;
         const tagsInput = this._modal.querySelector('#upm-tags-input');
-        
+
         let currentTagNames = [];
         if (this.tagInputHelper) {
             const text = this.tagInputHelper.getPlainTextFromDiv(tagsInput);
@@ -377,7 +377,7 @@ class UpdatePostUrlImport extends UpdatePostModalBase {
             const text = tagsInput.innerText || tagsInput.textContent || '';
             currentTagNames = text.trim().split(/\s+/).filter(t => t.length > 0);
         }
-        
+
         const newTagsList = currentTagNames.map(n => {
             const existing = (this._fetchedPost.tags || []).find(t => t.name.toLowerCase() === n.toLowerCase());
             return existing ? existing : { name: n };
