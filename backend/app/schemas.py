@@ -38,6 +38,7 @@ class MediaResponse(MediaBase):
     id: int
     filename: str
     path: str
+    transcoded_path: Optional[str] = None
     thumbnail_path: Optional[str]
     hash: str
     file_type: FileTypeEnum

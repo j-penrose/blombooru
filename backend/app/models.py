@@ -30,6 +30,7 @@ class Media(Base):
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String(255), nullable=False)
     path = Column(String(500), nullable=False, unique=True)
+    transcoded_path = Column(String(500), nullable=True)
     thumbnail_path = Column(String(500))
     hash = Column(String(64), unique=True, index=True)
     file_type = Column(Enum(FileTypeEnum), nullable=False)

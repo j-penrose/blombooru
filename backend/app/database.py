@@ -187,6 +187,7 @@ def check_and_migrate_schema(engine):
         migrate_file_size_to_bigint,
         migrate_remove_duplicate_tag_aliases,
         migrate_add_api_key_permission,
+        migrate_add_transcoded_path,
     ]
     
     for migration in migrations:
@@ -336,5 +337,20 @@ def migrate_add_api_key_permission(engine, inspector):
     with engine.connect() as conn:
         conn.execute(text(
             "ALTER TABLE blombooru_api_keys ADD COLUMN permission VARCHAR(32) DEFAULT 'admin' NOT NULL"
+        ))
+        conn.commit()
+
+def migrate_add_transcoded_path(engine, inspector):
+    """Add transcoded_path column to blombooru_media table"""
+    from sqlalchemy import text
+    
+    columns = [c['name'] for c in inspector.get_columns('blombooru_media')]
+    if 'transcoded_path' in columns:
+        return
+    
+    logger.info("Adding transcoded_path column to blombooru_media...")
+    with engine.connect() as conn:
+        conn.execute(text(
+            "ALTER TABLE blombooru_media ADD COLUMN transcoded_path VARCHAR(500)"
         ))
         conn.commit()
