@@ -2,12 +2,15 @@ import asyncio
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
-from sqlalchemy.orm import Session, joinedload
+from pydantic import BaseModel, model_validator
+from pydantic.types import conset, StringConstraints
+from sqlalchemy import cast, func, select, Text
+from sqlalchemy.orm import joinedload, Session
+from typing import Annotated, Self
 
 from ..auth import require_admin_mode
 from ..database import get_db
-from ..models import Media, Tag, TagImplication, User
+from ..models import blombooru_implication_implied, blombooru_implication_targets, Media, Tag, TagImplication, User 
 from ..utils.cache import invalidate_tag_cache
 from ..utils.tag_utils import expand_implications
 
@@ -29,12 +32,21 @@ class TagImplicationResponse(BaseModel):
     class Config:
         from_attributes = True
 
-class TagImplicationCreate(BaseModel):
-    target_tags: List[str]
-    target_tag_patterns: Optional[List[str]] = []
-    implied_tags: List[str]
+# Ensure a lower-case string stripped from whitespace with a minimum length of 1
+Tag_Or_Pattern = Annotated[str, StringConstraints(strip_whitespace=True, to_lower=True, min_length=1)]
 
-def _resolve_tag_names(db: Session, tag_names: List[str]) -> List[Tag]:
+class TagImplicationCreate(BaseModel):
+    target_tags: set[Tag_Or_Pattern] = set()
+    target_tag_patterns: set[Tag_Or_Pattern] = set()
+    implied_tags: conset(Tag_Or_Pattern, min_length=1)
+
+    @model_validator(mode="after")
+    def validate_target_presence(self) -> Self:
+        if not self.target_tags and not self.target_tag_patterns:
+            raise ValueError("either 'target_tags' or 'target_tag_patterns' is required")
+        return self
+
+def _resolve_tag_names(db: Session, tag_names: set[str]) -> List[Tag]:
     """Look up Tag objects by name. Raises 400 if any tag is not found."""
     tags = []
     for name in tag_names:
@@ -96,22 +108,61 @@ async def create_implication(
     db: Session = Depends(get_db)
 ):
     """Create a new tag implication."""
-    patterns = _clean_patterns(data.target_tag_patterns)
 
-    if not data.target_tags and not patterns:
-        raise HTTPException(status_code=400, detail="At least one target tag or target pattern is required")
-    if not data.implied_tags:
-        raise HTTPException(status_code=400, detail="At least one implied tag is required")
-
-    target_tags = _resolve_tag_names(db, data.target_tags)
+    target_tags = _resolve_tag_names(db, data.target_tags) if data.target_tags else []
     implied_tags = _resolve_tag_names(db, data.implied_tags)
 
-    if not implied_tags:
-        raise HTTPException(status_code=400, detail="At least one implied tag is required")
+    target_ids = [tag.id for tag in target_tags]
+    implied_ids = [tag.id for tag in implied_tags]
+
+    def matching_count_sq(table, tag_set):
+        """Generate a subquery selecting the count of matching tags (target or implied) for each implication"""
+        return (
+            select(func.count(table.c.tag_id))
+            .where(
+                table.c.implication_id == TagImplication.id,
+                table.c.tag_id.in_([tag.id for tag in tag_set])
+            )
+            .scalar_subquery()
+        )
+
+    def total_count_sq(table):
+        """Generate a subquery selecting the total count of tags (target or implied) for each implication"""
+        return (
+            select(func.count(table.c.tag_id))
+            .where(
+                table.c.implication_id == TagImplication.id
+            )
+            .scalar_subquery()
+        )
+
+    matching_implied_count = matching_count_sq(blombooru_implication_implied, implied_tags)
+    total_implied_count = total_count_sq(blombooru_implication_implied)
+    matching_target_count = matching_count_sq(blombooru_implication_targets, target_tags)
+    total_target_count = total_count_sq(blombooru_implication_targets)
+
+    stmt = (
+        select(TagImplication)
+        .where(
+            matching_implied_count == len(implied_tags), # it must contain at least the implied tags
+            total_implied_count == len(implied_tags),  # but it must not contain any more then those
+            matching_target_count == len(target_tags),
+            total_target_count == len(target_tags),
+        )
+    )
+
+    implications = db.execute(stmt).scalars().all()
+    exists = any(
+        set(imp.target_tag_patterns or ()) == data.target_tag_patterns
+        for imp in implications
+    )
+
+    if exists:
+        raise HTTPException(status_code=409, detail="Implication already exist")
 
     implication = TagImplication()
     implication.target_tags = target_tags
-    implication.target_tag_patterns = patterns if patterns else None
+    implication.target_tag_patterns = list(data.target_tag_patterns) if data.target_tag_patterns else None
     implication.implied_tags = implied_tags
 
     db.add(implication)
