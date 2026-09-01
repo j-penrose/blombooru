@@ -17,6 +17,7 @@ class Settings:
         self.MEDIA_DIR = self.BASE_DIR / "media"
         self.ORIGINAL_DIR = self.MEDIA_DIR / "original"
         self.THUMBNAIL_DIR = self.MEDIA_DIR / "thumbnails"
+        self.TRANSCODED_DIR = self.MEDIA_DIR / "transcoded"
         self.CACHE_DIR = self.MEDIA_DIR / "cache"
         self.DATA_DIR = self.BASE_DIR / "data"
         self.MODELS_DIR = self.DATA_DIR / "models"
@@ -24,6 +25,7 @@ class Settings:
         
         self.ORIGINAL_DIR.mkdir(parents=True, exist_ok=True)
         self.THUMBNAIL_DIR.mkdir(parents=True, exist_ok=True)
+        self.TRANSCODED_DIR.mkdir(parents=True, exist_ok=True)
         self.CACHE_DIR.mkdir(parents=True, exist_ok=True)
         self.DATA_DIR.mkdir(parents=True, exist_ok=True)
         self.MODELS_DIR.mkdir(parents=True, exist_ok=True)
