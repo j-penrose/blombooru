@@ -25,6 +25,7 @@ from ..utils.album_utils import (get_bulk_album_metrics, get_flattened_media_ids
 from ..utils.cache import (cache_response, invalidate_album_cache,
                            invalidate_media_cache, invalidate_media_item_cache,
                            invalidate_tag_cache)
+from ..utils.format_registry import format_registry
 from ..utils.logger import logger
 from ..utils.media_helpers import (create_stripped_media_cache,
                                    delete_media_cache, extract_image_metadata,
@@ -35,6 +36,8 @@ from ..utils.media_sort import apply_media_sort
 from ..utils.search_parser import (apply_custom_filters_or,
                                    apply_search_criteria, parse_search_query)
 from ..utils.thumbnail_generator import generate_thumbnail
+from ..utils.transcoder import (get_transcoded_path_for_original,
+                                transcode_media_if_needed)
 
 router = APIRouter(prefix="/api/media", tags=["media"])
 
@@ -115,6 +118,31 @@ async def update_from_source(
             if old_path.exists():
                 old_path.rename(new_path)
 
+            # Handle transcoded file rename/move if needed
+            fmt = format_registry.get_format(new_unique)
+            if fmt and fmt.requires_transcode:
+                new_transc_path = get_transcoded_path_for_original(new_path, fmt.transcode_target)
+                if media.transcoded_path:
+                    old_transc_path = settings.BASE_DIR / media.transcoded_path
+                    if old_transc_path.exists():
+                        delete_media_cache(old_transc_path)
+                        new_transc_path.parent.mkdir(parents=True, exist_ok=True)
+                        old_transc_path.rename(new_transc_path)
+                        media.transcoded_path = str(new_transc_path.relative_to(settings.BASE_DIR))
+                    else:
+                        trans_file = transcode_media_if_needed(new_path)
+                        media.transcoded_path = str(trans_file.relative_to(settings.BASE_DIR)) if trans_file else None
+                else:
+                    trans_file = transcode_media_if_needed(new_path)
+                    media.transcoded_path = str(trans_file.relative_to(settings.BASE_DIR)) if trans_file else None
+            else:
+                if media.transcoded_path:
+                    old_transc_path = settings.BASE_DIR / media.transcoded_path
+                    if old_transc_path.exists():
+                        delete_media_cache(old_transc_path)
+                        old_transc_path.unlink(missing_ok=True)
+                    media.transcoded_path = None
+
             if media.thumbnail_path:
                 old_thumb = settings.BASE_DIR / media.thumbnail_path
                 new_thumb_name = Path(new_unique).stem + ".jpg"
@@ -161,7 +189,15 @@ async def update_from_source(
                 raise HTTPException(status_code=409, detail=f"Media already exists (duplicate of {duplicate.filename})")
 
             old_file = settings.BASE_DIR / media.path
+            delete_media_cache(old_file)
             old_file.unlink(missing_ok=True)
+
+            if media.transcoded_path:
+                old_transc = settings.BASE_DIR / media.transcoded_path
+                delete_media_cache(old_transc)
+                old_transc.unlink(missing_ok=True)
+                media.transcoded_path = None
+
             shutil.move(str(tmp_path), str(old_file))
             tmp_path = None
 
@@ -174,10 +210,12 @@ async def update_from_source(
 
             thumb_name = Path(media.filename).stem + ".jpg"
             thumb_path = settings.THUMBNAIL_DIR / thumb_name
-            generate_thumbnail(old_file, thumb_path, new_meta["file_type"])
+            thumb_source = (settings.BASE_DIR / new_meta["transcoded_path"]) if new_meta.get("transcoded_path") else old_file
+            generate_thumbnail(thumb_source, thumb_path, new_meta["file_type"])
             media.thumbnail_path = str(thumb_path.relative_to(settings.BASE_DIR)) if thumb_path.exists() else None
 
             media.hash = new_hash
+            media.transcoded_path = new_meta.get("transcoded_path")
             media.file_type = new_meta["file_type"]
             media.mime_type = new_meta["mime_type"]
             media.file_size = new_meta["file_size"]
@@ -267,7 +305,15 @@ async def update_file_finalize(
             raise HTTPException(status_code=409, detail=f"Media already exists (duplicate of {duplicate.filename})")
 
         old_file = settings.BASE_DIR / media.path
+        delete_media_cache(old_file)
         old_file.unlink(missing_ok=True)
+
+        if media.transcoded_path:
+            old_transc = settings.BASE_DIR / media.transcoded_path
+            delete_media_cache(old_transc)
+            old_transc.unlink(missing_ok=True)
+            media.transcoded_path = None
+
         shutil.move(str(tmp_assembled), str(old_file))
 
         shutil.rmtree(chunk_dir, ignore_errors=True)
@@ -281,10 +327,12 @@ async def update_file_finalize(
 
         thumb_name = Path(media.filename).stem + ".jpg"
         thumb_path = settings.THUMBNAIL_DIR / thumb_name
-        generate_thumbnail(old_file, thumb_path, new_meta["file_type"])
+        thumb_source = (settings.BASE_DIR / new_meta["transcoded_path"]) if new_meta.get("transcoded_path") else old_file
+        generate_thumbnail(thumb_source, thumb_path, new_meta["file_type"])
         media.thumbnail_path = str(thumb_path.relative_to(settings.BASE_DIR)) if thumb_path.exists() else None
 
         media.hash = new_hash
+        media.transcoded_path = new_meta.get("transcoded_path")
         media.file_type = new_meta["file_type"]
         media.mime_type = new_meta["mime_type"]
         media.file_size = new_meta["file_size"]
@@ -481,7 +529,8 @@ def process_and_save_media(
     thumbnail_path = settings.THUMBNAIL_DIR / thumbnail_filename
 
     logger.debug(f"Generating thumbnail: {thumbnail_filename}")
-    thumbnail_generated = generate_thumbnail(file_path, thumbnail_path, metadata["file_type"])
+    thumb_source = (settings.BASE_DIR / metadata["transcoded_path"]) if metadata.get("transcoded_path") else file_path
+    thumbnail_generated = generate_thumbnail(thumb_source, thumbnail_path, metadata["file_type"])
 
     if thumbnail_generated:
         logger.debug(f"Thumbnail generated: {thumbnail_path}")
@@ -494,6 +543,7 @@ def process_and_save_media(
     media = Media(
         filename=unique_filename,
         path=str(relative_path),
+        transcoded_path=metadata.get("transcoded_path"),
         thumbnail_path=str(relative_thumb) if relative_thumb else None,
         hash=file_hash,
         file_type=metadata["file_type"],
@@ -1109,19 +1159,31 @@ async def get_media(media_id: int, db: Session = Depends(get_db)):
     return result
 
 @router.get("/{media_id}/file")
-async def get_media_file(media_id: int, chunked: bool = False):
-    """Serve media file"""
+async def get_media_file(media_id: int, chunked: bool = False, download: bool = False):
+    """Serve media file. When download is requested or no transcoded version exists, serve original file."""
     db = next(get_db())
     try:
         media = db.query(Media).filter(Media.id == media_id).first()
         if not media:
             raise HTTPException(status_code=404, detail="Media not found")
-        file_path = settings.BASE_DIR / media.path
-        mime_type = media.mime_type
+        
+        # If download is requested or no transcoded version exists, serve original
+        if download or not media.transcoded_path:
+            file_path = settings.BASE_DIR / media.path
+            mime_type = media.mime_type
+        else:
+            file_path = settings.BASE_DIR / media.transcoded_path
+            if not file_path.exists():
+                file_path = settings.BASE_DIR / media.path
+                mime_type = media.mime_type
+            else:
+                mime_type = format_registry.get_mime_type(file_path.name, default=media.mime_type)
+        
+        filename = media.filename if download else None
     finally:
         db.close()
 
-    return await serve_media_file(file_path, mime_type, chunked=chunked)
+    return await serve_media_file(file_path, mime_type, chunked=chunked, download=download, filename=filename)
 
 @router.get("/{media_id}/thumbnail")
 async def get_media_thumbnail(media_id: int):
@@ -1328,6 +1390,11 @@ async def delete_media(
     file_path = settings.BASE_DIR / media.path
     delete_media_cache(file_path)
     file_path.unlink(missing_ok=True)
+
+    if media.transcoded_path:
+        transcoded_file_path = settings.BASE_DIR / media.transcoded_path
+        delete_media_cache(transcoded_file_path)
+        transcoded_file_path.unlink(missing_ok=True)
     
     if media.thumbnail_path:
         thumb_path = settings.BASE_DIR / media.thumbnail_path
@@ -1367,9 +1434,10 @@ async def share_media(
         media.is_shared = True
         
         # Trigger background stripping
-        if media.mime_type and media.mime_type.startswith('image/'):
-            file_path = settings.BASE_DIR / media.path
-            background_tasks.add_task(create_stripped_media_cache, file_path, media.mime_type)
+        effective_path = (settings.BASE_DIR / media.transcoded_path) if media.transcoded_path else (settings.BASE_DIR / media.path)
+        effective_mime = format_registry.get_mime_type(effective_path.name, default=media.mime_type)
+        if effective_mime and effective_mime.startswith('image/'):
+            background_tasks.add_task(create_stripped_media_cache, effective_path, effective_mime)
     
     db.commit()
     invalidate_media_item_cache(media_id)
