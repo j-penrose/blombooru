@@ -378,23 +378,48 @@ async def serve_media_file(
     error_message: str = "File not found",
     strip_metadata: bool = False,
     chunked: bool = False,
+    download: bool = False,
+    filename: Optional[str] = None,
 ) -> FileResponse:
     """Serve a media file with error handling, optional metadata stripping, and browser caching."""
     if not file_path.exists():
         raise HTTPException(status_code=404, detail=error_message)
     
     cache_headers = {"Cache-Control": "public, max-age=31536000, immutable"}
+    content_disposition_type = "attachment" if download else "inline"
+    download_filename = filename or file_path.name if download else None
     
     if not strip_metadata:
-        return ChunkedMediaResponse(file_path, media_type=mime_type, headers=cache_headers, chunked=chunked)
+        return ChunkedMediaResponse(
+            file_path,
+            media_type=mime_type,
+            headers=cache_headers,
+            chunked=chunked,
+            filename=download_filename,
+            content_disposition_type=content_disposition_type
+        )
     
     if mime_type and mime_type.startswith('image/'):
         cache_path = await create_stripped_media_cache(file_path, mime_type)
         if cache_path:
-            return ChunkedMediaResponse(cache_path, media_type=mime_type, headers=cache_headers, chunked=chunked)
+            return ChunkedMediaResponse(
+                cache_path,
+                media_type=mime_type,
+                headers=cache_headers,
+                chunked=chunked,
+                filename=download_filename,
+                content_disposition_type=content_disposition_type
+            )
     
-    # Fallback to original file if stripping not supported or failed
-    return ChunkedMediaResponse(file_path, media_type=mime_type, headers=cache_headers, chunked=chunked)
+    # Fallback to file if stripping not supported or failed
+    return ChunkedMediaResponse(
+        file_path,
+        media_type=mime_type,
+        headers=cache_headers,
+        chunked=chunked,
+        filename=download_filename,
+        content_disposition_type=content_disposition_type
+    )
 
 def delete_media_cache(file_path: Path):
     """Delete the cached version of a media file if it exists."""
