@@ -120,10 +120,10 @@ class UrlImporter {
                         ${previewHtml}
                     </div>
                     <div class="flex-1 min-w-0 text-xs space-y-2">
-                        <div><strong>${window.i18n.t('admin.media_management.url_import.filename')}:</strong> ${this.escapeHtml(media.filename)}</div>
-                        <div><strong>${window.i18n.t('admin.media_management.url_import.file_type')}:</strong> ${this.escapeHtml(media.content_type)}</div>
-                        <div><strong>${window.i18n.t('admin.media_management.url_import.file_size')}:</strong> ${this.formatFileSize(media.file_size)}</div>
-                        <div class="break-all"><strong>${window.i18n.t('admin.media_management.url_import.source')}:</strong> ${this.escapeHtml(this.truncateUrl(media.file_url, 80))}</div>
+                        <div><strong>${window.i18n.t('media.info.filename')}:</strong> ${this.escapeHtml(media.filename)}</div>
+                        <div><strong>${window.i18n.t('media.info.type')}:</strong> ${this.escapeHtml(media.content_type)}</div>
+                        <div><strong>${window.i18n.t('media.info.size')}:</strong> ${this.formatFileSize(media.file_size)}</div>
+                        <div class="break-all"><strong>${window.i18n.t('media.info.source')}:</strong> ${this.escapeHtml(this.truncateUrl(media.file_url, 80))}</div>
                     </div>
                 </div>
                 <div class="flex flex-col sm:flex-row gap-2 mt-4">
@@ -131,7 +131,7 @@ class UrlImporter {
                         ${window.i18n.t('common.cancel')}
                     </button>
                     <button id="url-import-queue-btn" class="btn-primary flex-1 px-4 py-2 font-medium cursor-pointer">
-                        ${window.i18n.t('admin.media_management.url_import.add_to_queue')}
+                        ${window.i18n.t('admin.media_management.booru_import.add_to_queue')}
                     </button>
                 </div>
             </div>
@@ -201,7 +201,7 @@ class UrlImporter {
             });
 
             this.showStatus(
-                window.i18n.t('admin.media_management.url_import.added_to_queue'),
+                window.i18n.t('admin.media_management.booru_import.added_to_queue'),
                 'success'
             );
 
@@ -215,7 +215,7 @@ class UrlImporter {
             this.isAdding = false;
             if (queueBtn) {
                 queueBtn.disabled = false;
-                queueBtn.textContent = window.i18n.t('admin.media_management.url_import.add_to_queue');
+                queueBtn.textContent = window.i18n.t('admin.media_management.booru_import.add_to_queue');
             }
         }
     }
