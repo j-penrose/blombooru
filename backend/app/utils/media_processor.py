@@ -99,15 +99,15 @@ def get_video_info(file_path: Path) -> Optional[dict]:
     except Exception:
         return None
 
-def process_media_file(file_path: Path, precalculated_hash: Optional[str] = None) -> dict:
+def process_media_file(file_path: Path, precalculated_hash: Optional[str] = None, transcode: bool = True) -> dict:
     """Process media file and extract metadata"""
     file_size = file_path.stat().st_size
     file_hash = precalculated_hash if precalculated_hash else calculate_file_hash(file_path)
     mime_type = get_mime_type(file_path)
     file_type = determine_file_type(mime_type, file_path.name, file_path)
     
-    # Transcode if container/codec requires it
-    transcoded_file_path = transcode_media_if_needed(file_path)
+    # Transcode if container/codec requires it and transcode is requested
+    transcoded_file_path = transcode_media_if_needed(file_path) if transcode else None
     transcoded_rel_path = None
     if transcoded_file_path:
         try:

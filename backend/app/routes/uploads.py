@@ -224,7 +224,7 @@ async def upload_files_to_session(
 
     # Analyze media dimensions and type
     try:
-        media_info = process_media_file(staged_path, precalculated_hash=file_hash)
+        media_info = process_media_file(staged_path, precalculated_hash=file_hash, transcode=False)
         width = media_info.get("width")
         height = media_info.get("height")
         file_type = media_info.get("file_type")
