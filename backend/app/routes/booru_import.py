@@ -254,8 +254,9 @@ async def download_and_import(
         thumbnail_filename = f"{thumbnail_name}.jpg"
         thumbnail_path = settings.THUMBNAIL_DIR / thumbnail_filename
 
+        thumb_source = (settings.BASE_DIR / metadata["transcoded_path"]) if metadata.get("transcoded_path") else file_path
         thumbnail_generated = generate_thumbnail(
-            file_path,
+            thumb_source,
             thumbnail_path,
             metadata['file_type']
         )
@@ -271,6 +272,7 @@ async def download_and_import(
         media = Media(
             filename=unique_filename,
             path=str(relative_path),
+            transcoded_path=metadata.get("transcoded_path"),
             thumbnail_path=str(relative_thumb) if relative_thumb else None,
             hash=file_hash,
             file_type=metadata['file_type'],

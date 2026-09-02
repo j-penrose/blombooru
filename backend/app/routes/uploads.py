@@ -30,6 +30,7 @@ from ..utils.media_helpers import get_unique_filename
 from ..utils.media_processor import calculate_file_hash, process_media_file
 from ..utils.request_helpers import safe_error_detail
 from ..utils.thumbnail_generator import generate_thumbnail
+from ..utils.transcoder import transcode_media_if_needed
 from .media import preview_or_create_tags, update_tag_counts
 
 router = APIRouter(prefix="/api/uploads", tags=["uploads"])
@@ -872,11 +873,16 @@ async def commit_upload_session(
                 dest_path = settings.ORIGINAL_DIR / unique_filename
                 shutil.move(str(staged_path), str(dest_path))
 
+                # Transcode if container/codec requires it
+                transcoded_file_path = transcode_media_if_needed(dest_path)
+                rel_transcoded = str(transcoded_file_path.relative_to(settings.BASE_DIR)) if transcoded_file_path else None
+
                 # Generate final thumbnail
                 thumb_filename = Path(unique_filename).stem + ".jpg"
                 thumb_dest_path = settings.THUMBNAIL_DIR / thumb_filename
                 file_type_str = item.get("file_type", "image")
-                thumb_gen = generate_thumbnail(dest_path, thumb_dest_path, file_type_str)
+                thumb_source = transcoded_file_path if transcoded_file_path else dest_path
+                thumb_gen = generate_thumbnail(thumb_source, thumb_dest_path, file_type_str)
 
                 rel_path = dest_path.relative_to(settings.BASE_DIR)
                 rel_thumb = thumb_dest_path.relative_to(settings.BASE_DIR) if thumb_gen else None
@@ -885,6 +891,7 @@ async def commit_upload_session(
                 media = Media(
                     filename=unique_filename,
                     path=str(rel_path),
+                    transcoded_path=rel_transcoded,
                     thumbnail_path=str(rel_thumb) if rel_thumb else None,
                     hash=file_hash,
                     file_type=FileTypeEnum(file_type_str) if file_type_str in FileTypeEnum._value2member_map_ else FileTypeEnum.image,
