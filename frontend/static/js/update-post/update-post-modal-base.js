@@ -45,9 +45,11 @@ class UpdatePostModalBase {
 
     _checkboxRow(id, label, checked) {
         return `
-            <label class="flex items-center gap-2 cursor-pointer text-sm" for="${id}">
-                <input id="${id}" type="checkbox" class="w-4 h-4 accent-primary" ${checked ? 'checked' : ''}>
-                ${label}
+            <label class="w-full cursor-pointer" for="${id}">
+                <input id="${id}" type="checkbox" class="peer hidden" ${checked ? 'checked' : ''}>
+                <span class="block w-full p-1 bg border text-xs text-center cursor-pointer hover:border-primary transition-colors select-none peer-checked:bg-primary peer-checked:border-primary peer-checked:text-[var(--primary-text)] peer-checked:hover:bg-[var(--primary-hover)]">
+                    ${label}
+                </span>
             </label>`;
     }
 

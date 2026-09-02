@@ -263,7 +263,7 @@ class UpdatePostUrlImport extends UpdatePostModalBase {
                     <p class="text-xs font-bold text-secondary uppercase tracking-wide mb-1">
                         ${window.i18n.t('modal.update_post.what_to_update')}
                     </p>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
                         ${this._checkboxRow('upm-upd-tags', window.i18n.t('common.tags'), true)}
                         ${this._checkboxRow('upm-upd-rating', window.i18n.t('media.info.rating'), true)}
                         ${this._checkboxRow('upm-upd-file', window.i18n.t('modal.update_post.update_file'), autoCheckFile)}
