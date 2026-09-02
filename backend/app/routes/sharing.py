@@ -9,6 +9,7 @@ from ..config import settings
 from ..database import get_db
 from ..models import Media
 from ..schemas import SharedMediaResponse
+from ..utils.format_registry import format_registry
 from ..utils.media_helpers import (create_stripped_media_cache,
                                    extract_media_metadata,
                                    get_media_cache_status, serve_media_file)
@@ -49,8 +50,8 @@ async def get_shared_file(share_uuid: str, request: Request, chunked: bool = Fal
         ).first()
         if not media:
             raise HTTPException(status_code=404, detail="Shared media not found")
-        file_path = settings.BASE_DIR / media.path
-        mime_type = media.mime_type
+        file_path = (settings.BASE_DIR / media.transcoded_path) if media.transcoded_path else (settings.BASE_DIR / media.path)
+        mime_type = format_registry.get_mime_type(file_path.name, default=media.mime_type)
         strip_metadata = not media.share_ai_metadata
     finally:
         db.close()
@@ -113,18 +114,19 @@ async def get_shared_status(
     if not media:
         raise HTTPException(status_code=404, detail="Shared media not found")
         
-    # Serve original file immediately if AI metadata is shared
+    # Serve file immediately if AI metadata is shared
     if media.share_ai_metadata:
         return {"status": "not_stripped"}
         
-    file_path = settings.BASE_DIR / media.path
+    file_path = (settings.BASE_DIR / media.transcoded_path) if media.transcoded_path else (settings.BASE_DIR / media.path)
     if not file_path.exists():
         return {"status": "error"}
         
-    status = get_media_cache_status(file_path, media.mime_type)
+    mime_type = format_registry.get_mime_type(file_path.name, default=media.mime_type)
+    status = get_media_cache_status(file_path, mime_type)
     
     # If processing (not in cache), trigger generation
     if status == 'processing':
-        background_tasks.add_task(create_stripped_media_cache, file_path, media.mime_type)
+        background_tasks.add_task(create_stripped_media_cache, file_path, mime_type)
         
     return {"status": status}
