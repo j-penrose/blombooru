@@ -6,8 +6,10 @@ import cv2
 import magic
 from PIL import Image
 
+from ..config import settings
 from ..schemas import FileTypeEnum
 from .logger import logger
+from .transcoder import transcode_media_if_needed
 
 _HASH_CACHE = {}
 
@@ -104,22 +106,39 @@ def process_media_file(file_path: Path, precalculated_hash: Optional[str] = None
     mime_type = get_mime_type(file_path)
     file_type = determine_file_type(mime_type, file_path.name, file_path)
     
+    # Transcode if container/codec requires it
+    transcoded_file_path = transcode_media_if_needed(file_path)
+    transcoded_rel_path = None
+    if transcoded_file_path:
+        try:
+            transcoded_rel_path = str(transcoded_file_path.relative_to(settings.BASE_DIR))
+        except ValueError:
+            transcoded_rel_path = str(transcoded_file_path)
+    
     result = {
         'hash': file_hash,
         'mime_type': mime_type,
         'file_type': file_type,
         'file_size': file_size,
+        'transcoded_path': transcoded_rel_path,
         'width': None,
         'height': None,
         'duration': None
     }
     
+    # Extract metadata using transcoded file if available (or original file)
+    meta_source = transcoded_file_path if transcoded_file_path else file_path
+    
     if file_type in [FileTypeEnum.image, FileTypeEnum.gif]:
-        dimensions = get_image_dimensions(file_path)
+        dimensions = get_image_dimensions(meta_source)
+        if not dimensions and meta_source != file_path:
+            dimensions = get_image_dimensions(file_path)
         if dimensions:
             result['width'], result['height'] = dimensions
     elif file_type == FileTypeEnum.video:
-        video_info = get_video_info(file_path)
+        video_info = get_video_info(meta_source)
+        if not video_info and meta_source != file_path:
+            video_info = get_video_info(file_path)
         if video_info:
             result.update(video_info)
     return result
