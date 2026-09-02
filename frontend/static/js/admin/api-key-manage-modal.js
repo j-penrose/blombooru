@@ -60,7 +60,7 @@ class ApiKeyManageModal {
                     <!-- Read-Only -->
                     <button class="akm-level-btn text-left p-4 bg hover:border-primary transition-all border flex items-center gap-3 relative cursor-pointer" data-level="read">
                         <div class="text-success shrink-0">
-                            ${window.Icons ? window.Icons.eye({ size: 20 }) : ''}
+                            ${window.Icons.eye({ size: 20 })}
                         </div>
                         <div class="flex-1">
                             <div class="font-bold text-sm">${window.i18n.t('modal.manage_api_key.level_read_title')}</div>
@@ -71,7 +71,7 @@ class ApiKeyManageModal {
                     <!-- Upload & Edit -->
                     <button class="akm-level-btn text-left p-4 bg hover:border-primary transition-all border flex items-center gap-3 relative cursor-pointer" data-level="write">
                         <div class="mt-0.5 text-warning shrink-0">
-                            ${window.Icons ? window.Icons.upload({ size: 20 }) : ''}
+                            ${window.Icons.upload({ size: 20 })}
                         </div>
                         <div class="flex-1">
                             <div class="font-bold text-sm">${window.i18n.t('modal.manage_api_key.level_write_title')}</div>
@@ -82,7 +82,7 @@ class ApiKeyManageModal {
                     <!-- Full Admin -->
                     <button class="akm-level-btn text-left p-4 bg hover:border-primary transition-all border flex items-center gap-3 relative cursor-pointer" data-level="admin">
                         <div class="mt-0.5 text-danger shrink-0">
-                            ${window.Icons ? window.Icons.shield({ size: 20 }) : ''}
+                            ${window.Icons.shield({ size: 20 })}
                         </div>
                         <div class="flex-1">
                             <div class="font-bold text-sm">${window.i18n.t('modal.manage_api_key.level_admin_title')}</div>

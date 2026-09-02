@@ -43,10 +43,10 @@ class ModalHelper {
 
     getIconSVG(type) {
         const icons = {
-            primary: window.Icons ? window.Icons.primary({ class: 'mx-auto mb-4 text-primary' }) : '',
-            info: window.Icons ? window.Icons.info({ class: 'mx-auto mb-4 text-info' }) : '',
-            warning: window.Icons ? window.Icons.warning({ class: 'mx-auto mb-4 text-warning' }) : '',
-            danger: window.Icons ? window.Icons.danger({ class: 'mx-auto mb-4 text-danger' }) : ''
+            primary: window.Icons.primary({ class: 'mx-auto mb-4 text-primary' }),
+            info: window.Icons.info({ class: 'mx-auto mb-4 text-info' }),
+            warning: window.Icons.warning({ class: 'mx-auto mb-4 text-warning' }),
+            danger: window.Icons.danger({ class: 'mx-auto mb-4 text-danger' })
         };
         return icons[type] || icons.info;
     }

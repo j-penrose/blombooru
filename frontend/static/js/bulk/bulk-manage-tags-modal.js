@@ -40,30 +40,30 @@ class BulkManageTagsModal {
                 
                 <div class="flex flex-col gap-3">
                     <button class="action-btn text-left p-4 bg hover:border-primary hover:text-primary transition-colors border flex items-center gap-3 cursor-pointer" data-action="manual">
-                        ${window.Icons ? window.Icons.edit({ size: 20 }) : ''}
+                        ${window.Icons.edit({ size: 20 })}
                         <div class="flex-1">
                             <div class="font-bold text-sm">${window.i18n.t('common.manual_tag_editor')}</div>
                             <div class="text-xs opacity-70">${window.i18n.t('bulk_modal.menu.manual_desc')}</div>
                         </div>
-                        ${window.Icons ? window.Icons.chevronRight({ size: 16, class: 'opacity-50' }) : ''}
+                        ${window.Icons.chevronRight({ size: 16, class: 'opacity-50' })}
                     </button>
 
                     <button class="action-btn text-left p-4 bg hover:border-primary hover:text-primary transition-colors border flex items-center gap-3 cursor-pointer" data-action="ai_tags">
-                        ${window.Icons ? window.Icons.messageSquare({ size: 20 }) : ''}
+                        ${window.Icons.messageSquare({ size: 20 })}
                         <div class="flex-1">
                             <div class="font-bold text-sm">${window.i18n.t('bulk_modal.menu.ai_tags')}</div>
                             <div class="text-xs opacity-70">${window.i18n.t('bulk_modal.menu.ai_desc')}</div>
                         </div>
-                        ${window.Icons ? window.Icons.chevronRight({ size: 16, class: 'opacity-50' }) : ''}
+                        ${window.Icons.chevronRight({ size: 16, class: 'opacity-50' })}
                     </button>
 
                     <button class="action-btn text-left p-4 bg hover:border-primary hover:text-primary transition-colors border flex items-center gap-3 cursor-pointer" data-action="wd_tagger">
-                        ${window.Icons ? window.Icons.camera({ size: 20 }) : ''}
+                        ${window.Icons.camera({ size: 20 })}
                         <div class="flex-1">
                             <div class="font-bold text-sm">${window.i18n.t('bulk_modal.menu.wd_tagger')}</div>
                             <div class="text-xs opacity-70">${window.i18n.t('bulk_modal.menu.wd_desc')}</div>
                         </div>
-                        ${window.Icons ? window.Icons.chevronRight({ size: 16, class: 'opacity-50' }) : ''}
+                        ${window.Icons.chevronRight({ size: 16, class: 'opacity-50' })}
                     </button>
                 </div>
                 <div class="flex gap-2 mt-4">

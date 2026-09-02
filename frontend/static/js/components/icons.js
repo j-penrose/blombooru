@@ -104,7 +104,4 @@
     };
 
     window.Icons = Icons;
-    window.renderDiceIcon = function (face) {
-        return Icons.dice({ face: face });
-    };
 })();

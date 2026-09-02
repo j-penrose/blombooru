@@ -86,7 +86,7 @@ class MediaPickerModal {
                         <p class="text-secondary mt-2">${this._esc(window.i18n.t('common.loading'))}</p>
                     </div>
                     <div class="mpicker-empty text-center py-8 text-secondary" style="display:none">
-                        ${window.Icons ? window.Icons.search({ size: 48, class: 'mx-auto mb-3 opacity-50' }) : ''}
+                        ${window.Icons.search({ size: 48, class: 'mx-auto mb-3 opacity-50' })}
                         <p>${this._esc(window.i18n.t('gallery.no_results_found'))}</p>
                     </div>
                     <div class="mpicker-load-more text-center py-4" style="display:none">
@@ -635,7 +635,7 @@ class MediaPickerModal {
         // Select indicator
         const indicator = document.createElement('div');
         indicator.className = 'select-indicator';
-        indicator.innerHTML = window.Icons ? window.Icons.check({ size: 24 }) : '';
+        indicator.innerHTML = window.Icons.check({ size: 24 });
 
         // Badge (parent/child indicators for relation manager, etc.)
         if (this.options.badgeFn) {

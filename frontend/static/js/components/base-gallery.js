@@ -369,10 +369,8 @@ class BaseGallery {
     }
 
     rollSortRandomDice() {
-        if (!window.Icons && typeof renderDiceIcon === 'undefined') return;
-
         this.sortRandomRegenBtns.forEach(btn => {
-            btn.innerHTML = window.Icons ? window.Icons.dice() : renderDiceIcon();
+            btn.innerHTML = window.Icons.dice();
         });
     }
 
@@ -750,7 +748,7 @@ class BaseGallery {
     }
 
     createEllipsis() {
-        const dotsIcon = window.Icons ? window.Icons.dots({ size: 16 }) : '';
+        const dotsIcon = window.Icons.dots({ size: 16 });
         return `
             <a href="#" class="page-ellipsis btn-dark min-w-[2rem] h-8 px-2 flex items-center justify-center transition-all duration-200 text-secondary cursor-pointer" 
                title="${window.i18n.t('gallery.jump_to_page')}">
@@ -1519,7 +1517,7 @@ class BaseGallery {
             // Custom visual indicator (the clickable circle)
             indicator = document.createElement('div');
             indicator.className = 'select-indicator';
-            indicator.innerHTML = window.Icons ? window.Icons.check({ size: 24 }) : '';
+            indicator.innerHTML = window.Icons.check({ size: 24 });
 
             if (this.selectedItems.has(media.id)) {
                 checkbox.checked = true;
@@ -1674,7 +1672,7 @@ class BaseGallery {
         if (media.is_shared) {
             const shareIcon = document.createElement('div');
             shareIcon.className = 'share-icon w-6 h-6 flex items-center justify-center p-0';
-            shareIcon.innerHTML = window.Icons ? window.Icons.share({ size: 12 }) : '';
+            shareIcon.innerHTML = window.Icons.share({ size: 12 });
             item.appendChild(shareIcon);
         }
 

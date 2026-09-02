@@ -55,7 +55,7 @@ class BooruConfigManager {
                 </td>
                 <td class="py-2 px-3 text-xs text-right">
                     <button class="text-danger hover:text-danger transition-colors cursor-pointer" onclick="window.booruConfigManager.deleteConfig('${config.domain}')">
-                        ${window.Icons ? window.Icons.trash({ size: 14 }) : ''}
+                        ${window.Icons.trash({ size: 14 })}
                     </button>
                 </td>
             </tr>

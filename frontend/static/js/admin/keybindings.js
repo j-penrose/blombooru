@@ -68,13 +68,13 @@ class AdminKeybindings {
                 <button class="btn keybinding-edit-btn p-2 text-xs flex items-center justify-center hover:border-primary transition-colors cursor-pointer"
                         data-action-id="${this._escapeHtml(action.id)}"
                         title="${this._escapeHtml(editTitle)}">
-                    ${window.Icons ? window.Icons.edit({ size: 14 }) : ''}
+                    ${window.Icons.edit({ size: 14 })}
                 </button>
 
                 <button class="btn keybinding-reset-btn p-2 text-xs text-secondary flex items-center justify-center hover:border-primary transition-colors cursor-pointer"
                         data-action-id="${this._escapeHtml(action.id)}"
                         title="${this._escapeHtml(resetTitle)}">
-                    ${window.Icons ? window.Icons.reset({ size: 14 }) : ''}
+                    ${window.Icons.reset({ size: 14 })}
                 </button>
             </div>
         `;
@@ -141,7 +141,7 @@ class AdminKeybindings {
             <div class="flex items-center gap-2">
                 <button class="btn keybinding-cancel-capture-btn p-2 text-xs text flex items-center justify-center hover:border-danger transition-colors cursor-pointer"
                         title="${this._escapeHtml(cancelTitle)}">
-                    ${window.Icons ? window.Icons.close({ size: 14 }) : ''}
+                    ${window.Icons.close({ size: 14 })}
                 </button>
             </div>
         `;

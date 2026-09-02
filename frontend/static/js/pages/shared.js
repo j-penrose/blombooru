@@ -131,7 +131,7 @@ class SharedViewer extends MediaViewerBase {
                     <div id="ai-metadata-section" style="display: none;" class="surface border">
                         <button type="button" id="ai-metadata-toggle" class="w-full p-3 flex justify-between items-center text-left hover:text-primary transition-colors cursor-pointer">
                             <h3 class="text-sm font-bold">${window.i18n.t('shared.ai_generation_data')}</h3>
-                            ${window.Icons ? window.Icons.chevronDown({ id: 'ai-metadata-chevron', class: 'transition-transform duration-200' }) : ''}
+                            ${window.Icons.chevronDown({ id: 'ai-metadata-chevron', class: 'transition-transform duration-200' })}
                         </button>
                         <div id="ai-metadata-content" class="text-xs px-3 pb-3" style="display: none;"></div>
                     </div>
@@ -142,7 +142,7 @@ class SharedViewer extends MediaViewerBase {
                         <div class="space-y-2">
                             <a id="download-btn" href="/api/shared/${this.shareUuid}/file${media.hash ? '?v=' + media.hash : ''}" download="${media.filename}" 
                                class="btn-primary flex items-center justify-center gap-2 w-full text-sm font-medium cursor-pointer ${this.isProcessing ? 'pointer-events-none opacity-50' : ''}">
-                                ${window.Icons ? window.Icons.download({ size: 16 }) : ''}
+                                ${window.Icons.download({ size: 16 })}
                                 ${this.isProcessing ? window.i18n.t('common.processing') : window.i18n.t('common.download')}
                             </a>
                         </div>

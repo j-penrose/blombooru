@@ -127,7 +127,7 @@ class BooruImporter {
                                 <div id="booru-rating-select" class="custom-select w-32" data-value="${post.rating}">
                                     <div class="custom-select-trigger w-full flex items-center justify-between gap-2 px-2 py-1 bg border text-xs cursor-pointer focus:outline-none hover:border-primary transition-colors">
                                         <span class="custom-select-value text capitalize">${post.rating}</span>
-                                        ${window.Icons ? window.Icons.selectArrow({ size: 10, class: 'custom-select-arrow flex-shrink-0 transition-transform duration-200 text-secondary' }) : ''}
+                                        ${window.Icons.selectArrow({ size: 10, class: 'custom-select-arrow flex-shrink-0 transition-transform duration-200 text-secondary' })}
                                     </div>
                                     <div class="custom-select-dropdown bg border border-primary max-h-40 overflow-y-auto shadow-lg z-50">
                                         <div class="custom-select-option px-3 py-2 cursor-pointer hover:surface text-xs ${post.rating === 'safe' ? 'selected' : ''}" data-value="safe">Safe</div>
@@ -509,7 +509,7 @@ class BooruImporter {
                 <div class="custom-select-trigger tag-text tag ${colorClass} cursor-pointer select-none" style="display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;">
                     <span class="text-xs">${this.escapeHtml(tag.name)}</span>
                     <span class="custom-select-value" style="display: none;"></span>
-                    ${window.Icons ? window.Icons.chevronDown({ size: 10, class: 'custom-select-arrow flex-shrink-0 transition-transform duration-200', style: 'display: block;' }) : ''}
+                    ${window.Icons.chevronDown({ size: 10, class: 'custom-select-arrow flex-shrink-0 transition-transform duration-200', style: 'display: block;' })}
                 </div>
                 <div class="custom-select-dropdown bg border border-primary max-h-40 overflow-y-auto shadow-lg z-50 min-w-[100px]">
                     <div class="custom-select-option px-3 py-2 cursor-pointer hover:surface text-xs" data-value="general">General</div>

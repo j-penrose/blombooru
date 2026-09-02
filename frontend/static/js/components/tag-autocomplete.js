@@ -355,7 +355,7 @@ class TagAutocomplete {
                     <div id="tag-create-category-select" class="custom-select w-full" data-value="general">
                         <button class="custom-select-trigger w-full flex items-center justify-between gap-3 px-3 py-2 bg border text-xs cursor-pointer focus:outline-none hover:border-primary transition-colors focus:border-primary" type="button">
                             <span class="custom-select-value text">${this.escapeHtml(generalLabel)}</span>
-                            ${window.Icons ? window.Icons.selectArrow({ size: 12 }) : ''}
+                            ${window.Icons.selectArrow({ size: 12 })}
                         </button>
                         <div class="custom-select-dropdown bg border border-primary max-h-60 overflow-y-auto shadow-lg">
                             ${categoryOptions}

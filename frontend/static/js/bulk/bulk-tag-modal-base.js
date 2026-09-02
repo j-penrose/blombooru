@@ -860,13 +860,13 @@ class BulkTagModalBase {
                                         class="${prefix}-refresh w-11 h-11 sm:w-9 sm:h-9 surface hover:surface-light text-secondary hover:text flex items-center justify-center transition-colors cursor-pointer"
                                         data-index="${index}"
                                         title="${window.i18n.t('bulk_modal.buttons.refresh_tags')}">
-                                    ${window.Icons ? window.Icons.wand({ size: 20, class: 'w-5 h-5 sm:w-4 sm:h-4' }) : ''}
+                                    ${window.Icons.wand({ size: 20, class: 'w-5 h-5 sm:w-4 sm:h-4' })}
                                 </button>
                                 <button type="button" 
                                         class="${prefix}-clear w-11 h-11 sm:w-9 sm:h-9 bg-danger hover:bg-danger tag-text flex items-center justify-center transition-colors cursor-pointer"
                                         data-index="${index}"
                                         title="${window.i18n.t('bulk_modal.buttons.clear_tags')}">
-                                    ${window.Icons ? window.Icons.trash({ size: 20, class: 'w-5 h-5 sm:w-4 sm:h-4' }) : ''}
+                                    ${window.Icons.trash({ size: 20, class: 'w-5 h-5 sm:w-4 sm:h-4' })}
                                 </button>
                             </div>
                         </div>

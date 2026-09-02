@@ -452,7 +452,7 @@ class AdminSystem {
             removeBtn.type = 'button';
             removeBtn.className = 'btn-danger p-2 flex items-center justify-center flex-shrink-0 text-xs cursor-pointer h-[34px] w-[34px]';
             removeBtn.title = window.i18n.t('common.delete');
-            removeBtn.innerHTML = window.Icons ? window.Icons.trash({ size: 14 }) : '';
+            removeBtn.innerHTML = window.Icons.trash({ size: 14 });
             removeBtn.onclick = () => this.removeCustomButton(index);
 
             row.appendChild(titleInput);
@@ -1063,18 +1063,18 @@ class AdminSystem {
         if (permission === 'write') {
             const title = window.i18n.t('admin.api_access.level_write');
             return `<span title="${this.app.escapeHtml(title)}" class="inline-flex items-center">
-                ${window.Icons ? window.Icons.upload({ size: size, class: 'text-warning shrink-0' }) : ''}
+                ${window.Icons.upload({ size: size, class: 'text-warning shrink-0' })}
             </span>`;
         }
         if (permission === 'admin') {
             const title = window.i18n.t('admin.api_access.level_admin');
             return `<span title="${this.app.escapeHtml(title)}" class="inline-flex items-center">
-                ${window.Icons ? window.Icons.shield({ size: size, class: 'text-danger shrink-0' }) : ''}
+                ${window.Icons.shield({ size: size, class: 'text-danger shrink-0' })}
             </span>`;
         }
         const title = window.i18n.t('admin.api_access.level_read');
         return `<span title="${this.app.escapeHtml(title)}" class="inline-flex items-center">
-            ${window.Icons ? window.Icons.eye({ size: size, class: 'text-success shrink-0' }) : ''}
+            ${window.Icons.eye({ size: size, class: 'text-success shrink-0' })}
         </span>`;
     }
 
@@ -1101,7 +1101,7 @@ class AdminSystem {
                         <!-- Read-Only -->
                         <button type="button" class="new-akm-level text-left p-3.5 bg hover:border-primary transition-all border flex items-start gap-3 cursor-pointer border-primary surface" data-level="read">
                             <div class="mt-0.5 text-success shrink-0">
-                                ${window.Icons ? window.Icons.eye({ size: 18 }) : ''}
+                                ${window.Icons.eye({ size: 18 })}
                             </div>
                             <div class="flex-1">
                                 <div class="font-bold text-xs text mb-0.5">${window.i18n.t('modal.manage_api_key.level_read_title')}</div>
@@ -1112,7 +1112,7 @@ class AdminSystem {
                         <!-- Upload & Edit -->
                         <button type="button" class="new-akm-level text-left p-3.5 bg hover:border-primary transition-all border flex items-start gap-3 cursor-pointer" data-level="write">
                             <div class="mt-0.5 text-warning shrink-0">
-                                ${window.Icons ? window.Icons.upload({ size: 18 }) : ''}
+                                ${window.Icons.upload({ size: 18 })}
                             </div>
                             <div class="flex-1">
                                 <div class="font-bold text-xs text mb-0.5">${window.i18n.t('modal.manage_api_key.level_write_title')}</div>
@@ -1123,7 +1123,7 @@ class AdminSystem {
                         <!-- Full Admin -->
                         <button type="button" class="new-akm-level text-left p-3.5 bg hover:border-primary transition-all border flex items-start gap-3 cursor-pointer" data-level="admin">
                             <div class="mt-0.5 text-danger shrink-0">
-                                ${window.Icons ? window.Icons.shield({ size: 18 }) : ''}
+                                ${window.Icons.shield({ size: 18 })}
                             </div>
                             <div class="flex-1">
                                 <div class="font-bold text-xs text mb-0.5">${window.i18n.t('modal.manage_api_key.level_admin_title')}</div>
@@ -1779,17 +1779,17 @@ class AdminSystem {
                     <button type="button" class="text-success hover:text-success transition-colors mr-2 cursor-pointer"
                         data-action="export" data-theme-id="${this.app.escapeHtml(theme.id)}"
                         title="${window.i18n.t('admin.settings.custom_themes.export')}">
-                        ${window.Icons ? window.Icons.download({ size: 14 }) : ''}
+                        ${window.Icons.download({ size: 14 })}
                     </button>
                     <button type="button" class="text-primary hover:text-primary transition-colors mr-2 cursor-pointer"
                         data-action="edit" data-theme-id="${this.app.escapeHtml(theme.id)}"
                         title="${window.i18n.t('admin.settings.custom_themes.edit')}">
-                        ${window.Icons ? window.Icons.edit({ size: 14 }) : ''}
+                        ${window.Icons.edit({ size: 14 })}
                     </button>
                     <button type="button" class="text-danger hover:text-danger transition-colors cursor-pointer"
                         data-action="delete" data-theme-id="${this.app.escapeHtml(theme.id)}"
                         title="${window.i18n.t('common.delete')}">
-                        ${window.Icons ? window.Icons.trash({ size: 14 }) : ''}
+                        ${window.Icons.trash({ size: 14 })}
                     </button>
                 </td>`;
 

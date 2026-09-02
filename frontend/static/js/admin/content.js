@@ -247,11 +247,11 @@ class AdminContent {
             if (isDownloaded) {
                 btn.className = 'btn-danger p-2 flex items-center justify-center flex-shrink-0 text-xs';
                 btn.title = window.i18n.t('common.delete');
-                btn.innerHTML = window.Icons ? window.Icons.trash({ size: 14 }) : '';
+                btn.innerHTML = window.Icons.trash({ size: 14 });
             } else {
                 btn.className = 'btn-primary p-2 flex items-center justify-center flex-shrink-0 text-xs';
                 btn.title = window.i18n.t('common.download');
-                btn.innerHTML = window.Icons ? window.Icons.download({ size: 14 }) : '';
+                btn.innerHTML = window.Icons.download({ size: 14 });
             }
         } catch (e) {
             console.error('Error checking model status:', e);
@@ -883,7 +883,7 @@ class AdminContent {
                             data-tag-name="${this.app.escapeHtml(tag.name)}"
                             data-tag-category="${tag.category}"
                             title="${window.i18n.t('admin.tags_management.manage_tag')}">
-                            ${window.Icons ? window.Icons.tagMenu({ size: 14 }) : ''}
+                            ${window.Icons.tagMenu({ size: 14 })}
                         </button>
                         <a href="/?q=${encodeURIComponent(tag.name)}" class="tag ${tag.category} tag-text overflow-hidden whitespace-nowrap text-ellipsis">${tag.name}</a>
                     </div>
@@ -959,15 +959,15 @@ class AdminContent {
                 <p class="text-base mb-6 text font-medium">${this.app.escapeHtml(tagName)}</p>
                 <div class="flex flex-col gap-3">
                     <button id="tag-manage-edit" class="btn-dark px-6 py-3 font-bold text-sm flex items-center justify-center gap-2 cursor-pointer">
-                        ${window.Icons ? window.Icons.edit({ size: 16 }) : ''}
+                        ${window.Icons.edit({ size: 16 })}
                         ${window.i18n.t('admin.tags_management.edit_tag')}
                     </button>
                     <button id="tag-manage-merge" class="btn-dark px-6 py-3 font-bold text-sm flex items-center justify-center gap-2 cursor-pointer">
-                        ${window.Icons ? window.Icons.merge({ size: 16 }) : ''}
+                        ${window.Icons.merge({ size: 16 })}
                         ${window.i18n.t('admin.tags_management.merge_tag')}
                     </button>
                     <button id="tag-manage-delete" class="px-6 py-3 transition-colors bg border border-danger text-danger hover:bg-danger hover:tag-text font-bold text-sm flex items-center justify-center gap-2 cursor-pointer">
-                        ${window.Icons ? window.Icons.trash({ size: 16 }) : ''}
+                        ${window.Icons.trash({ size: 16 })}
                         ${window.i18n.t('modal.delete_tag.title')}
                     </button>
                     <button id="tag-manage-cancel" class="btn-dark px-6 py-3 font-bold text-sm flex items-center justify-center gap-2 cursor-pointer">
@@ -1243,7 +1243,7 @@ class AdminContent {
                     <div id="tag-edit-category-select" class="custom-select w-full" data-value="${tagCategory}">
                         <button class="custom-select-trigger w-full flex items-center justify-between gap-3 px-3 py-2 bg border text-xs cursor-pointer focus:outline-none hover:border-primary transition-colors focus:border-primary" type="button">
                             <span class="custom-select-value text">${currentCatLabel}</span>
-                            ${window.Icons ? window.Icons.selectArrow({ size: 12 }) : ''}
+                            ${window.Icons.selectArrow({ size: 12 })}
                         </button>
                         <div class="custom-select-dropdown bg border border-primary max-h-60 overflow-y-auto shadow-lg">
                             ${categoryOptions}
@@ -1783,7 +1783,7 @@ class AdminContent {
                             data-album-name="${this.app.escapeHtml(album.name)}"
                             data-parent-id="${immediateParentId || ''}"
                             title="${window.i18n.t('admin.albums_management.manage_album')}">
-                            ${window.Icons ? window.Icons.tagMenu({ size: 14 }) : ''}
+                            ${window.Icons.tagMenu({ size: 14 })}
                         </button>
                         <a href="/album/${album.id}" class="tag general tag-text overflow-hidden whitespace-nowrap text-ellipsis">${this.app.escapeHtml(album.name)}</a>
                     </div>
@@ -1828,20 +1828,20 @@ class AdminContent {
 
         modal.innerHTML = `
             <div class="surface border-2 border-primary p-8 max-w-md w-full text-center">
-                ${window.Icons ? window.Icons.folder({ size: 48, class: 'mx-auto mb-4 text-primary' }) : ''}
+                ${window.Icons.folder({ size: 48, class: 'mx-auto mb-4 text-primary' })}
                 <h2 class="text-xl font-bold mb-2 text-primary">${window.i18n.t('admin.albums_management.manage_album')}</h2>
                 <p class="text-base mb-6 text font-medium">${this.app.escapeHtml(albumName)}</p>
                 <div class="flex flex-col gap-3">
                     <button id="album-manage-rename" class="btn-dark px-6 py-3 font-bold text-sm flex items-center justify-center gap-2 cursor-pointer">
-                        ${window.Icons ? window.Icons.edit({ size: 16 }) : ''}
+                        ${window.Icons.edit({ size: 16 })}
                         ${window.i18n.t('admin.albums_management.rename_album')}
                     </button>
                     <button id="album-manage-parent" class="btn-dark px-6 py-3 font-bold text-sm flex items-center justify-center gap-2 cursor-pointer">
-                        ${window.Icons ? window.Icons.folderParent({ size: 16 }) : ''}
+                        ${window.Icons.folderParent({ size: 16 })}
                         ${window.i18n.t('admin.albums_management.change_parent_album')}
                     </button>
                     <button id="album-manage-delete" class="px-6 py-3 transition-colors bg border border-danger text-danger hover:bg-danger hover:tag-text font-bold text-sm flex items-center justify-center gap-2 cursor-pointer">
-                        ${window.Icons ? window.Icons.trash({ size: 16 }) : ''}
+                        ${window.Icons.trash({ size: 16 })}
                         ${window.i18n.t('common.delete_album')}
                     </button>
                     <button id="album-manage-cancel" class="btn-dark px-6 py-3 font-bold text-sm flex items-center justify-center gap-2 cursor-pointer">
@@ -2090,7 +2090,7 @@ class AdminContent {
                             class="custom-select-trigger w-full flex items-center justify-between gap-3 px-3 py-2 bg border text-xs cursor-pointer focus:outline-none focus:border-primary"
                             type="button">
                             <span class="custom-select-value text">${this.app.escapeHtml(initialDisplayText)}</span>
-                            ${window.Icons ? window.Icons.selectArrow({ size: 12 }) : ''}
+                            ${window.Icons.selectArrow({ size: 12 })}
                         </button>
                         <div class="custom-select-dropdown bg border border-primary max-h-60 overflow-y-auto shadow-lg">
                             ${optionsHtml}

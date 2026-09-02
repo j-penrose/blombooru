@@ -761,7 +761,7 @@ class MediaViewer extends MediaViewerBase {
         if (media.is_shared) {
             const shareIcon = document.createElement('div');
             shareIcon.className = 'share-icon w-6 h-6 flex items-center justify-center p-0';
-            shareIcon.innerHTML = window.Icons ? window.Icons.share({ size: 12 }) : '';
+            shareIcon.innerHTML = window.Icons.share({ size: 12 });
             item.appendChild(shareIcon);
         }
 
@@ -1778,7 +1778,7 @@ class MediaViewer extends MediaViewerBase {
         const hasChildren = this.currentMedia.has_children;
         const childCount = this.relationChildIds.size;
 
-        const infoIcon = window.Icons ? window.Icons.infoCircle({ class: 'inline-block w-4 h-4 mr-1' }) : '';
+        const infoIcon = window.Icons.infoCircle({ class: 'inline-block w-4 h-4 mr-1' });
 
         if (hasParent) {
             return `

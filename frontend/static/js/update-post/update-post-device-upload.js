@@ -44,12 +44,12 @@ class UpdatePostDeviceUpload extends UpdatePostModalBase {
                 <div class="flex items-center justify-between p-4 border-b border-color flex-shrink-0">
                     <div class="flex items-center gap-2 min-w-0">
                         <button id="upm-device-back" type="button" class="p-1 hover:text-primary transition-colors cursor-pointer text-secondary flex items-center justify-center" title="${window.i18n.t('common.back')}">
-                            ${window.Icons ? window.Icons.chevronLeft({ size: 16 }) : ''}
+                            ${window.Icons.chevronLeft({ size: 16 })}
                         </button>
                         <h2 class="text-base sm:text-lg font-bold truncate">${window.i18n.t('modal.update_post.from_device')}</h2>
                     </div>
                     <button id="upm-device-close" type="button" class="p-1 hover:text-primary transition-colors cursor-pointer text-secondary flex items-center justify-center" title="${window.i18n.t('common.close')}">
-                        ${window.Icons ? window.Icons.close({ size: 14 }) : ''}
+                        ${window.Icons.close({ size: 14 })}
                     </button>
                 </div>
 
@@ -80,7 +80,7 @@ class UpdatePostDeviceUpload extends UpdatePostModalBase {
 
                         <!-- Drop zone -->
                         <div id="upm-drop-zone" class="upload-area bg flex flex-col items-center justify-center gap-2 p-8 border cursor-pointer hover:border-primary transition-colors mb-3">
-                            ${window.Icons ? window.Icons.upload({ size: 32, class: 'text-secondary' }) : ''}
+                            ${window.Icons.upload({ size: 32, class: 'text-secondary' })}
                             <p id="upm-drop-label" class="text-xs font-medium text-center">
                                 ${window.i18n.t('modal.update_post.drop_file_here')}
                             </p>
@@ -125,7 +125,7 @@ class UpdatePostDeviceUpload extends UpdatePostModalBase {
                                         ${window.i18n.t('modal.update_post.replacement_file')}
                                     </span>
                                     <button id="upm-device-reselect" type="button" class="text-xs text-primary hover:underline cursor-pointer flex items-center gap-1">
-                                        ${window.Icons ? window.Icons.upload({ size: 12 }) : ''}
+                                        ${window.Icons.upload({ size: 12 })}
                                         ${window.i18n.t('modal.update_post.change_file')}
                                     </button>
                                 </div>
