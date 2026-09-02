@@ -143,6 +143,7 @@ async def backup_full_db(
             "share_uuid": m.share_uuid,
             "share_ai_metadata": bool(m.share_ai_metadata),
             "share_language": m.share_language,
+            "transcoded_path": m.transcoded_path,
             "tags": [t.name for t in m.tags],
             "archive_path": archive_path,
             "parent_hash": m.parent.hash if m.parent else None

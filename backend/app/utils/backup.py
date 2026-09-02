@@ -22,6 +22,7 @@ from ..utils.cache import (invalidate_album_cache, invalidate_media_cache,
                            invalidate_tag_cache)
 from ..utils.logger import logger
 from ..utils.thumbnail_generator import generate_thumbnail
+from ..utils.transcoder import transcode_media_if_needed
 
 # Constants for batch processing
 DB_BATCH_SIZE = 5000
@@ -391,13 +392,18 @@ def import_media_logical(db: Session, zf: zipfile.ZipFile, media_list: List[dict
         elif file_type_str == 'gif':
             file_type_enum = FileTypeEnum.gif
             
+        # Transcode if needed
+        transcoded_file = transcode_media_if_needed(target_path)
+        transcoded_rel_path = str(transcoded_file.relative_to(settings.BASE_DIR)) if transcoded_file else None
+
         # Generate thumbnail
         thumb_filename = f"{target_path.stem}.jpg"
         thumb_path = settings.THUMBNAIL_DIR / thumb_filename
+        thumb_source = transcoded_file if transcoded_file else target_path
         try:
-            generate_thumbnail(target_path, thumb_path, file_type_enum)
+            generate_thumbnail(thumb_source, thumb_path, file_type_enum)
         except Exception as e:
-            logger.error(f"Failed to generate thumbnail for {target_path}: {e}")
+            logger.error(f"Failed to generate thumbnail for {thumb_source}: {e}")
 
         # Parse rating
         rating_str = media_data.get('rating', 'safe')
@@ -420,6 +426,7 @@ def import_media_logical(db: Session, zf: zipfile.ZipFile, media_list: List[dict
         new_media = Media(
             filename=target_path.name,
             path=str(target_path.relative_to(settings.BASE_DIR)),
+            transcoded_path=transcoded_rel_path,
             thumbnail_path=str(thumb_path.relative_to(settings.BASE_DIR)) if thumb_path.exists() else None,
             hash=file_hash,
             file_type=file_type_enum,
