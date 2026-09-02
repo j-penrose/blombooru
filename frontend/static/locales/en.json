@@ -969,7 +969,13 @@
             "success": "Post updated successfully",
             "error_no_changes": "No update options selected",
             "error_identical_file": "The replacement file is identical to the current file",
-            "error_duplicate_file": "This file already exists as another post"
+            "error_duplicate_file": "This file already exists as another post",
+            "update_filename": "Update Filename",
+            "current_post": "Current File",
+            "replacement_file": "Replacement File",
+            "change_file": "Change File",
+            "keep_filename_hint": "Keep existing filename: {name}",
+            "new_filename_hint": "Update filename to: {name}"
         }
     },
     "nav": {

@@ -969,7 +969,13 @@
             "success": "Inlägget uppdaterades!",
             "error_no_changes": "Inga uppdateringsalternativ valdes",
             "error_identical_file": "Ersättningsfilen är identisk med den nuvarande filen",
-            "error_duplicate_file": "Denna fil existerar redan som ett annat inlägg"
+            "error_duplicate_file": "Denna fil existerar redan som ett annat inlägg",
+            "update_filename": "Uppdatera Filnamn",
+            "current_post": "Nuvarande Fil",
+            "replacement_file": "Ersättningsfil",
+            "change_file": "Byt Fil",
+            "keep_filename_hint": "Behåll nuvarande filnamn: {name}",
+            "new_filename_hint": "Uppdatera filnamnet till: {name}"
         }
     },
     "nav": {

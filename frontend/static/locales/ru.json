@@ -969,7 +969,13 @@
             "success": "Пост успешно обновлён",
             "error_no_changes": "Не выбраны параметры для обновления",
             "error_identical_file": "Файл для перезаписи идентичен текущему",
-            "error_duplicate_file": "Этот файл уже используется другим постом"
+            "error_duplicate_file": "",
+            "update_filename": "",
+            "current_post": "",
+            "replacement_file": "",
+            "change_file": "",
+            "keep_filename_hint": "",
+            "new_filename_hint": ""
         }
     },
     "nav": {

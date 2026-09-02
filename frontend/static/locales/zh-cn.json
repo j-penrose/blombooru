@@ -969,7 +969,13 @@
             "success": "",
             "error_no_changes": "",
             "error_identical_file": "",
-            "error_duplicate_file": ""
+            "error_duplicate_file": "",
+            "update_filename": "",
+            "current_post": "",
+            "replacement_file": "",
+            "change_file": "",
+            "keep_filename_hint": "",
+            "new_filename_hint": ""
         }
     },
     "nav": {

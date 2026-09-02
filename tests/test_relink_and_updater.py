@@ -12,7 +12,7 @@ from backend.app.config import settings
 from backend.app.database import Base
 from backend.app.enums import FileTypeEnum, RatingEnum
 from backend.app.models import Media, User
-from backend.app.routes.media import PostUpdateRequest, update_from_source
+from backend.app.routes.media import PostUpdateRequest, update_from_source, update_file_finalize
 from backend.app.utils.file_scanner import relink_media_files
 from backend.app.utils.media_processor import calculate_file_hash
 
@@ -25,9 +25,11 @@ class TestRelinkAndUpdater(unittest.IsolatedAsyncioTestCase):
         self.orig_dir = self.base_path / "media" / "original"
         self.trans_dir = self.base_path / "media" / "transcoded"
         self.thumb_dir = self.base_path / "media" / "thumbnails"
+        self.chunks_dir = self.base_path / "cache" / "media-chunks"
         self.orig_dir.mkdir(parents=True, exist_ok=True)
         self.trans_dir.mkdir(parents=True, exist_ok=True)
         self.thumb_dir.mkdir(parents=True, exist_ok=True)
+        self.chunks_dir.mkdir(parents=True, exist_ok=True)
 
         # In-memory SQLite engine
         self.engine = create_engine("sqlite:///:memory:")
@@ -274,6 +276,246 @@ class TestRelinkAndUpdater(unittest.IsolatedAsyncioTestCase):
             self.assertIsNotNone(imported)
             self.assertEqual(imported.transcoded_path, str(expected_trans.relative_to(self.base_path)))
             mock_transcode.assert_called_once()
+
+    async def test_update_file_finalize_keep_filename(self):
+        """Finalizing an update with update_filename=False retains original filename."""
+        import json as _json
+        orig_file = self.orig_dir / "sample_orig.png"
+        orig_file.write_bytes(b"INITIAL_ORIG_BYTES")
+        old_hash = calculate_file_hash(orig_file)
+
+        media = Media(
+            id=10,
+            filename="sample_orig.png",
+            path="media/original/sample_orig.png",
+            hash=old_hash,
+            file_type=FileTypeEnum.image,
+            mime_type="image/png",
+            file_size=len(b"INITIAL_ORIG_BYTES"),
+            rating=RatingEnum.safe,
+        )
+        self.db.add(media)
+        self.db.commit()
+
+        upload_id = "11111111-2222-3333-4444-555555555555"
+        chunk_dir = self.chunks_dir / upload_id
+        chunk_dir.mkdir(parents=True, exist_ok=True)
+        (chunk_dir / "meta.json").write_text(_json.dumps({"filename": "new_device_name.png", "total_chunks": 1}))
+        (chunk_dir / "chunk_0").write_bytes(b"NEW_DEVICE_BYTES_CONTENT")
+
+        with patch.object(settings, "BASE_DIR", self.base_path), \
+             patch.object(settings, "ORIGINAL_DIR", self.orig_dir), \
+             patch.object(settings, "TRANSCODED_DIR", self.trans_dir), \
+             patch.object(settings, "THUMBNAIL_DIR", self.thumb_dir), \
+             patch("backend.app.routes.media.MEDIA_CHUNKS_DIR", self.chunks_dir), \
+             patch("backend.app.routes.media.process_media_file") as mock_process, \
+             patch("backend.app.routes.media.generate_thumbnail", return_value=True):
+
+            mock_process.side_effect = lambda f, precalculated_hash=None: {
+                "file_type": FileTypeEnum.image,
+                "mime_type": "image/png",
+                "file_size": f.stat().st_size,
+                "transcoded_path": None,
+                "width": 2048,
+                "height": 1536,
+                "duration": None,
+            }
+
+            resp = await update_file_finalize(
+                media_id=10,
+                upload_id=upload_id,
+                update_filename=False,
+                current_user=self.mock_user,
+                db=self.db,
+            )
+
+            self.db.refresh(media)
+            self.assertEqual(media.filename, "sample_orig.png")
+            self.assertEqual(media.path, "media/original/sample_orig.png")
+            self.assertEqual(media.width, 2048)
+            self.assertTrue(orig_file.exists())
+            self.assertEqual(orig_file.read_bytes(), b"NEW_DEVICE_BYTES_CONTENT")
+
+    async def test_update_file_finalize_update_filename(self):
+        """Finalizing an update with update_filename=True updates filename and storage path."""
+        import json as _json
+        orig_file = self.orig_dir / "sample_orig2.png"
+        orig_file.write_bytes(b"INITIAL_ORIG_BYTES_2")
+        old_hash = calculate_file_hash(orig_file)
+
+        media = Media(
+            id=11,
+            filename="sample_orig2.png",
+            path="media/original/sample_orig2.png",
+            hash=old_hash,
+            file_type=FileTypeEnum.image,
+            mime_type="image/png",
+            file_size=len(b"INITIAL_ORIG_BYTES_2"),
+            rating=RatingEnum.safe,
+        )
+        self.db.add(media)
+        self.db.commit()
+
+        upload_id = "22222222-3333-4444-5555-666666666666"
+        chunk_dir = self.chunks_dir / upload_id
+        chunk_dir.mkdir(parents=True, exist_ok=True)
+        (chunk_dir / "meta.json").write_text(_json.dumps({"filename": "brand_new_name.png", "total_chunks": 1}))
+        (chunk_dir / "chunk_0").write_bytes(b"BRAND_NEW_CONTENT_BYTES")
+
+        with patch.object(settings, "BASE_DIR", self.base_path), \
+             patch.object(settings, "ORIGINAL_DIR", self.orig_dir), \
+             patch.object(settings, "TRANSCODED_DIR", self.trans_dir), \
+             patch.object(settings, "THUMBNAIL_DIR", self.thumb_dir), \
+             patch("backend.app.routes.media.MEDIA_CHUNKS_DIR", self.chunks_dir), \
+             patch("backend.app.routes.media.process_media_file") as mock_process, \
+             patch("backend.app.routes.media.generate_thumbnail", return_value=True):
+
+            mock_process.side_effect = lambda f, precalculated_hash=None: {
+                "file_type": FileTypeEnum.image,
+                "mime_type": "image/png",
+                "file_size": f.stat().st_size,
+                "transcoded_path": None,
+                "width": 1000,
+                "height": 1000,
+                "duration": None,
+            }
+
+            resp = await update_file_finalize(
+                media_id=11,
+                upload_id=upload_id,
+                update_filename=True,
+                current_user=self.mock_user,
+                db=self.db,
+            )
+
+            self.db.refresh(media)
+            self.assertEqual(media.filename, "brand_new_name.png")
+            self.assertEqual(media.path, "media/original/brand_new_name.png")
+            self.assertFalse(orig_file.exists())
+            new_file = self.orig_dir / "brand_new_name.png"
+            self.assertTrue(new_file.exists())
+            self.assertEqual(new_file.read_bytes(), b"BRAND_NEW_CONTENT_BYTES")
+
+    async def test_update_file_finalize_extension_change_when_keep_filename(self):
+        """When keeping filename but replacing with different format, stem is preserved with updated extension."""
+        import json as _json
+        orig_file = self.orig_dir / "keep_my_name.png"
+        orig_file.write_bytes(b"INITIAL_PNG_BYTES")
+        old_hash = calculate_file_hash(orig_file)
+
+        media = Media(
+            id=12,
+            filename="keep_my_name.png",
+            path="media/original/keep_my_name.png",
+            hash=old_hash,
+            file_type=FileTypeEnum.image,
+            mime_type="image/png",
+            file_size=len(b"INITIAL_PNG_BYTES"),
+            rating=RatingEnum.safe,
+        )
+        self.db.add(media)
+        self.db.commit()
+
+        upload_id = "33333333-4444-5555-6666-777777777777"
+        chunk_dir = self.chunks_dir / upload_id
+        chunk_dir.mkdir(parents=True, exist_ok=True)
+        (chunk_dir / "meta.json").write_text(_json.dumps({"filename": "incoming_upload.mp4", "total_chunks": 1}))
+        (chunk_dir / "chunk_0").write_bytes(b"NEW_VIDEO_CONTENT")
+
+        with patch.object(settings, "BASE_DIR", self.base_path), \
+             patch.object(settings, "ORIGINAL_DIR", self.orig_dir), \
+             patch.object(settings, "TRANSCODED_DIR", self.trans_dir), \
+             patch.object(settings, "THUMBNAIL_DIR", self.thumb_dir), \
+             patch("backend.app.routes.media.MEDIA_CHUNKS_DIR", self.chunks_dir), \
+             patch("backend.app.routes.media.process_media_file") as mock_process, \
+             patch("backend.app.routes.media.generate_thumbnail", return_value=True):
+
+            mock_process.side_effect = lambda f, precalculated_hash=None: {
+                "file_type": FileTypeEnum.video,
+                "mime_type": "video/mp4",
+                "file_size": f.stat().st_size,
+                "transcoded_path": None,
+                "width": 1920,
+                "height": 1080,
+                "duration": 12.5,
+            }
+
+            resp = await update_file_finalize(
+                media_id=12,
+                upload_id=upload_id,
+                update_filename=False,
+                current_user=self.mock_user,
+                db=self.db,
+            )
+
+            self.db.refresh(media)
+            self.assertEqual(media.filename, "keep_my_name.mp4")
+            self.assertEqual(media.path, "media/original/keep_my_name.mp4")
+            self.assertFalse(orig_file.exists())
+            new_file = self.orig_dir / "keep_my_name.mp4"
+            self.assertTrue(new_file.exists())
+            self.assertEqual(new_file.read_bytes(), b"NEW_VIDEO_CONTENT")
+
+    async def test_update_file_finalize_transcodes_if_needed(self):
+        """Finalizing with a format requiring transcoding properly updates transcoded_path."""
+        import json as _json
+        orig_file = self.orig_dir / "photo.jpg"
+        orig_file.write_bytes(b"INITIAL_JPG_BYTES")
+        old_hash = calculate_file_hash(orig_file)
+
+        media = Media(
+            id=13,
+            filename="photo.jpg",
+            path="media/original/photo.jpg",
+            hash=old_hash,
+            file_type=FileTypeEnum.image,
+            mime_type="image/jpeg",
+            file_size=len(b"INITIAL_JPG_BYTES"),
+            rating=RatingEnum.safe,
+        )
+        self.db.add(media)
+        self.db.commit()
+
+        upload_id = "44444444-5555-6666-7777-888888888888"
+        chunk_dir = self.chunks_dir / upload_id
+        chunk_dir.mkdir(parents=True, exist_ok=True)
+        (chunk_dir / "meta.json").write_text(_json.dumps({"filename": "video.mkv", "total_chunks": 1}))
+        (chunk_dir / "chunk_0").write_bytes(b"MKV_RAW_BYTES")
+
+        transcoded_target = self.trans_dir / "photo.mp4"
+        transcoded_target.write_bytes(b"TRANSCODED_MP4_BYTES")
+
+        with patch.object(settings, "BASE_DIR", self.base_path), \
+             patch.object(settings, "ORIGINAL_DIR", self.orig_dir), \
+             patch.object(settings, "TRANSCODED_DIR", self.trans_dir), \
+             patch.object(settings, "THUMBNAIL_DIR", self.thumb_dir), \
+             patch("backend.app.routes.media.MEDIA_CHUNKS_DIR", self.chunks_dir), \
+             patch("backend.app.routes.media.process_media_file") as mock_process, \
+             patch("backend.app.routes.media.generate_thumbnail", return_value=True):
+
+            mock_process.side_effect = lambda f, precalculated_hash=None: {
+                "file_type": FileTypeEnum.video,
+                "mime_type": "video/x-matroska",
+                "file_size": f.stat().st_size,
+                "transcoded_path": str(transcoded_target.relative_to(self.base_path)),
+                "width": 1280,
+                "height": 720,
+                "duration": 5.0,
+            }
+
+            resp = await update_file_finalize(
+                media_id=13,
+                upload_id=upload_id,
+                update_filename=False,
+                current_user=self.mock_user,
+                db=self.db,
+            )
+
+            self.db.refresh(media)
+            self.assertEqual(media.filename, "photo.mkv")
+            self.assertEqual(media.transcoded_path, str(transcoded_target.relative_to(self.base_path)))
+            self.assertEqual(media.width, 1280)
+            self.assertEqual(media.height, 720)
 
 if __name__ == "__main__":
     unittest.main()

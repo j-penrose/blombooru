@@ -248,6 +248,7 @@ async def update_from_source(
 async def update_file_finalize(
     media_id: int,
     upload_id: str = Form(...),
+    update_filename: bool = Form(False),
     current_user: User = Depends(require_admin_mode),
     db: Session = Depends(get_db),
 ):
@@ -304,9 +305,30 @@ async def update_file_finalize(
             shutil.rmtree(chunk_dir, ignore_errors=True)
             raise HTTPException(status_code=409, detail=f"Media already exists (duplicate of {duplicate.filename})")
 
+        # Determine target filename and path
+        if update_filename:
+            sanitized = sanitize_filename(filename)
+            if not sanitized:
+                sanitized = filename
+            if sanitized == media.filename:
+                target_filename = media.filename
+            else:
+                target_filename = get_unique_filename(settings.ORIGINAL_DIR, sanitized)
+        else:
+            new_suffix = Path(filename).suffix.lower()
+            old_suffix = Path(media.filename).suffix.lower()
+            if new_suffix and new_suffix != old_suffix:
+                stem = Path(media.filename).stem
+                target_filename = get_unique_filename(settings.ORIGINAL_DIR, f"{stem}{new_suffix}")
+            else:
+                target_filename = media.filename
+
+        target_file = settings.ORIGINAL_DIR / target_filename
         old_file = settings.BASE_DIR / media.path
-        delete_media_cache(old_file)
-        old_file.unlink(missing_ok=True)
+
+        if old_file.exists():
+            delete_media_cache(old_file)
+            old_file.unlink(missing_ok=True)
 
         if media.transcoded_path:
             old_transc = settings.BASE_DIR / media.transcoded_path
@@ -314,23 +336,25 @@ async def update_file_finalize(
             old_transc.unlink(missing_ok=True)
             media.transcoded_path = None
 
-        shutil.move(str(tmp_assembled), str(old_file))
+        shutil.move(str(tmp_assembled), str(target_file))
 
         shutil.rmtree(chunk_dir, ignore_errors=True)
 
-        new_meta = process_media_file(old_file, precalculated_hash=new_hash)
+        new_meta = process_media_file(target_file, precalculated_hash=new_hash)
 
         # Regenerate thumbnail
         if media.thumbnail_path:
             old_thumb = settings.BASE_DIR / media.thumbnail_path
             old_thumb.unlink(missing_ok=True)
 
-        thumb_name = Path(media.filename).stem + ".jpg"
+        thumb_name = Path(target_filename).stem + ".jpg"
         thumb_path = settings.THUMBNAIL_DIR / thumb_name
-        thumb_source = (settings.BASE_DIR / new_meta["transcoded_path"]) if new_meta.get("transcoded_path") else old_file
+        thumb_source = (settings.BASE_DIR / new_meta["transcoded_path"]) if new_meta.get("transcoded_path") else target_file
         generate_thumbnail(thumb_source, thumb_path, new_meta["file_type"])
         media.thumbnail_path = str(thumb_path.relative_to(settings.BASE_DIR)) if thumb_path.exists() else None
 
+        media.filename = target_filename
+        media.path = str(target_file.relative_to(settings.BASE_DIR))
         media.hash = new_hash
         media.transcoded_path = new_meta.get("transcoded_path")
         media.file_type = new_meta["file_type"]
