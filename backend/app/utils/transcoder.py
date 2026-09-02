@@ -1,12 +1,12 @@
-import imageio_ffmpeg
 import subprocess
 from pathlib import Path
 from typing import Optional
 
+import imageio_ffmpeg
 from PIL import Image
 
 from ..config import settings
-from .format_registry import format_registry
+from .format_registry import FormatCategory, format_registry
 from .logger import logger
 
 from pillow_heif import register_heif_opener
@@ -18,8 +18,25 @@ class TranscodingError(Exception):
 
 def get_transcoded_path_for_original(original_path: Path, transcode_target_ext: str) -> Path:
     """Compute the destination path in media/transcoded/ preserving the relative subpath under media/original/."""
+    if transcode_target_ext and not transcode_target_ext.startswith("."):
+        transcode_target_ext = f".{transcode_target_ext}"
+
     original_dir = settings.ORIGINAL_DIR.resolve()
-    orig_resolved = original_path.resolve()
+
+    if not original_path.is_absolute():
+        candidate = (settings.BASE_DIR / original_path).resolve()
+        try:
+            candidate.relative_to(original_dir)
+            orig_resolved = candidate
+        except ValueError:
+            try:
+                candidate2 = (original_dir / original_path).resolve()
+                candidate2.relative_to(original_dir)
+                orig_resolved = candidate2
+            except ValueError:
+                orig_resolved = original_path.resolve()
+    else:
+        orig_resolved = original_path.resolve()
 
     try:
         rel_subpath = orig_resolved.relative_to(original_dir)
@@ -132,9 +149,9 @@ def transcode_media_if_needed(original_file_path: Path) -> Optional[Path]:
         return dest_path
 
     success = False
-    if fmt.category == "video":
+    if fmt.category in (FormatCategory.VIDEO, "video"):
         success = transcode_video(original_file_path, dest_path)
-    elif fmt.category == "image":
+    elif fmt.category in (FormatCategory.IMAGE, "image"):
         success = transcode_image(original_file_path, dest_path)
 
     if success and dest_path.exists():
