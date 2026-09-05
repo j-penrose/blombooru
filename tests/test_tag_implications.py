@@ -17,7 +17,7 @@ from backend.app.routes.tag_implications import (
     update_implication,
     TagImplicationCreate,
 )
-from backend.app.utils.tag_utils import expand_implications
+from backend.app.utils.tag_utils import expand_implications, resolve_implications
 from tests.backup_test_base import BackupTestBase
 
 class TestTagImplications(BackupTestBase):
@@ -506,6 +506,118 @@ class TestTagImplications(BackupTestBase):
 
         self.assertIsNotNone(self.db.query(Tag).filter(Tag.name == "cat").first())
         self.assertIsNotNone(self.db.query(Tag).filter(Tag.name == "animal").first())
+
+    def test_resolve_implications_chain_resolution(self):
+        """Test chain resolution"""
+        tag_names = ["a", "b", "c", "d", "e", "f", "g", "h"]
+        tags = [self._create_tag(name) for name in tag_names]
+        for i in range(len(tags) - 1):
+            self.db.add(TagImplication(target_tags=[tags[i]], implied_tags=[tags[i + 1]]))
+        self.db.commit()
+
+        for i in range(len(tag_names)):
+            implied_tags = set(resolve_implications(self.db, [tag_names[i]]))
+            self.assertEqual(set(tag_names[i + 1:]), implied_tags)
+
+    def test_resolve_implications_resolution_max_depth(self):
+        """Test max-depth resolution"""
+        tag_names = ["a", "b", "c"]
+        tags = [self._create_tag(name) for name in tag_names]
+        for i in range(len(tags) - 1):
+            self.db.add(TagImplication(target_tags=[tags[i]], implied_tags=[tags[i + 1]]))
+        self.db.commit()
+
+        MAX_DEPTH = 1
+        for i in range(len(tag_names)):
+            implied_tags = set(resolve_implications(self.db, [tag_names[i]], max_depth=MAX_DEPTH))
+            print(f"{tag_names[i]} -> {sorted(implied_tags)}, {tag_names[i+1:i+1+MAX_DEPTH]}")
+            self.assertEqual(set(tag_names[i + 1:i + 1 + MAX_DEPTH]), implied_tags)
+
+    def test_resolve_implications_pattern_matching(self):
+        """Test pattern-only resolution"""
+
+        implied_tag_name = "long-haired_girl"
+        implied_tag = self._create_tag(implied_tag_name)
+        self.db.add(TagImplication(target_tag_patterns=["?girl", "*_hair"], implied_tags=[implied_tag]))
+        self.db.commit()
+
+        self.assertEqual({"long-haired_girl"}, set(resolve_implications(self.db, ["1girl", "long_hair"])))
+        self.assertEqual([], resolve_implications(self.db, ["1girl"]))
+        self.assertEqual([], resolve_implications(self.db, ["long_hair"]))
+
+    def test_resolve_implications_multiple_target_tags(self):
+        """Test multiple-target implications are only matched when all targets are present"""
+
+        a = self._create_tag("a")
+        b = self._create_tag("b")
+        c = self._create_tag("c")
+        self.db.add(TagImplication(target_tags=[a, b], implied_tags=[c]))
+        self.db.commit()
+
+        self.assertEqual([], resolve_implications(self.db, ["a"]))
+        self.assertEqual([], resolve_implications(self.db, ["b"]))
+        self.assertEqual(["c"], resolve_implications(self.db, ["a", "b"]))
+
+    def test_resolve_implications_multiple_implied_tags(self):
+        """Test multi-implied implications return all implied tags"""
+
+        a = self._create_tag("a")
+        b = self._create_tag("b")
+        c = self._create_tag("c")
+        self.db.add(TagImplication(target_tags=[a], implied_tags=[b, c]))
+        self.db.commit()
+
+        self.assertEqual({"b", "c"}, set(resolve_implications(self.db, ["a"])))
+
+    def test_resolve_implications_deduplication(self):
+        """Test multiple implication with same implied tag only produces a single instance of said tag"""
+
+        a = self._create_tag("a")
+        b = self._create_tag("b")
+        c = self._create_tag("c")
+        self.db.add(TagImplication(target_tags=[a], implied_tags=[c]))
+        self.db.add(TagImplication(target_tags=[b], implied_tags=[c]))
+        self.db.commit()
+
+        self.assertEqual(["c"], resolve_implications(self.db, ["a", "b"]))
+        self.assertEqual([], resolve_implications(self.db, ["a", "b", "c"]))
+
+    def test_resolve_implications_target_tag_and_pattern(self):
+        """Test implication with both target tags and patterns"""
+        a = self._create_tag("a")
+        aabc = self._create_tag("aabc")
+        self.db.add(TagImplication(target_tags=[a], target_tag_patterns=["ab?"], implied_tags=[aabc]))
+        self.db.commit()
+
+        self.assertEqual(["aabc"], resolve_implications(self.db, ["a", "abc"]))
+        self.assertEqual(["aabc"], resolve_implications(self.db, ["a", "abd"]))
+        self.assertEqual([], resolve_implications(self.db, ["a"]))
+        self.assertEqual([], resolve_implications(self.db, ["abc"]))
+        self.assertEqual([], resolve_implications(self.db, ["a", "acb"]))
+
+    def test_resolve_implications_cyclic_implications(self):
+        """Test that cyclic implications does not cause a infinite loop"""
+
+        a = self._create_tag("a")
+        b = self._create_tag("b")
+        c = self._create_tag("c")
+        self.db.add(TagImplication(target_tags=[a], implied_tags=[b]))
+        self.db.add(TagImplication(target_tags=[b], implied_tags=[c]))
+        self.db.add(TagImplication(target_tags=[c], implied_tags=[a]))
+        self.db.commit()
+
+        self.assertEqual({"b", "c"}, set(resolve_implications(self.db, ["a"])))
+
+    def test_resolve_implications_self_implication(self):
+        """Test implication to self"""
+
+        a = self._create_tag("a")
+        self.db.add(TagImplication(target_tags=[a], implied_tags=[a]))
+        self.db.commit()
+
+        self.assertEqual([], resolve_implications(self.db, ["a"]))
+
+
 
 if __name__ == "__main__":
     unittest.main()
