@@ -435,7 +435,7 @@ class TestTagImplications(BackupTestBase):
         self.assertEqual(names, {"cat", "feline"})
 
     def test_expand_implications_multiple_target_tags(self):
-        """Test implication triggering when any of the target tags are present."""
+        """Test implication triggering only when all target tags are present."""
         imp = TagImplication(
             target_tags=[self.tag_kitten, self.tag_cat],
             implied_tags=[self.tag_feline]
@@ -443,7 +443,13 @@ class TestTagImplications(BackupTestBase):
         self.db.add(imp)
         self.db.commit()
 
+        # Incomplete target set does not trigger implication
         tag_set = {self.tag_kitten.id: self.tag_kitten}
+        expand_implications(self.db, tag_set)
+        self.assertNotIn(self.tag_feline.id, tag_set)
+
+        # Complete target set triggers implication
+        tag_set = {self.tag_kitten.id: self.tag_kitten, self.tag_cat.id: self.tag_cat}
         expand_implications(self.db, tag_set)
         self.assertIn(self.tag_feline.id, tag_set)
 
