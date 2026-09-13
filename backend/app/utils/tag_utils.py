@@ -1,15 +1,15 @@
-from collections.abc import Iterable
 import fnmatch
 import time
-from typing import Dict, Tuple, TYPE_CHECKING 
+from collections.abc import Iterable
+from typing import TYPE_CHECKING
 
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload, Session
+from sqlalchemy.orm import Session, selectinload
 
 if TYPE_CHECKING:
     from ..models import Tag
 
-def resolve_aliases(db: Session, raw_names: list[str]) -> Dict[str, Tuple[str, str]]:
+def resolve_aliases(db: Session, raw_names: list[str]) -> dict[str, tuple[str, str]]:
     """Build an alias lookup map for a list of (already lowercased) tag names."""
     from ..models import TagAlias
 
