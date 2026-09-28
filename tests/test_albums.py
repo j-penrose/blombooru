@@ -371,5 +371,36 @@ class TestAlbumArchitecture(BackupTestBase):
         self.assertEqual(root.cached_media_count, 1)
         self.assertEqual(root.cached_rating, RatingEnum.explicit)
 
+    def test_prune_endpoint(self):
+        from backend.app.routes.albums import prune_all_albums_endpoint
+        
+        root = self._create_album("Root")
+        a = self._create_album("A", parent_id=root.id) # empty album (no media, no child); should be pruned
+        b = self._create_album("B", parent_id=root.id) # album with a media; must not be pruned
+        c1 = self._create_album("C1", parent_id=root.id) # album with no media and an empty child; should be pruned incl. the child
+        c2 = self._create_album("C2", parent_id=c1.id)
+        d1 = self._create_album("D1", parent_id=root.id) # album with no media and a child; should not be pruned because the child has a media
+        d2 = self._create_album("D2", parent_id=d1.id)
+        
+        m = self._create_media("m1.jpg")
+        add_media_to_album(self.db, b.id, [m.id])
+        add_media_to_album(self.db, d2.id, [m.id])
+
+        self.assertEqual(root.cached_media_count, 2)
+        
+        res = asyncio.run(prune_all_albums_endpoint(current_user=self.admin_user, db=self.db))
+        self.assertIn("message", res)
+        self.assertIn("count", res)
+        self.assertEqual(res["count"], 3)
+
+        self.db.refresh(root)
+        self.assertEqual(root.cached_media_count, 2)
+        self.assertIsNone(self.db.query(Album).filter(Album.id == a.id).first())
+        self.assertIsNone(self.db.query(Album).filter(Album.id == c1.id).first())
+        self.assertIsNone(self.db.query(Album).filter(Album.id == c2.id).first())
+        self.assertIsNotNone(self.db.query(Album).filter(Album.id == b.id).first())
+        self.assertIsNotNone(self.db.query(Album).filter(Album.id == d1.id).first())
+        self.assertIsNotNone(self.db.query(Album).filter(Album.id == d2.id).first())
+
 if __name__ == "__main__":
     unittest.main()

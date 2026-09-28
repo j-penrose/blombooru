@@ -83,7 +83,11 @@
                 "recalculate_metrics": "Omberäkna Albumstatistik",
                 "recalculate_metrics_description": "Omberäkna mediaräkningar och maxbetyg för alla album i hierarkin.",
                 "recalculate_metrics_btn": "Omberäkna Alla Mätvärden",
-                "metrics_recalculated": "Alla albummätvärden har omberäknats."
+                "metrics_recalculated": "Alla albummätvärden har omberäknats.",
+                "prune_albums": "",
+                "prune_albums_description": "",
+                "prune_albums_btn": "",
+                "albums_pruned": ""
             },
             "none_root": "Inget (Rotalbum)",
             "parent_album": "Överordnat album (Valfritt)",

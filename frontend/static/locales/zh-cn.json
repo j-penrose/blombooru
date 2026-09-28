@@ -83,7 +83,11 @@
                 "recalculate_metrics": "",
                 "recalculate_metrics_description": "",
                 "recalculate_metrics_btn": "",
-                "metrics_recalculated": ""
+                "metrics_recalculated": "",
+                "prune_albums": "",
+                "prune_albums_description": "",
+                "prune_albums_btn": "",
+                "albums_pruned": ""
             },
             "none_root": "无（根相册）",
             "parent_album": "父级相册（可选）",

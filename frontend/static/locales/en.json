@@ -83,7 +83,11 @@
                 "recalculate_metrics": "Recalculate Album Metrics",
                 "recalculate_metrics_description": "Recalculate media counts and maximum ratings for all albums across the hierarchy.",
                 "recalculate_metrics_btn": "Recalculate All Metrics",
-                "metrics_recalculated": "All album metrics successfully recalculated."
+                "metrics_recalculated": "All album metrics successfully recalculated.",
+                "prune_albums": "Prune Albums",
+                "prune_albums_description": "Remove albums that have no media and no child albums. Albums that have no media but include other albums with media will not be deleted to preserve the hierarchy.",
+                "prune_albums_btn": "Prune All Albums",
+                "albums_pruned": "Successfully pruned {count} albums."
             },
             "none_root": "None (Root Album)",
             "parent_album": "Parent Album (Optional)",
