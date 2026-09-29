@@ -19,22 +19,21 @@ def normalize_random_seed(seed: Optional[str]) -> Optional[str]:
 def _effective_random_seed(seed: Optional[str]) -> str:
     return normalize_random_seed(seed) or DEFAULT_RANDOM_SEED
 
-def apply_media_sort(
-    query: Query,
+def get_media_sort_clauses(
     sort_by: str,
     sort_order: str = "desc",
     db: Optional[Session] = None,
     seed: Optional[str] = None,
     column_overrides: Optional[dict[str, Any]] = None,
-) -> Query:
-    """Apply sort ordering to a Media query at the database level."""
+) -> list:
+    """Return order_by expressions for Media sorting."""
     ascending = sort_order == "asc"
     overrides = column_overrides or {}
 
     if sort_by == "random":
         effective_seed = _effective_random_seed(seed)
         hash_input = func.concat(cast(Media.id, String), literal(effective_seed))
-        return query.order_by(func.md5(hash_input))
+        return [func.md5(hash_input)]
 
     if sort_by == "tag_count":
         if db is None:
@@ -45,11 +44,14 @@ def apply_media_sort(
             .scalar_subquery()
         )
         if ascending:
-            return query.order_by(tag_count_subq.asc(), Media.id.asc())
-        return query.order_by(tag_count_subq.desc(), Media.id.desc())
+            return [tag_count_subq.asc(), Media.id.asc()]
+        return [tag_count_subq.desc(), Media.id.desc()]
 
     if sort_by in overrides:
         sort_column = overrides[sort_by]
+    elif sort_by == "manual":
+        # Manual ordering is album-media specific and handled inline in get_album_contents
+        sort_column = Media.uploaded_at
     elif sort_by == "filename":
         sort_column = Media.filename
     elif sort_by == "file_size":
@@ -60,22 +62,33 @@ def apply_media_sort(
         sort_column = Media.uploaded_at
 
     if ascending:
-        return query.order_by(sort_column.asc(), Media.id.asc())
-    return query.order_by(sort_column.desc(), Media.id.desc())
+        return [sort_column.asc(), Media.id.asc()]
+    return [sort_column.desc(), Media.id.desc()]
 
-def apply_album_sort(
+def apply_media_sort(
     query: Query,
     sort_by: str,
     sort_order: str = "desc",
+    db: Optional[Session] = None,
     seed: Optional[str] = None,
+    column_overrides: Optional[dict[str, Any]] = None,
 ) -> Query:
-    """Apply sort ordering to an Album query at the database level."""
+    """Apply sort ordering to a Media query at the database level."""
+    clauses = get_media_sort_clauses(sort_by, sort_order, db, seed, column_overrides)
+    return query.order_by(*clauses)
+
+def get_album_sort_clauses(
+    sort_by: str,
+    sort_order: str = "desc",
+    seed: Optional[str] = None,
+) -> list:
+    """Return order_by expressions for Album sorting."""
     ascending = sort_order == "asc"
 
     if sort_by == "random":
         effective_seed = _effective_random_seed(seed)
         hash_input = func.concat(cast(Album.id, String), literal(effective_seed))
-        return query.order_by(func.md5(hash_input))
+        return [func.md5(hash_input)]
 
     if sort_by == "name" or sort_by == "filename":
         sort_column = Album.name
@@ -84,9 +97,19 @@ def apply_album_sort(
     elif sort_by == "media_count":
         sort_column = Album.cached_media_count
     else:
-        # uploaded_at, created_at, and unknown values default to created_at
+        # uploaded_at, created_at, manual (outside root context), and unknown values default to created_at
         sort_column = Album.created_at
 
     if ascending:
-        return query.order_by(sort_column.asc(), Album.id.asc())
-    return query.order_by(sort_column.desc(), Album.id.desc())
+        return [sort_column.asc(), Album.id.asc()]
+    return [sort_column.desc(), Album.id.desc()]
+
+def apply_album_sort(
+    query: Query,
+    sort_by: str,
+    sort_order: str = "desc",
+    seed: Optional[str] = None,
+) -> Query:
+    """Apply sort ordering to an Album query at the database level."""
+    clauses = get_album_sort_clauses(sort_by, sort_order, seed)
+    return query.order_by(*clauses)
