@@ -355,9 +355,43 @@
                 window.addEventListener('resize', adjustPadding);
 
                 let lastScrollTop = 0;
+                let wasHeaderVisibleBeforeDrag = false;
+                let isDraggingActive = false;
+
+                const setDraggingState = (dragging) => {
+                    if (dragging) {
+                        if (!isDraggingActive) {
+                            wasHeaderVisibleBeforeDrag = !header.classList.contains('-translate-y-full');
+                            isDraggingActive = true;
+                        }
+                        document.body.classList.add('is-dragging');
+                        header.classList.add('-translate-y-full');
+                    } else {
+                        isDraggingActive = false;
+                        document.body.classList.remove('is-dragging');
+                        if (wasHeaderVisibleBeforeDrag || mainScroll.scrollTop <= 0) {
+                            header.classList.remove('-translate-y-full');
+                        } else {
+                            header.classList.add('-translate-y-full');
+                        }
+                    }
+                };
+
+                const bodyObserver = new MutationObserver(() => {
+                    const hasClass = document.body.classList.contains('is-dragging');
+                    if (hasClass !== isDraggingActive) {
+                        setDraggingState(hasClass);
+                    }
+                });
+                bodyObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
 
                 mainScroll.addEventListener('scroll', () => {
                     const currentScroll = mainScroll.scrollTop;
+
+                    if (isDraggingActive || document.body.classList.contains('is-dragging')) {
+                        lastScrollTop = currentScroll;
+                        return;
+                    }
 
                     if (currentScroll <= 0) {
                         header.classList.remove('-translate-y-full');
