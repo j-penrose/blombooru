@@ -49,7 +49,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from .auth_middleware import AuthMiddleware
 from .config import APP_VERSION, settings
 from .database import get_db, init_db, init_engine
-from .models import Media, Album
+from .models import Media, Album, blombooru_album_hierarchy, blombooru_album_media
 from .routes import (acknowledgements, admin, ai_tagger, albums, booru_config, booru_import,
                      changelog, danbooru, media, search, sharing, system,
                      tag_implications, tags, instance_info, uploads, url_import)
@@ -497,13 +497,22 @@ async def tags_overview_page(request: Request):
     })
 
 @app.get("/albums", response_class=HTMLResponse)
-async def albums_page(request: Request):
+async def albums_page(request: Request, db: Session = Depends(get_db)):
     """Albums overview page"""
+    has_manual_order = db.query(Album.id).filter(
+        ~Album.id.in_(db.query(blombooru_album_hierarchy.c.child_album_id)),
+        Album.sort_position.isnot(None)
+    ).limit(1).scalar() is not None
+
+    default_sort = "manual" if has_manual_order else settings.get_default_sort()
+    default_order = "asc" if has_manual_order else settings.get_default_order()
+
     return templates.TemplateResponse("albums.html", {
         "request": request,
         "app_name": settings.APP_NAME,
-        "default_sort": settings.get_default_sort(),
-        "default_order": settings.get_default_order(),
+        "default_sort": default_sort,
+        "default_order": default_order,
+        "has_manual_order": has_manual_order,
         "popular_tags_mode": settings.get_popular_tags_mode(),
         "popular_tags_limit": settings.get_popular_tags_limit(),
         "sidebar_filter_mode": settings.SIDEBAR_FILTER_MODE,
@@ -517,12 +526,27 @@ async def album_detail_page(request: Request, album_id: int, db: Session = Depen
     if album is None:
         raise StarletteHTTPException(status_code=404, detail="Album not found")
 
+    has_manual_media = db.query(blombooru_album_media.c.media_id).filter(
+        blombooru_album_media.c.album_id == album_id,
+        blombooru_album_media.c.sort_position.isnot(None)
+    ).limit(1).scalar() is not None
+
+    has_manual_subalbums = db.query(blombooru_album_hierarchy.c.child_album_id).filter(
+        blombooru_album_hierarchy.c.parent_album_id == album_id,
+        blombooru_album_hierarchy.c.sort_position.isnot(None)
+    ).limit(1).scalar() is not None
+
+    has_manual_order = has_manual_media or has_manual_subalbums
+    default_sort = "manual" if has_manual_order else settings.get_default_sort()
+    default_order = "asc" if has_manual_order else settings.get_default_order()
+
     return templates.TemplateResponse("album.html", {
         "request": request,
         "app_name": settings.APP_NAME,
         "album_id": album_id,
-        "default_sort": settings.get_default_sort(),
-        "default_order": settings.get_default_order(),
+        "default_sort": default_sort,
+        "default_order": default_order,
+        "has_manual_order": has_manual_order,
         "popular_tags_mode": settings.get_popular_tags_mode(),
         "popular_tags_limit": settings.get_popular_tags_limit(),
         "sidebar_filter_mode": settings.SIDEBAR_FILTER_MODE,
