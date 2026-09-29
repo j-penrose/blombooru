@@ -232,14 +232,14 @@ location='desktop', is_admin=false) %}
             {{ t('common.manage_tags') }}
         </button>
         {% endif %}
-        {% if 'remove' in buttons %}
-        <button id="bulk-remove-btn" class="btn-danger px-3 py-1 cursor-pointer">
-            {{ t('gallery.remove_from_album') }}
-        </button>
-        {% endif %}
         {% if 'rating' in buttons %}
         <button id="bulk-rating-btn" class="btn px-3 py-1 flex items-center gap-1.5 cursor-pointer">
             {{ t('modal.bulk_rating.title') }}
+        </button>
+        {% endif %}
+        {% if 'remove' in buttons %}
+        <button id="bulk-remove-btn" class="btn-danger px-3 py-1 cursor-pointer">
+            {{ t('modal.bulk_remove_from_album.title') }}
         </button>
         {% endif %}
         {% if 'delete' in buttons %}
