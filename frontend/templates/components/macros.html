@@ -1,4 +1,4 @@
-{% from "components/icons.html" import dice_icon, chevron_down_icon, check_icon, select_arrow_icon %}
+{% from "components/icons.html" import dice_icon, chevron_down_icon, check_icon, select_arrow_icon, icon_use %}
 
 {# Rating Filter Component #}
 {% macro rating_filter(location='desktop', mode='rating', custom_buttons=[]) %}
@@ -132,7 +132,7 @@
 {# Sorting Options Component #}
 
 {% macro sorting_options(sort_options=none, default_sort='uploaded_at', default_order='desc', show_wrapper=true,
-location='desktop') %}
+location='desktop', is_admin=false) %}
 {% set standard_sort_options = {
 'uploaded_at': t('admin.settings.upload_date'),
 'filename': t('admin.settings.file_name'),
@@ -184,6 +184,13 @@ location='desktop') %}
                     aria-label="{{ t('gallery.sort_regen_random') }}" title="{{ t('gallery.sort_regen_random') }}">
                     {{ dice_icon() }}
                 </button>
+                {% if is_admin %}
+                <button id="sort-edit-order{{ suffix }}" type="button"
+                    class="js-sort-edit-order sort-edit-order p-1 border bg text hover:border-primary transition-colors flex-shrink-0 cursor-pointer hidden"
+                    aria-label="{{ t('gallery.sort_edit_order') }}" title="{{ t('gallery.sort_edit_order') }}">
+                    {{ icon_use("edit", size=16) }}
+                </button>
+                {% endif %}
             </div>
 
             {% if location != 'mobile' %}
