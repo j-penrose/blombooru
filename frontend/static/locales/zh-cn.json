@@ -610,6 +610,8 @@
         "default": "默认",
         "delete": "删除",
         "description": "",
+        "discard": "",
+        "discard_changes": "",
         "disconnected": "断开连接",
         "edit": "编辑",
         "error": "错误",
@@ -723,7 +725,17 @@
         "sort_random": "",
         "sort_regen_random": "",
         "sort_tag_count": "",
-        "sort_toggle_order": ""
+        "sort_toggle_order": "",
+        "sort_manual": "",
+        "sort_edit_order": "",
+        "sort_clear_order": "",
+        "sort_clear_confirm": "",
+        "sort_cancel_confirm": "",
+        "sort_order_saved": "",
+        "sort_order_save_failed": "",
+        "sort_order_clear_failed": "",
+        "sort_order_cleared": "",
+        "sort_order_save_partial": ""
     },
     "login": {
         "enter_credentials": "输入您的凭据以访问 {app_name}",

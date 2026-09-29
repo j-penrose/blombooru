@@ -611,6 +611,8 @@
         "default": "По умолчанию",
         "delete": "Удалить",
         "description": "Описание",
+        "discard": "",
+        "discard_changes": "",
         "disconnected": "Отключено",
         "edit": "Редактировать",
         "error": "Ошибка",
@@ -724,7 +726,17 @@
         "sort_random": "В случайном порядке",
         "sort_regen_random": "Новый случайный порядок",
         "sort_tag_count": "Количество тегов",
-        "sort_toggle_order": "Переключить порядок"
+        "sort_toggle_order": "Переключить порядок",
+        "sort_manual": "",
+        "sort_edit_order": "",
+        "sort_clear_order": "",
+        "sort_clear_confirm": "",
+        "sort_cancel_confirm": "",
+        "sort_order_saved": "",
+        "sort_order_save_failed": "",
+        "sort_order_clear_failed": "",
+        "sort_order_cleared": "",
+        "sort_order_save_partial": ""
     },
     "login": {
         "enter_credentials": "Введите свои учетные данные для доступа к {app_name}",

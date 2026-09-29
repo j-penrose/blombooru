@@ -610,6 +610,8 @@
         "default": "Standard",
         "delete": "Radera",
         "description": "Beskrivning",
+        "discard": "Kasta",
+        "discard_changes": "Kasta ändringar",
         "disconnected": "Frånkopplad",
         "edit": "Redigera",
         "error": "Fel",
@@ -723,7 +725,17 @@
         "sort_random": "Slumpmässig",
         "sort_regen_random": "Slumpa igen",
         "sort_tag_count": "Antal taggar",
-        "sort_toggle_order": "Växla sorteringsordning"
+        "sort_toggle_order": "Växla sorteringsordning",
+        "sort_manual": "Manuell",
+        "sort_edit_order": "Ändra ordning",
+        "sort_clear_order": "Återställ ordning",
+        "sort_clear_confirm": "Är du säker på att du vill återställa den manuella ordningen?",
+        "sort_cancel_confirm": "Du har osparade ändringar i sorteringsordningen. Är du säker på att du vill kasta dem?",
+        "sort_order_saved": "Ordningen har sparats",
+        "sort_order_save_failed": "Kunde inte spara ordningen",
+        "sort_order_clear_failed": "Kunde inte återställa ordningen",
+        "sort_order_cleared": "Ordningen har rensats",
+        "sort_order_save_partial": "Vissa sektioner kunde inte sparas: {sections}"
     },
     "login": {
         "enter_credentials": "Ange dina uppgifter för att komma åt {app_name}",
