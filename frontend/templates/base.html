@@ -76,7 +76,7 @@
     {% block head_extra %}{% endblock %}
 </head>
 
-<body class="bg text text-xs flex flex-col h-screen overflow-hidden"
+<body class="bg text text-xs flex flex-col h-screen h-dvh overflow-hidden"
     data-sidebar-mode="{{ sidebar_filter_mode if sidebar_filter_mode is defined else 'rating' }}">
     {{ icon_sprite() }}
     {% set bg = custom_background() %}
@@ -266,14 +266,14 @@
         {% endblock %}
         {% endif %}
 
-        <main id="main-scroll" class="flex-1 h-full overflow-y-auto flex flex-col">
+        <main id="main-scroll" class="flex-1 min-h-0 overflow-y-auto flex flex-col">
             <div class="flex-1 w-full">
                 {% block content %}{% endblock %}
             </div>
 
             {% if show_footer is not defined or show_footer %}
             {% block footer %}
-            <footer class="surface border-t mt-8">
+            <footer class="surface border-t mt-8 pb-8 sm:pb-0">
                 <div class="container mx-auto px-2 py-4 sm:px-4 sm:py-6">
                     <div class="flex flex-col md:flex-row justify-between items-center gap-4">
                         <div class="text-secondary text-xs">

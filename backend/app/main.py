@@ -283,9 +283,11 @@ templates.env.globals['require_auth'] = lambda: settings.REQUIRE_AUTH
 templates.env.globals['canonicalize_query'] = canonicalize_query
 templates.env.globals['get_supported_formats_json'] = lambda: json.dumps(format_registry.to_json_dict())
 
-def _is_authenticated_admin(request) -> bool:
+def _is_authenticated_admin(request=None) -> bool:
     """Verify that the request has a valid admin_token JWT. Used by templates to show/hide
     admin-only UI elements. Does NOT rely on the client-controlled admin_mode cookie alone."""
+    if not request or not hasattr(request, "cookies"):
+        return False
     from .auth import get_current_user
     from .database import SessionLocal
     admin_token = request.cookies.get("admin_token")
