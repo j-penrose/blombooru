@@ -1696,6 +1696,10 @@ class AdminContent {
         // Recalculate album metrics button
         const recalculateBtn = document.getElementById('recalculate-album-metrics-btn');
         recalculateBtn?.addEventListener('click', () => this.recalculateAlbumMetrics());
+    
+        // Prune albums button
+        const pruneBtn = document.getElementById('prune-albums-btn');
+        pruneBtn?.addEventListener('click', () => this.pruneAlbums());
 
         // Load albums for parent select
         this.loadAlbums();
@@ -1718,6 +1722,27 @@ class AdminContent {
                 await this.albumTree.loadAlbums();
                 this.albumTree.render();
             }
+        } catch (error) {
+            app.showNotification(error.message, 'error');
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    async pruneAlbums() {
+        const btn = document.getElementById('prune-albums-btn');
+        if (!btn) return;
+
+        btn.disabled = true;
+
+        try {
+            const response = await app.apiCall('/api/albums/prune', { method: 'POST' });
+            app.showNotification(
+                window.i18n.t('admin.albums_management.maintenance.albums_pruned', {
+                    count: response.count
+                }),
+                'success'
+            );
         } catch (error) {
             app.showNotification(error.message, 'error');
         } finally {

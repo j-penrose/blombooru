@@ -298,6 +298,27 @@ def recalculate_all_album_metrics(db: Session) -> None:
 
     db.commit()
 
+def prune_all_albums(db: Session) -> int:
+    pruned = 0
+    while True:
+        leaves = (
+            db.query(Album)
+            .filter(~Album.id.in_(db.query(blombooru_album_hierarchy.c.parent_album_id)))
+            .all()
+        )
+
+        albums_deleted = 0
+        for leaf in leaves:
+            if leaf.cached_direct_media_count == 0:
+                delete_album_cascade(db, leaf.id, cascade=False)
+                albums_deleted += 1
+
+        if albums_deleted == 0:
+            break
+        pruned += albums_deleted
+
+    return pruned
+
 def update_album_last_modified(album_id_or_ids: Union[int, List[int]], db: Session):
     """Update last_modified timestamp for one or more albums."""
     if isinstance(album_id_or_ids, int):

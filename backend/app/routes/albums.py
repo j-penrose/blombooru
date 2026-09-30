@@ -18,7 +18,7 @@ from ..utils.album_utils import (add_media_to_album, delete_album_cascade,
                                  get_album_tree_data, get_bulk_album_thumbnails,
                                  get_bulk_parent_ids, get_parent_ids,
                                  recalculate_album_metrics, recalculate_all_album_metrics,
-                                 remove_media_from_album, reparent_album)
+                                 prune_all_albums, remove_media_from_album, reparent_album)
 from ..utils.cache import cache_response, invalidate_album_cache
 from ..utils.media_sort import (apply_album_sort, apply_media_sort,
                                 get_album_sort_clauses, get_media_sort_clauses)
@@ -161,6 +161,16 @@ async def recalculate_all_albums_endpoint(
     recalculate_all_album_metrics(db)
     invalidate_album_cache()
     return {"message": "All album metrics successfully recalculated and cache invalidated"}
+
+@router.post("/prune")
+async def prune_all_albums_endpoint(
+    current_user: User = Depends(require_admin_mode),
+    db: Session = Depends(get_db)
+):
+    """Prune all albums that contains no media and that have no children."""
+    pruned = prune_all_albums(db)
+    invalidate_album_cache()
+    return {"message": "Albums have been pruned successfully", "count": pruned}
 
 @router.get("/autocomplete")
 @cache_response(expire=3600, key_prefix="album_autocomplete")
