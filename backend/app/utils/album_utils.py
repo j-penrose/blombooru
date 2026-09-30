@@ -497,6 +497,9 @@ def reparent_album(db: Session, album_id: int, new_parent_id: Optional[int]) -> 
     # Capture old ancestors
     old_parents = set(get_parent_ids(album_id, db))
 
+    # Reset root sort_position to avoid carrying stale position across hierarchy changes
+    db.query(Album).filter(Album.id == album_id).update({Album.sort_position: None}, synchronize_session=False)
+
     # Remove old parent relationship
     db.execute(
         blombooru_album_hierarchy.delete().where(
@@ -509,7 +512,8 @@ def reparent_album(db: Session, album_id: int, new_parent_id: Optional[int]) -> 
         db.execute(
             blombooru_album_hierarchy.insert().values(
                 parent_album_id=new_parent_id,
-                child_album_id=album_id
+                child_album_id=album_id,
+                sort_position=None
             )
         )
 
@@ -570,7 +574,10 @@ def get_bulk_album_thumbnails(album_ids: List[int], db: Session, count: int = 4)
     # 2. Windowed query to sample up to `count` thumbnails per sub-album
     rn_col = func.row_number().over(
         partition_by=blombooru_album_media.c.album_id,
-        order_by=func.random()
+        order_by=(
+            blombooru_album_media.c.sort_position.asc().nulls_last(),
+            func.random()
+        )
     ).label("rn")
 
     subq = db.query(

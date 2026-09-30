@@ -191,6 +191,7 @@ def check_and_migrate_schema(engine):
         migrate_add_transcoded_path,
         migrate_add_album_indexes,
         migrate_add_album_cached_columns,
+        migrate_add_manual_sort_positions,
     ]
     
     for migration in migrations:
@@ -461,3 +462,32 @@ def migrate_add_album_cached_columns(engine, inspector):
         logger.info("Album metrics synchronization completed successfully.")
     except Exception as e:
         logger.error(f"Error synchronizing album metrics during migration: {e}")
+
+def migrate_add_manual_sort_positions(engine, inspector):
+    """Add sort_position columns to blombooru_albums, blombooru_album_media, and blombooru_album_hierarchy."""
+    from sqlalchemy import text
+
+    tables = inspector.get_table_names()
+    with engine.connect() as conn:
+        if 'blombooru_albums' in tables:
+            album_cols = [c['name'] for c in inspector.get_columns('blombooru_albums')]
+            if 'sort_position' not in album_cols:
+                logger.info("Adding sort_position column to blombooru_albums...")
+                conn.execute(text("ALTER TABLE blombooru_albums ADD COLUMN sort_position INTEGER"))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS ix_blombooru_albums_sort_position ON blombooru_albums(sort_position)"))
+
+        if 'blombooru_album_media' in tables:
+            media_cols = [c['name'] for c in inspector.get_columns('blombooru_album_media')]
+            if 'sort_position' not in media_cols:
+                logger.info("Adding sort_position column to blombooru_album_media...")
+                conn.execute(text("ALTER TABLE blombooru_album_media ADD COLUMN sort_position INTEGER"))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS ix_blombooru_album_media_sort_position ON blombooru_album_media(sort_position)"))
+
+        if 'blombooru_album_hierarchy' in tables:
+            hierarchy_cols = [c['name'] for c in inspector.get_columns('blombooru_album_hierarchy')]
+            if 'sort_position' not in hierarchy_cols:
+                logger.info("Adding sort_position column to blombooru_album_hierarchy...")
+                conn.execute(text("ALTER TABLE blombooru_album_hierarchy ADD COLUMN sort_position INTEGER"))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS ix_blombooru_album_hierarchy_sort_position ON blombooru_album_hierarchy(sort_position)"))
+
+        conn.commit()

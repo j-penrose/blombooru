@@ -76,7 +76,7 @@
     {% block head_extra %}{% endblock %}
 </head>
 
-<body class="bg text text-xs flex flex-col h-screen overflow-hidden"
+<body class="bg text text-xs flex flex-col h-screen h-dvh overflow-hidden"
     data-sidebar-mode="{{ sidebar_filter_mode if sidebar_filter_mode is defined else 'rating' }}">
     {{ icon_sprite() }}
     {% set bg = custom_background() %}
@@ -266,14 +266,14 @@
         {% endblock %}
         {% endif %}
 
-        <main id="main-scroll" class="flex-1 h-full overflow-y-auto flex flex-col">
+        <main id="main-scroll" class="flex-1 min-h-0 overflow-y-auto flex flex-col">
             <div class="flex-1 w-full">
                 {% block content %}{% endblock %}
             </div>
 
             {% if show_footer is not defined or show_footer %}
             {% block footer %}
-            <footer class="surface border-t mt-8">
+            <footer class="surface border-t mt-8 pb-8 sm:pb-0">
                 <div class="container mx-auto px-2 py-4 sm:px-4 sm:py-6">
                     <div class="flex flex-col md:flex-row justify-between items-center gap-4">
                         <div class="text-secondary text-xs">
@@ -355,9 +355,43 @@
                 window.addEventListener('resize', adjustPadding);
 
                 let lastScrollTop = 0;
+                let wasHeaderVisibleBeforeDrag = false;
+                let isDraggingActive = false;
+
+                const setDraggingState = (dragging) => {
+                    if (dragging) {
+                        if (!isDraggingActive) {
+                            wasHeaderVisibleBeforeDrag = !header.classList.contains('-translate-y-full');
+                            isDraggingActive = true;
+                        }
+                        document.body.classList.add('is-dragging');
+                        header.classList.add('-translate-y-full');
+                    } else {
+                        isDraggingActive = false;
+                        document.body.classList.remove('is-dragging');
+                        if (wasHeaderVisibleBeforeDrag || mainScroll.scrollTop <= 0) {
+                            header.classList.remove('-translate-y-full');
+                        } else {
+                            header.classList.add('-translate-y-full');
+                        }
+                    }
+                };
+
+                const bodyObserver = new MutationObserver(() => {
+                    const hasClass = document.body.classList.contains('is-dragging');
+                    if (hasClass !== isDraggingActive) {
+                        setDraggingState(hasClass);
+                    }
+                });
+                bodyObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
 
                 mainScroll.addEventListener('scroll', () => {
                     const currentScroll = mainScroll.scrollTop;
+
+                    if (isDraggingActive || document.body.classList.contains('is-dragging')) {
+                        lastScrollTop = currentScroll;
+                        return;
+                    }
 
                     if (currentScroll <= 0) {
                         header.classList.remove('-translate-y-full');

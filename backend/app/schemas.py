@@ -232,6 +232,12 @@ class AlbumAutocompleteItem(BaseModel):
 class MediaIds(BaseModel):
     media_ids: List[int]
 
+class AlbumReorderRequest(BaseModel):
+    album_ids: List[int]
+
+class MediaReorderRequest(BaseModel):
+    media_ids: List[int]
+
 class ApiKeyCreate(BaseModel):
     name: Optional[str] = Field(None, max_length=64)
     permission: ApiKeyPermissionEnum = ApiKeyPermissionEnum.read

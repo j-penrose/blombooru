@@ -1000,3 +1000,19 @@ video:focus-visible {
         opacity: 0;
     }
 }
+
+/* Manual Reorder */
+body.is-dragging #main-header,
+body.is-dragging .manual-reorder-bar {
+    pointer-events: none !important;
+}
+
+body.reorder-active-mode .gallery-item .select-indicator,
+body.reorder-active-mode .gallery-item .select-checkbox {
+    display: none !important;
+    pointer-events: none !important;
+}
+
+.reorder-active-item {
+    -webkit-touch-callout: none !important;
+}
