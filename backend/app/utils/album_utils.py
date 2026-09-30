@@ -298,7 +298,7 @@ def recalculate_all_album_metrics(db: Session) -> None:
 
     db.commit()
 
-def prune_all_albums(db: Session) -> None:
+def prune_all_albums(db: Session) -> int:
     pruned = 0
     while True:
         leaves = (
