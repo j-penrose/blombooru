@@ -18,6 +18,7 @@ from PIL import Image
 
 from ..config import settings
 from ..utils.logger import logger
+from ..utils import image_plugins
 
 class DownloadCancelledException(Exception):
     """Raised when a model download is cancelled by the client."""

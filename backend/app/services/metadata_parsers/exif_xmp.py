@@ -12,6 +12,7 @@ from ...config import settings
 from ...utils.ai_metadata.exif import decode_exif_user_comment
 from ...utils.format_registry import format_registry
 from ...utils.logger import logger
+from ...utils import image_plugins
 from .base import MetadataParser
 from .gallery_dl import GALLERY_DL_RATING_MAP
 from .types import ParsedMetadata

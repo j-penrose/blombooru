@@ -15,6 +15,7 @@ from PIL import Image, ExifTags
 from .ai_metadata import decode_exif_user_comment, normalize_ai_metadata, parse_xmp_packet
 from .format_registry import format_registry
 from .logger import logger
+from . import image_plugins
 
 _cache_locks: Dict[str, list] = {}
 

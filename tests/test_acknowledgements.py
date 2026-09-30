@@ -30,7 +30,7 @@ class TestAcknowledgements(unittest.TestCase):
         self.assertGreater(len(pkgs), 50)
         vendored = load_vendored_dependencies()
         total_dependencies = len(pkgs) + len(vendored)
-        self.assertEqual(total_dependencies, 69)
+        self.assertEqual(total_dependencies, 70)
 
     def test_backend_route_render(self):
         html = _render_acknowledgements()

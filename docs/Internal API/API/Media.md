@@ -97,7 +97,7 @@ GET /api/media/{id}/file
 | Param | Type | Description |
 |---|---|---|
 | `chunked` | bool | Optional (default: `false`). When `true`, video responses without a `Range` header are limited to an initial 2MB chunk (for in-browser playback). |
-| `download` | bool | Optional (default: `false`). When `true`, always serves the original uploaded file with `Content-Disposition: attachment; filename="..."`. When `false` (default for playback/preview), serves the transcoded version (e.g. `.mp4` for MKV/AVI, `.webp` for HEIC/JXL) if available. |
+| `download` | bool | Optional (default: `false`). When `true`, always serves the original uploaded file with `Content-Disposition: attachment; filename="..."`. When `false` (default for playback/preview), serves the transcoded version (e.g. `.mp4` for MKV/AVI, `.webp` for HEIC) if available. |
 
 ### Serve thumbnail
 
@@ -143,7 +143,7 @@ Content-Type: multipart/form-data
 | `description` | string | No | Optional media description |
 | `category_hints` | string | No | JSON object mapping tag names to category strings, e.g. `{"bob": "artist"}` |
 
-If the uploaded file format requires transcoding (such as `.heic`, `.jxl`, `.mkv`, or `.avi`), the transcoded file is generated in `media/transcoded/` and used as the source for the thumbnail.
+If the uploaded file format requires transcoding (such as `.heic`, `.mkv`, or `.avi`), the transcoded file is generated in `media/transcoded/` and used as the source for the thumbnail.
 
 **Response:** `MediaResponse`. Returns `409` if a duplicate (matching SHA-256 hash) already exists.
 

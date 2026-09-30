@@ -5,6 +5,7 @@ from PIL import Image
 
 from ..schemas import FileTypeEnum
 from .logger import logger
+from . import image_plugins
 
 THUMBNAIL_SIZE = (300, 300)
 

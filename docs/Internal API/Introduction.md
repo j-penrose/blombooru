@@ -148,8 +148,8 @@ The login endpoint also sets `admin_token=<jwt>` (HttpOnly) and `admin_mode=true
 
 Blombooru maintains a centralized format registry. Supported media containers and codecs are handled either natively or through automated transcoding:
 
-- **Native images:** `.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`, `.avif`, `.bmp`, `.tiff`, `.tif`
-- **Transcoded images:** `.heic`, `.heif`, `.jxl` (automatically transcoded to `.webp`)
+- **Native images:** `.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`, `.avif`, `.jxl`, `.bmp`, `.tiff`, `.tif`
+- **Transcoded images:** `.heic`, `.heif` (automatically transcoded to `.webp`)
 - **Native videos:** `.mp4`, `.webm`, `.mov`, `.m4v`
 - **Transcoded videos:** `.mkv`, `.avi` (automatically transcoded to H.264/AAC `.mp4`)
 - **Archives:** `.zip`, `.tar.gz`, `.tgz`, `.tar`
