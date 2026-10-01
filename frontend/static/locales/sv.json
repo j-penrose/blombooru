@@ -84,10 +84,10 @@
                 "recalculate_metrics_description": "Omberäkna mediaräkningar och maxbetyg för alla album i hierarkin.",
                 "recalculate_metrics_btn": "Omberäkna Alla Mätvärden",
                 "metrics_recalculated": "Alla albummätvärden har omberäknats.",
-                "prune_albums": "",
-                "prune_albums_description": "",
-                "prune_albums_btn": "",
-                "albums_pruned": ""
+                "prune_albums": "Rensa Tomma Album",
+                "prune_albums_description": "Ta bort album som inte innehåller media eller underalbum. Album som saknar media men innehåller andra album med media kommer inte att raderas för att bevara hierarkin.",
+                "prune_albums_btn": "Rensa Alla Tomma Album",
+                "albums_pruned": "Lyckades rensa {count} album."
             },
             "none_root": "Inget (Rotalbum)",
             "parent_album": "Överordnat album (Valfritt)",
