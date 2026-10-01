@@ -18,6 +18,8 @@ GET /api/albums
 | `sort` | string | `created_at` | `created_at`, `name`, `last_modified` |
 | `order` | string | `desc` | `asc` or `desc` |
 | `rating` | string | | Rating filter |
+| `custom_filter` | string[] | | Custom filter tag expressions |
+| `q` | string | | Search query |
 | `root_only` | bool | false | Only return top-level albums (not children of any album) |
 
 **Response:** `{ "items": AlbumListResponse[], "total", "page", "limit", "pages" }`

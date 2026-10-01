@@ -1,7 +1,7 @@
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from sqlalchemy import case, desc, func
+from sqlalchemy import case, desc, func, literal
 from sqlalchemy.orm import Session, selectinload
 
 from ..auth import User, require_admin_mode
@@ -13,17 +13,19 @@ from ..schemas import (AlbumCreate, AlbumHierarchyResponse, AlbumListResponse,
                         AlbumResponse, AlbumStatsResponse,
                         AlbumUpdate, MediaIds,
                         AlbumReorderRequest, MediaReorderRequest)
-from ..utils.album_utils import (add_media_to_album, delete_album_cascade,
+from ..utils.album_utils import (add_media_to_album, apply_media_filters,
+                                 delete_album_cascade,
+                                 get_album_matching_media_counts,
                                  get_album_popular_tags, get_album_stats,
                                  get_album_tree_data, get_bulk_album_thumbnails,
-                                 get_bulk_parent_ids, get_parent_ids,
+                                 get_bulk_parent_ids, get_matching_album_ids,
+                                 get_parent_ids, is_album_filter_active,
                                  recalculate_album_metrics, recalculate_all_album_metrics,
                                  prune_all_albums, remove_media_from_album, reparent_album)
 from ..utils.cache import cache_response, invalidate_album_cache
 from ..utils.media_sort import (apply_album_sort, apply_media_sort,
                                 get_album_sort_clauses, get_media_sort_clauses)
-from ..utils.search_parser import (apply_custom_filters_or,
-                                   apply_search_criteria, parse_search_query)
+from ..utils.search_parser import parse_search_query
 
 router = APIRouter(prefix="/api/albums", tags=["albums"])
 
@@ -36,7 +38,6 @@ def get_effective_limit(limit: Optional[int]) -> int:
 
 @router.get("/", response_model=dict)
 @router.get("", response_model=dict)
-@cache_response(expire=3600, key_prefix="album_list")
 async def get_albums(
     request: Request,
     page: int = 1,
@@ -47,6 +48,8 @@ async def get_albums(
     fallback_order: Optional[str] = Query(default=None),
     seed: Optional[str] = Query(default=None),
     rating: Optional[str] = None,
+    custom_filter: Optional[List[str]] = Query(default=None),
+    q: Optional[str] = Query(default=None),
     root_only: bool = Query(default=False),
     db: Session = Depends(get_db)
 ):
@@ -58,11 +61,13 @@ async def get_albums(
         # Only show albums that are not children of any other album
         query = query.filter(~Album.id.in_(db.query(blombooru_album_hierarchy.c.child_album_id)))
     
-    if isinstance(rating, str) and rating.strip():
-        ratings_list = [r.strip().lower() for r in rating.split(",") if r.strip()]
-        valid_ratings = [RatingEnum[r] for r in ratings_list if r in RatingEnum.__members__]
-        if valid_ratings:
-            query = query.filter(Album.cached_rating.in_(valid_ratings))
+    filter_active = is_album_filter_active(rating=rating, custom_filter=custom_filter, q=q)
+    if filter_active:
+        matching_ids = get_matching_album_ids(db, rating=rating, custom_filter=custom_filter, q=q)
+        if not matching_ids:
+            query = query.filter(literal(False))
+        else:
+            query = query.filter(Album.id.in_(matching_ids))
     
     sort_str = sort if isinstance(sort, str) and sort else "created_at"
     sort_order = order.lower() if isinstance(order, str) and order.lower() in ("asc", "desc") else "desc"
@@ -86,7 +91,15 @@ async def get_albums(
     pages = max(1, (total + limit - 1) // limit)
     
     page_album_ids = [a.id for a in page_albums]
-    thumbnails_map = get_bulk_album_thumbnails(page_album_ids, db, count=4)
+    thumbnails_map = get_bulk_album_thumbnails(
+        page_album_ids, db, count=4, rating=rating, custom_filter=custom_filter, q=q
+    )
+    if filter_active:
+        counts_map = get_album_matching_media_counts(
+            page_album_ids, db, rating=rating, custom_filter=custom_filter, q=q
+        )
+    else:
+        counts_map = {a.id: (a.cached_media_count or 0) for a in page_albums}
     
     album_list = [
         AlbumListResponse(
@@ -95,7 +108,7 @@ async def get_albums(
             last_modified=album.last_modified,
             thumbnail_paths=thumbnails_map.get(album.id, []),
             rating=album.cached_rating or RatingEnum.safe,
-            media_count=album.cached_media_count or 0
+            media_count=counts_map[album.id]
         )
         for album in page_albums
     ]
@@ -366,7 +379,6 @@ async def remove_media_from_album_endpoint(
     return {"message": "Media removed from album"}
 
 @router.get("/{album_id}/contents")
-@cache_response(expire=3600, key_prefix="album_contents")
 async def get_album_contents(
     request: Request,
     album_id: int,
@@ -410,29 +422,14 @@ async def get_album_contents(
         blombooru_album_media.c.album_id == album_id
     ).options(selectinload(Media.tags))
     
-    # Apply tag filtering if query provided
-    if q and isinstance(q, str):
-        parsed = parse_search_query(q)
-        
-        # Merge rating filter into parsed query if provided and not already in query
-        if isinstance(rating, str) and rating.strip() and 'rating' not in parsed['meta']:
-            parsed['meta']['rating'] = [{'value': rating.lower(), 'negated': False}]
-        
-        # Apply search criteria to media query
-        media_query = apply_search_criteria(media_query, parsed, db)
-    else:
-        # Filter Rating (only if no tag query provided)
-        if isinstance(rating, str) and rating.strip():
-            ratings_list = [r.strip().lower() for r in rating.split(",") if r.strip()]
-            valid_ratings = [RatingEnum[r] for r in ratings_list if r in RatingEnum.__members__]
-            if valid_ratings:
-                media_query = media_query.filter(Media.rating.in_(valid_ratings))
-    
-    if custom_filter and isinstance(custom_filter, list):
-        media_query = apply_custom_filters_or(media_query, custom_filter, db)
+    parsed_q = parse_search_query(q) if (q and isinstance(q, str) and q.strip()) else None
+    media_query = apply_media_filters(
+        media_query, db, rating=rating, custom_filter=custom_filter, q=q, parsed_q=parsed_q, apply_sort=True
+    )
     
     # Sort Media
-    if not q or not isinstance(q, str) or ('order' not in parsed['meta'] and 'sort' not in parsed['meta']):
+    has_q_sort = bool(parsed_q and ('order' in parsed_q.get('meta', {}) or 'sort' in parsed_q.get('meta', {})))
+    if not has_q_sort:
         media_query = media_query.order_by(None)
         if sort == "manual":
             fb_media_clauses = get_media_sort_clauses(
@@ -479,11 +476,13 @@ async def get_album_contents(
         blombooru_album_hierarchy.c.parent_album_id == album_id
     )
     
-    if isinstance(rating, str) and rating.strip():
-        ratings_list = [r.strip().lower() for r in rating.split(",") if r.strip()]
-        valid_ratings = [RatingEnum[r] for r in ratings_list if r in RatingEnum.__members__]
-        if valid_ratings:
-            child_albums_query = child_albums_query.filter(Album.cached_rating.in_(valid_ratings))
+    child_filter_active = is_album_filter_active(rating=rating, custom_filter=custom_filter, q=q)
+    if child_filter_active:
+        matching_child_ids = get_matching_album_ids(db, rating=rating, custom_filter=custom_filter, q=q)
+        if not matching_child_ids:
+            child_albums_query = child_albums_query.filter(literal(False))
+        else:
+            child_albums_query = child_albums_query.filter(Album.id.in_(matching_child_ids))
     
     if sort == "manual":
         fb_subalbum_clauses = get_album_sort_clauses(
@@ -501,7 +500,15 @@ async def get_album_contents(
     child_albums = child_albums_query.all()
     
     child_ids = [c.id for c in child_albums]
-    child_thumbnails_map = get_bulk_album_thumbnails(child_ids, db, count=4)
+    child_thumbnails_map = get_bulk_album_thumbnails(
+        child_ids, db, count=4, rating=rating, custom_filter=custom_filter, q=q
+    )
+    if child_filter_active:
+        child_counts_map = get_album_matching_media_counts(
+            child_ids, db, rating=rating, custom_filter=custom_filter, q=q
+        )
+    else:
+        child_counts_map = {c.id: (c.cached_media_count or 0) for c in child_albums}
     
     child_album_list = [
         AlbumListResponse(
@@ -510,7 +517,7 @@ async def get_album_contents(
             last_modified=child.last_modified,
             thumbnail_paths=child_thumbnails_map.get(child.id, []),
             rating=child.cached_rating or RatingEnum.safe,
-            media_count=child.cached_media_count or 0
+            media_count=child_counts_map[child.id]
         )
         for child in child_albums
     ]
