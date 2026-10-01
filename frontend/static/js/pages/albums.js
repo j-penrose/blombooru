@@ -35,6 +35,9 @@ class AlbumsOverview extends BaseGallery {
             if (this.currentRating) {
                 params.set('rating', this.currentRating);
             }
+            if (this.selectedCustomFilters && this.selectedCustomFilters.size > 0) {
+                this.selectedCustomFilters.forEach(cf => params.append('custom_filter', cf));
+            }
             this.appendSortParams(params);
 
             const response = await fetch(`/api/albums?${params}`);
@@ -42,6 +45,11 @@ class AlbumsOverview extends BaseGallery {
 
             const data = await response.json();
             this.totalPages = data.pages || 1;
+
+            if (this.adjustPageIfNeeded(data.pages)) {
+                this.isLoading = false;
+                return await this.loadContent();
+            }
 
             // Filter empty albums before rendering
             const rawItems = data.items || [];
@@ -87,6 +95,9 @@ class AlbumsOverview extends BaseGallery {
                 });
                 if (limit) params.set('limit', limit);
                 if (this.currentRating) params.set('rating', this.currentRating);
+                if (this.selectedCustomFilters && this.selectedCustomFilters.size > 0) {
+                    this.selectedCustomFilters.forEach(cf => params.append('custom_filter', cf));
+                }
                 this.appendSortParams(params);
                 const res = await fetch(`/api/albums?${params}`);
                 if (!res.ok) return null;

@@ -103,7 +103,7 @@ class AlbumViewer extends BaseGallery {
 
             // Check if page adjustment is needed
             if (this.adjustPageIfNeeded(data.pages)) {
-                return this.loadContent();
+                return await this.loadContent();
             }
 
             // Filter out empty albums for logic checks
@@ -156,6 +156,11 @@ class AlbumViewer extends BaseGallery {
     }
 
     onRatingChange() {
+        this.loadContent();
+        this.loadPopularTagsFromAPI();
+    }
+
+    onCustomFilterChange() {
         this.loadContent();
         this.loadPopularTagsFromAPI();
     }
