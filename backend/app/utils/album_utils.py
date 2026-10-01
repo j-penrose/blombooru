@@ -7,6 +7,9 @@ from sqlalchemy import and_, func, or_, text
 from sqlalchemy.orm import Session
 
 from .cache import invalidate_album_cache
+from .search_parser import (apply_custom_filters_or, apply_search_criteria,
+                            build_search_criteria_conditions,
+                            parse_search_query)
 from ..models import (Album, Media, RatingEnum, blombooru_album_hierarchy,
                       blombooru_album_media, blombooru_media_tags, Tag)
 
@@ -557,8 +560,156 @@ def delete_album_cascade(db: Session, album_id: int, cascade: bool = False) -> N
 
     invalidate_album_cache()
 
-def get_bulk_album_thumbnails(album_ids: List[int], db: Session, count: int = 4) -> Dict[int, List[str]]:
-    """Fetches up to `count` thumbnails for multiple albums using window functions."""
+VALID_RATING_MAP = {
+    's': RatingEnum.safe, 'safe': RatingEnum.safe,
+    'q': RatingEnum.questionable, 'questionable': RatingEnum.questionable,
+    'e': RatingEnum.explicit, 'explicit': RatingEnum.explicit
+}
+
+def parse_rating_filter(rating: Optional[str]) -> List[RatingEnum]:
+    """Parses a comma-separated rating string into unique valid RatingEnum values."""
+    if not rating or not isinstance(rating, str) or not rating.strip():
+        return []
+    vals = [r.strip().lower() for r in rating.split(",") if r.strip()]
+    ratings = [VALID_RATING_MAP[r] for r in vals if r in VALID_RATING_MAP]
+    seen = set()
+    result = []
+    for r in ratings:
+        if r not in seen:
+            seen.add(r)
+            result.append(r)
+    return result
+
+def is_rating_filter_active(valid_ratings: List[RatingEnum]) -> bool:
+    """Returns True if ratings are restricted (i.e. not empty and not all ratings allowed)."""
+    return 0 < len(valid_ratings) < len(RatingEnum)
+
+def is_album_filter_active(
+    rating: Optional[str] = None,
+    custom_filter: Optional[Any] = None,
+    q: Optional[str] = None
+) -> bool:
+    """Checks whether any album content filter is active."""
+    if q and isinstance(q, str) and q.strip():
+        return True
+    if custom_filter and isinstance(custom_filter, (list, tuple, str, set)):
+        if isinstance(custom_filter, str):
+            clean = [custom_filter.strip()] if custom_filter.strip() else []
+        else:
+            clean = [cf.strip() for cf in custom_filter if isinstance(cf, str) and cf.strip()]
+        if clean:
+            return True
+    valid_ratings = parse_rating_filter(rating)
+    if is_rating_filter_active(valid_ratings):
+        return True
+    return False
+
+def apply_media_filters(
+    query: Any,
+    db: Session,
+    rating: Optional[str] = None,
+    custom_filter: Optional[Any] = None,
+    q: Optional[str] = None,
+    parsed_q: Optional[Dict[str, Any]] = None,
+    apply_sort: bool = False
+) -> Any:
+    """Applies media search criteria, rating filter, and custom filters to a media-joined query."""
+    valid_ratings = parse_rating_filter(rating)
+    has_rating_filter = is_rating_filter_active(valid_ratings)
+
+    if parsed_q is None and q and isinstance(q, str) and q.strip():
+        parsed_q = parse_search_query(q)
+
+    if parsed_q:
+        if has_rating_filter and 'rating' not in parsed_q.get('meta', {}):
+            parsed_q.setdefault('meta', {})['rating'] = [{'value': ','.join(r.value for r in valid_ratings), 'negated': False}]
+        if apply_sort:
+            query = apply_search_criteria(query, parsed_q, db)
+        else:
+            for cond in build_search_criteria_conditions(parsed_q, db):
+                query = query.filter(cond)
+    elif has_rating_filter:
+        query = query.filter(Media.rating.in_(valid_ratings))
+
+    if custom_filter and isinstance(custom_filter, (list, tuple, str, set)):
+        query = apply_custom_filters_or(query, custom_filter, db)
+
+    return query
+
+def get_matching_album_ids(
+    db: Session,
+    rating: Optional[str] = None,
+    custom_filter: Optional[Any] = None,
+    q: Optional[str] = None
+) -> Set[int]:
+    """
+    Finds all album IDs that contain at least one media matching the given
+    filters, including any ancestors of those albums.
+    """
+    media_album_q = db.query(blombooru_album_media.c.album_id).join(
+        Media, Media.id == blombooru_album_media.c.media_id
+    )
+    media_album_q = apply_media_filters(media_album_q, db, rating=rating, custom_filter=custom_filter, q=q)
+
+    direct_album_ids = {row[0] for row in media_album_q.distinct().all()}
+    if not direct_album_ids:
+        return set()
+
+    ancestor_ids = get_all_ancestor_ids(db, list(direct_album_ids))
+    return direct_album_ids | ancestor_ids
+
+def get_album_matching_media_counts(
+    album_ids: List[int],
+    db: Session,
+    rating: Optional[str] = None,
+    custom_filter: Optional[Any] = None,
+    q: Optional[str] = None
+) -> Dict[int, int]:
+    """
+    Calculates the count of media matching the given filters for each requested album,
+    including media in any descendant albums.
+    """
+    if not album_ids:
+        return {}
+
+    descendant_map = get_descendant_ids(db, list(album_ids))
+    all_needed_album_ids: Set[int] = set()
+    for dset in descendant_map.values():
+        all_needed_album_ids.update(dset)
+
+    if not all_needed_album_ids:
+        return {aid: 0 for aid in album_ids}
+
+    counts_q = db.query(
+        blombooru_album_media.c.album_id,
+        func.count(Media.id)
+    ).join(
+        Media, Media.id == blombooru_album_media.c.media_id
+    ).filter(
+        blombooru_album_media.c.album_id.in_(list(all_needed_album_ids))
+    )
+
+    counts_q = apply_media_filters(counts_q, db, rating=rating, custom_filter=custom_filter, q=q)
+
+    direct_counts = dict(counts_q.group_by(blombooru_album_media.c.album_id).all())
+
+    result: Dict[int, int] = {}
+    for target_aid in album_ids:
+        descendants = descendant_map.get(target_aid, {target_aid})
+        total = sum(direct_counts.get(aid, 0) for aid in descendants)
+        result[target_aid] = total
+
+    return result
+
+def get_bulk_album_thumbnails(
+    album_ids: List[int],
+    db: Session,
+    count: int = 4,
+    rating: Optional[str] = None,
+    custom_filter: Optional[Any] = None,
+    q: Optional[str] = None
+) -> Dict[int, List[str]]:
+    """Fetches up to `count` thumbnails for multiple albums using window functions, filtered by active rating/custom filters."""
     if not album_ids:
         return {}
 
@@ -580,7 +731,7 @@ def get_bulk_album_thumbnails(album_ids: List[int], db: Session, count: int = 4)
         )
     ).label("rn")
 
-    subq = db.query(
+    subq_query = db.query(
         blombooru_album_media.c.album_id,
         Media.id.label("media_id"),
         rn_col
@@ -589,7 +740,10 @@ def get_bulk_album_thumbnails(album_ids: List[int], db: Session, count: int = 4)
     ).filter(
         blombooru_album_media.c.album_id.in_(list(all_needed_album_ids)),
         or_(Media.thumbnail_path.isnot(None), Media.path.isnot(None))
-    ).subquery()
+    )
+
+    subq_query = apply_media_filters(subq_query, db, rating=rating, custom_filter=custom_filter, q=q)
+    subq = subq_query.subquery()
 
     thumbnail_rows = db.query(
         subq.c.album_id,
