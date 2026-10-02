@@ -78,7 +78,7 @@ class GelbooruClient(BooruClient):
         last_error = None
         for attempt in range(self.MAX_RETRIES + 1):
             try:
-                response = self.session.get(url, params=merged_params, timeout=15)
+                response = self.session.get(url, params=merged_params, timeout=(5, 10))
                 
                 if response.status_code == 429:
                     # Back off when rate-limited
@@ -105,6 +105,8 @@ class GelbooruClient(BooruClient):
                 
                 return data
 
+            except requests.ConnectionError as e:
+                raise Exception(f"Failed to connect to booru API: {e}")
             except requests.RequestException as e:
                 last_error = e
                 if attempt < self.MAX_RETRIES:

@@ -107,26 +107,14 @@ class TestProxyResponse(BaseModel):
     message: Optional[str] = None
     error: Optional[str] = None
 
-@router.post("/test-proxy", response_model=TestProxyResponse)
-async def test_booru_proxy(
-    req: TestProxyRequest,
-    current_user: User = Depends(require_admin_mode),
-):
-    """Test connectivity through the specified proxy URL."""
-    proxy_url = req.proxy_url.strip()
-    if not proxy_url:
-        return TestProxyResponse(
-            success=False,
-            error="Proxy URL cannot be empty",
-        )
-
+def _do_test_booru_proxy(proxy_url: str) -> TestProxyResponse:
     import requests as _requests
     proxies = {"http": proxy_url, "https": proxy_url}
     try:
         resp = _requests.get(
             "https://jsonip.com",
             proxies=proxies,
-            timeout=5,
+            timeout=(3, 5),
             headers={"User-Agent": "Blombooru/1.0 (proxy-test)"},
         )
         resp.raise_for_status()
@@ -142,3 +130,19 @@ async def test_booru_proxy(
             success=False,
             error=str(e),
         )
+
+@router.post("/test-proxy", response_model=TestProxyResponse)
+async def test_booru_proxy(
+    req: TestProxyRequest,
+    current_user: User = Depends(require_admin_mode),
+):
+    """Test connectivity through the specified proxy URL."""
+    proxy_url = req.proxy_url.strip()
+    if not proxy_url:
+        return TestProxyResponse(
+            success=False,
+            error="Proxy URL cannot be empty",
+        )
+
+    from fastapi.concurrency import run_in_threadpool
+    return await run_in_threadpool(_do_test_booru_proxy, proxy_url)

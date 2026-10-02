@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -40,20 +41,14 @@ class ImportRequest(BaseModel):
     category_hints: Optional[dict[str, str]] = None
     auto_create_tags: bool = False
 
-@router.post("/fetch")
-async def fetch_media_url(
-    req: FetchRequest,
-    current_user: User = Depends(require_admin_mode),
-    db: Session = Depends(get_db),
-):
-    """Probe a direct media URL or a booru URL and return metadata without downloading the full file."""
+def _do_fetch_media_url(url: str, db: Session) -> dict:
     # Try Booru fetch first
-    client = get_client_for_url(req.url, db=db)
+    client = get_client_for_url(url, db=db)
     if client:
         try:
             import requests
             from .booru_import import _enrich_post_tags_with_db_categories
-            post = client.fetch_post_by_url(req.url)
+            post = client.fetch_post_by_url(url)
             _enrich_post_tags_with_db_categories(post, db)
             
             return {
@@ -73,13 +68,14 @@ async def fetch_media_url(
                 "description": post.description,
             }
         except Exception as e:
-            logger.warning(f"Booru fetch failed for {req.url}, falling back to direct probe: {e}")
+            logger.warning(f"Booru fetch failed for {url}, falling back to direct probe: {e}")
             try:
-                data = probe_media_url(req.url)
+                data = probe_media_url(url)
                 data["is_booru_post"] = False
                 return data
             except Exception:
                 pass
+            import requests
             if isinstance(e, requests.HTTPError):
                 if e.response.status_code == 403:
                     raise HTTPException(status_code=403, detail="admin.media_management.booru_import.error_access_denied_403")
@@ -92,7 +88,7 @@ async def fetch_media_url(
 
     # Fallback to direct media probe
     try:
-        data = probe_media_url(req.url)
+        data = probe_media_url(url)
         data["is_booru_post"] = False
         return data
     except UrlFetchError as e:
@@ -102,6 +98,15 @@ async def fetch_media_url(
             status_code=500,
             detail=f"admin.media_management.url_import.error_fetch_failed:::{safe_error_detail('Fetch failed', e)}",
         )
+
+@router.post("/fetch")
+async def fetch_media_url(
+    req: FetchRequest,
+    current_user: User = Depends(require_admin_mode),
+    db: Session = Depends(get_db),
+):
+    """Probe a direct media URL or a booru URL and return metadata without downloading the full file."""
+    return await run_in_threadpool(_do_fetch_media_url, req.url, db)
 
 @router.get("/proxy")
 async def proxy_media_url(
@@ -124,18 +129,7 @@ async def proxy_media_url(
             detail=f"admin.media_management.url_import.error_proxy_failed:::{safe_error_detail('Proxy failed', e)}",
         )
 
-@router.post("/import", response_model=MediaResponse)
-async def import_media_url(
-    req: ImportRequest,
-    current_user: User = Depends(require_admin_mode),
-    db: Session = Depends(get_db),
-):
-    """
-    Download media from a direct URL or booru URL and import it into the library in one step.
-
-    Only ``url`` is required; all other fields are optional. Authenticated via
-    admin session or API key (for browser extensions and other API clients).
-    """
+def _do_import_media_url(req: ImportRequest, db: Session) -> MediaResponse:
     from .media import process_and_save_media
 
     tmp_path: Optional[Path] = None
@@ -228,3 +222,12 @@ async def import_media_url(
     finally:
         if tmp_path and tmp_path.exists():
             tmp_path.unlink(missing_ok=True)
+
+@router.post("/import", response_model=MediaResponse)
+async def import_media_url(
+    req: ImportRequest,
+    current_user: User = Depends(require_admin_mode),
+    db: Session = Depends(get_db),
+):
+    """Download media from a direct URL or booru URL and import it into the library in one step."""
+    return await run_in_threadpool(_do_import_media_url, req, db)

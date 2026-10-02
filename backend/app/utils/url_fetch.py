@@ -20,7 +20,8 @@ SUPPORTED_MIME_TYPES = set(
     + format_registry.get_supported_mime_types(FormatCategory.VIDEO)
 )
 
-DEFAULT_TIMEOUT = 60
+DEFAULT_PROBE_TIMEOUT = (5, 10)
+DEFAULT_DOWNLOAD_TIMEOUT = (10, 60)
 
 _session = requests.Session()
 _adapter = HTTPAdapter(
@@ -152,7 +153,7 @@ def probe_media_url(url: str) -> dict:
         try:
             response = _session.head(
                 url,
-                timeout=DEFAULT_TIMEOUT,
+                timeout=DEFAULT_PROBE_TIMEOUT,
                 allow_redirects=True,
                 headers=_request_headers(url),
                 proxies=proxies,
@@ -161,7 +162,7 @@ def probe_media_url(url: str) -> dict:
                 response.close()
                 response = _session.get(
                     url,
-                    timeout=DEFAULT_TIMEOUT,
+                    timeout=DEFAULT_PROBE_TIMEOUT,
                     allow_redirects=True,
                     headers={**_request_headers(url), "Range": "bytes=0-0"},
                     stream=True,
@@ -190,7 +191,7 @@ def fetch_media_stream(url: str) -> Tuple[requests.Response, str]:
     try:
         response = _session.get(
             url,
-            timeout=DEFAULT_TIMEOUT,
+            timeout=DEFAULT_DOWNLOAD_TIMEOUT,
             allow_redirects=True,
             headers=_request_headers(url),
             stream=True,
