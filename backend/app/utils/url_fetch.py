@@ -9,6 +9,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
+from ..config import settings
 from ..enums import FileTypeEnum
 from .format_registry import format_registry, FormatCategory
 from .media_processor import determine_file_type
@@ -145,6 +146,7 @@ def probe_media_url(url: str) -> dict:
     """Probe a direct media URL and return metadata without downloading the full file."""
     url = validate_media_url(url)
     response: Optional[requests.Response] = None
+    proxies = settings.get_booru_proxies()
 
     try:
         try:
@@ -153,6 +155,7 @@ def probe_media_url(url: str) -> dict:
                 timeout=DEFAULT_TIMEOUT,
                 allow_redirects=True,
                 headers=_request_headers(url),
+                proxies=proxies,
             )
             if response.status_code == 405 or response.status_code >= 500:
                 response.close()
@@ -162,6 +165,7 @@ def probe_media_url(url: str) -> dict:
                     allow_redirects=True,
                     headers={**_request_headers(url), "Range": "bytes=0-0"},
                     stream=True,
+                    proxies=proxies,
                 )
         except requests.Timeout:
             raise UrlFetchError("admin.media_management.url_import.error_timeout", 504)
@@ -181,6 +185,7 @@ def probe_media_url(url: str) -> dict:
 def fetch_media_stream(url: str) -> Tuple[requests.Response, str]:
     """Download a media URL as a streaming response. Caller must close the response."""
     url = validate_media_url(url)
+    proxies = settings.get_booru_proxies()
 
     try:
         response = _session.get(
@@ -189,6 +194,7 @@ def fetch_media_stream(url: str) -> Tuple[requests.Response, str]:
             allow_redirects=True,
             headers=_request_headers(url),
             stream=True,
+            proxies=proxies,
         )
     except requests.Timeout:
         raise UrlFetchError("admin.media_management.url_import.error_timeout", 504)

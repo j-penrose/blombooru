@@ -57,6 +57,11 @@ class DanbooruClient(BooruClient):
             "User-Agent": self._format_user_agent(),
             "Accept": "application/json",
         })
+        from ...config import settings
+        proxies = settings.get_booru_proxies()
+        if proxies:
+            self.session.proxies.update(proxies)
+
         if api_key and username:
             self.session.params = {"api_key": api_key, "login": username}
 

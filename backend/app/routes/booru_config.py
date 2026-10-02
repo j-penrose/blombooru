@@ -97,3 +97,48 @@ async def delete_booru_config(
     clear_client_cache()
 
     return {"status": "success", "message_key": "admin.settings.booru_config.delete_success", "message_args": {"domain": domain}}
+
+class TestProxyRequest(BaseModel):
+    proxy_url: str
+
+class TestProxyResponse(BaseModel):
+    success: bool
+    origin_ip: Optional[str] = None
+    message: Optional[str] = None
+    error: Optional[str] = None
+
+@router.post("/test-proxy", response_model=TestProxyResponse)
+async def test_booru_proxy(
+    req: TestProxyRequest,
+    current_user: User = Depends(require_admin_mode),
+):
+    """Test connectivity through the specified proxy URL."""
+    proxy_url = req.proxy_url.strip()
+    if not proxy_url:
+        return TestProxyResponse(
+            success=False,
+            error="Proxy URL cannot be empty",
+        )
+
+    import requests as _requests
+    proxies = {"http": proxy_url, "https": proxy_url}
+    try:
+        resp = _requests.get(
+            "https://jsonip.com",
+            proxies=proxies,
+            timeout=5,
+            headers={"User-Agent": "Blombooru/1.0 (proxy-test)"},
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        origin_ip = data.get("ip")
+        return TestProxyResponse(
+            success=True,
+            origin_ip=origin_ip,
+            message=f"Connected successfully (IP: {origin_ip})" if origin_ip else "Connected successfully",
+        )
+    except Exception as e:
+        return TestProxyResponse(
+            success=False,
+            error=str(e),
+        )

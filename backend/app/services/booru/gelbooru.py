@@ -43,6 +43,10 @@ class GelbooruClient(BooruClient):
             "User-Agent": "Blombooru/1.0 (booru-import)",
             "Referer": f"{self.base_url}/",
         })
+        from ...config import settings
+        proxies = settings.get_booru_proxies()
+        if proxies:
+            self.session.proxies.update(proxies)
 
     @classmethod
     def can_handle_url(cls, url: str) -> bool:

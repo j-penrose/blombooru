@@ -26,6 +26,9 @@ def validate_url_not_ssrf(url: str) -> None:
     try:
         addrinfos = socket.getaddrinfo(hostname, None)
     except socket.gaierror:
+        from ..config import settings
+        if settings.BOORU_PROXY_URL:
+            return
         raise UrlValidationError("invalid_url")
 
     for _family, _type, _proto, _canonname, sockaddr in addrinfos:
