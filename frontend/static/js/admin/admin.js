@@ -188,6 +188,12 @@ class AdminPanel {
         if (syncSharedTagsBtn) {
             syncSharedTagsBtn.addEventListener('click', () => this.system.syncSharedTags());
         }
+
+        // Booru proxy test button
+        const testBooruProxyBtn = document.getElementById('test-booru-proxy-btn');
+        if (testBooruProxyBtn) {
+            testBooruProxyBtn.addEventListener('click', () => this.system.testBooruProxy());
+        }
     }
 
     setupTabs() {

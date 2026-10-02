@@ -548,6 +548,47 @@ class AdminSystem {
         }
     }
 
+    async testBooruProxy() {
+        const proxyInput = document.getElementById('booru-proxy-url');
+        const proxyUrl = proxyInput ? proxyInput.value.trim() : '';
+        if (!proxyUrl) {
+            app.showNotification(window.i18n.t('admin.settings.booru_config.error_proxy_empty'), 'error');
+            return;
+        }
+
+        const btn = document.getElementById('test-booru-proxy-btn');
+        const originalText = btn ? btn.textContent : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = window.i18n.t('admin.actions.testing');
+        }
+
+        try {
+            const result = await app.apiCall('/api/booru-config/test-proxy', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ proxy_url: proxyUrl })
+            });
+
+            if (result.success) {
+                const msg = window.i18n.t('admin.settings.booru_config.proxy_test_success', { ip: result.origin_ip || 'unknown' });
+                app.showNotification(msg, 'success');
+            } else {
+                const err = result.error || window.i18n.t('common.connection_failed');
+                const msg = window.i18n.t('admin.settings.booru_config.proxy_test_failed', { error: err });
+                app.showNotification(msg, 'error');
+            }
+        } catch (error) {
+            const msg = window.i18n.t('admin.settings.booru_config.proxy_test_failed', { error: error.message });
+            app.showNotification(msg, 'error');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        }
+    }
+
     async syncSharedTags() {
         const btn = document.getElementById('sync-shared-tags-btn');
         const resultDiv = document.getElementById('shared-tags-test-result');
@@ -734,6 +775,12 @@ class AdminSystem {
                         el.value = settings.similarity_weights[cat];
                     }
                 });
+            }
+
+            // Load booru proxy setting
+            if (settings.booru_proxy_url !== undefined) {
+                const proxyInput = document.getElementById('booru-proxy-url');
+                if (proxyInput) proxyInput.value = settings.booru_proxy_url || '';
             }
 
             // Load media_type_tags settings
@@ -996,13 +1043,17 @@ class AdminSystem {
             }
         });
 
+        const proxyInput = document.getElementById('booru-proxy-url');
+        const booruProxyUrl = proxyInput ? proxyInput.value.trim() : null;
+
         try {
             await app.apiCall('/api/admin/settings', {
                 method: 'PATCH',
                 body: JSON.stringify({
                     redis: redisSettings,
                     shared_tags: sharedTagsSettings,
-                    similarity_weights: similarityWeights
+                    similarity_weights: similarityWeights,
+                    booru_proxy_url: booruProxyUrl || null
                 })
             });
 
