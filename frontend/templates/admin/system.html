@@ -708,6 +708,23 @@
                 </div>
             </div>
         </div>
+
+        <!-- Global Booru Outbound Proxy -->
+        <div class="border-t mt-4 pt-4">
+            <h3 class="text-sm font-bold mb-1">{{ t('admin.settings.booru_config.proxy_title') }}</h3>
+            <p class="text-xs text-secondary mb-3">{{ t('admin.settings.booru_config.proxy_hint') }}</p>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <input type="text" id="booru-proxy-url"
+                    class="flex-1 bg px-3 py-2 border text-xs focus:outline-none hover:border-primary transition-colors focus:border-primary"
+                    placeholder="socks5h://127.0.0.1:10808">
+                <button id="test-booru-proxy-btn" type="button" class="btn whitespace-nowrap cursor-pointer">
+                    {{ t('admin.settings.booru_config.test_proxy') }}
+                </button>
+                <button id="save-booru-proxy-btn" type="button" class="btn-primary whitespace-nowrap cursor-pointer">
+                    {{ t('common.save') }}
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- API Access Section -->

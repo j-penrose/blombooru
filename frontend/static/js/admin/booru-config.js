@@ -9,12 +9,24 @@ class BooruConfigManager {
     init() {
         this.tableBody = this.container.querySelector('#booru-config-table tbody');
         this.form = this.container.querySelector('#booru-config-form');
+        this.proxyInput = this.container.querySelector('#booru-proxy-url');
+        this.testProxyBtn = this.container.querySelector('#test-booru-proxy-btn');
+        this.saveProxyBtn = this.container.querySelector('#save-booru-proxy-btn');
 
         if (this.form) {
             this.form.addEventListener('submit', (e) => this.handleSubmit(e));
         }
 
+        if (this.testProxyBtn) {
+            this.testProxyBtn.addEventListener('click', () => this.handleTestProxy());
+        }
+
+        if (this.saveProxyBtn) {
+            this.saveProxyBtn.addEventListener('click', () => this.handleSaveProxy());
+        }
+
         this.loadConfigs();
+        this.loadProxySetting();
     }
 
     showStatus(message, type = 'info') {
@@ -132,6 +144,89 @@ class BooruConfigManager {
                 }
             }
         }).show();
+    }
+
+    async loadProxySetting() {
+        if (!this.proxyInput) return;
+        try {
+            const response = await fetch('/api/admin/settings');
+            if (response.ok) {
+                const data = await response.json();
+                if (data.booru_proxy_url) {
+                    this.proxyInput.value = data.booru_proxy_url;
+                }
+            }
+        } catch (e) {
+            console.error('Error loading booru proxy setting:', e);
+        }
+    }
+
+    async handleTestProxy() {
+        const proxyUrl = this.proxyInput.value.trim();
+        if (!proxyUrl) {
+            this.showStatus(window.i18n.t('admin.settings.booru_config.error_proxy_empty'), 'error');
+            return;
+        }
+
+        if (this.testProxyBtn) {
+            this.testProxyBtn.disabled = true;
+        }
+
+        try {
+            const response = await fetch('/api/booru-config/test-proxy', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ proxy_url: proxyUrl })
+            });
+
+            const result = await response.json();
+            if (response.ok && result.success) {
+                const msg = window.i18n.t('admin.settings.booru_config.proxy_test_success', { ip: result.origin_ip || 'unknown' });
+                this.showStatus(msg, 'success');
+            } else {
+                const err = result.error || 'Connection failed';
+                const msg = window.i18n.t('admin.settings.booru_config.proxy_test_failed', { error: err });
+                this.showStatus(msg, 'error');
+            }
+        } catch (e) {
+            console.error('Test proxy error:', e);
+            const msg = window.i18n.t('admin.settings.booru_config.proxy_test_failed', { error: e.message });
+            this.showStatus(msg, 'error');
+        } finally {
+            if (this.testProxyBtn) {
+                this.testProxyBtn.disabled = false;
+            }
+        }
+    }
+
+    async handleSaveProxy() {
+        const proxyUrl = this.proxyInput.value.trim();
+        if (this.saveProxyBtn) {
+            this.saveProxyBtn.disabled = true;
+        }
+
+        try {
+            const response = await fetch('/api/admin/settings', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ booru_proxy_url: proxyUrl || null })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message_key || error.detail || 'Failed to save proxy setting');
+            }
+
+            this.showStatus(window.i18n.t('admin.settings.booru_config.save_success'), 'success');
+        } catch (e) {
+            console.error('Save proxy error:', e);
+            const errorMsg = app.translateError(e.message) || window.i18n.t('admin.settings.booru_config.error_save_failed');
+            this.showStatus(errorMsg, 'error');
+        } finally {
+            if (this.saveProxyBtn) {
+                this.saveProxyBtn.disabled = false;
+            }
+        }
     }
 
     escapeHtml(text) {
