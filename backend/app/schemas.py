@@ -167,6 +167,7 @@ class SettingsUpdate(BaseModel):
     custom_background: Optional[CustomBackgroundSettings] = None
     similarity_weights: Optional[SimilarityWeights] = None
     stripped_cache_max_mb: Optional[int] = None
+    booru_proxy_url: Optional[str] = None
 
 class ShareSettingsUpdate(BaseModel):
     share_ai_metadata: Optional[bool] = None

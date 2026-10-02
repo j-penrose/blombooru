@@ -135,7 +135,8 @@ class Settings:
                     "description": ["UserComment", "Description", "description"]
                 }
             },
-            "stripped_cache_max_mb": 0
+            "stripped_cache_max_mb": 0,
+            "booru_proxy_url": None
         }
     
     def get_items_per_page(self) -> int:
@@ -341,6 +342,33 @@ class Settings:
         if val is not None:
             return bool(val)
         return bool(self.settings.get("auto_apply_ai_tags", False))
+
+    @property
+    def BOORU_PROXY_URL(self) -> Optional[str]:
+        """Get the configured proxy URL for booru requests and URL imports (SOCKS5/HTTP)."""
+        val = self.file_settings.get("booru_proxy_url")
+        if val is not None:
+            val_str = str(val).strip()
+            return val_str if val_str else None
+        env_val = os.getenv("BLOMBOORU_BOORU_PROXY_URL")
+        if env_val is not None:
+            env_str = env_val.strip()
+            return env_str if env_str else None
+        saved = self.settings.get("booru_proxy_url")
+        if saved:
+            saved_str = str(saved).strip()
+            return saved_str if saved_str else None
+        return None
+
+    def get_booru_proxies(self) -> Optional[dict]:
+        """Return a requests-compatible proxies dict if a booru proxy is configured, else None."""
+        proxy_url = self.BOORU_PROXY_URL
+        if not proxy_url:
+            return None
+        return {
+            "http": proxy_url,
+            "https": proxy_url,
+        }
 
     @property
     def CUSTOM_BACKGROUND(self) -> dict:

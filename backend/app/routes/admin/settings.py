@@ -87,6 +87,10 @@ async def update_settings(
             except RuntimeError:
                 pass
 
+    if "booru_proxy_url" in update_dict:
+        from ...services.booru import clear_client_cache
+        clear_client_cache()
+
     invalidate_media_cache(rebuild_similarity=False)
         
     return {"message_key": "notifications.admin.settings_updated"}
