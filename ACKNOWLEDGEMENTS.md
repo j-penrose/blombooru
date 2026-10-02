@@ -22677,76 +22677,6 @@ the FAQ for more information on the distribution of modified source versions.
 
 ---
 
-Name: pillow-heif
-Version: 1.6.0
-License: BSD-3-Clause
-Author: Alexander Piskun
-License Text:
-===
-
-Copyright (c) 2021-2023, Pillow-Heif contributors.
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are
-met:
-
-    * Redistributions of source code must retain the above copyright
-       notice, this list of conditions and the following disclaimer.
-
-    * Redistributions in binary form must reproduce the above
-       copyright notice, this list of conditions and the following
-       disclaimer in the documentation and/or other materials provided
-       with the distribution.
-
-    * Neither the name of the Pillow-Heif nor the names of any
-       contributors may be used to endorse or promote products derived
-       from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-========================================
-
-The "pillow-heif" source code is licensed under the BSD-3-Clause license, see LICENSE.txt.
-License for "pillow-heif" binary wheels: GPLv2, due to base library licenses.
-
-Binary wheels combine several license-compatible libraries. Here they are listed.
-
-Name: libheif
-License: LGPLv3
-Files: libheif.[dylib|so|dll]
-  For details, see https://github.com/strukturag/libheif/tree/v1.23.2/COPYING
-  Source code: https://github.com/strukturag/libheif/tree/v1.23.2
-
-Name: libde265
-License: LGPLv3
-Files: libde265.[dylib|so|dll]
-  For details, see https://github.com/strukturag/libde265/tree/v1.1.1/COPYING
-  Source code: https://github.com/strukturag/libde265/tree/v1.1.1
-
-Name: x265
-License: GPLv2
-Files: libx265.[dylib|so|dll]
-  For details, see https://bitbucket.org/multicoreware/x265_git/src/4.2/COPYING
-  Source code: https://bitbucket.org/multicoreware/x265_git/src/4.2
-
-Name: MinGW-w64 runtime (Windows wheels only)
-License: GPL-3.0-with-GCC-exception (libgcc, libstdc++), MIT and BSD (libwinpthread)
-Files: libgcc_s_seh-1.dll, libstdc++-6.dll, libwinpthread-1.dll
-  For details, see https://sourceforge.net/p/mingw-w64/mingw-w64/ci/master/tree/COPYING
-
----
-
 Name: pillow-jxl-plugin
 Version: 1.3.8
 License: GPL-3.0-or-later
@@ -23431,6 +23361,76 @@ Public License instead of this License.  But first, please read
 
 ---
 
+Name: pillow_heif
+Version: 1.6.0
+License: BSD-3-Clause
+Author: Alexander Piskun
+License Text:
+===
+
+Copyright (c) 2021-2023, Pillow-Heif contributors.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+    * Redistributions of source code must retain the above copyright
+       notice, this list of conditions and the following disclaimer.
+
+    * Redistributions in binary form must reproduce the above
+       copyright notice, this list of conditions and the following
+       disclaimer in the documentation and/or other materials provided
+       with the distribution.
+
+    * Neither the name of the Pillow-Heif nor the names of any
+       contributors may be used to endorse or promote products derived
+       from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+========================================
+
+The "pillow-heif" source code is licensed under the BSD-3-Clause license, see LICENSE.txt.
+License for "pillow-heif" binary wheels: GPLv2, due to base library licenses.
+
+Binary wheels combine several license-compatible libraries. Here they are listed.
+
+Name: libheif
+License: LGPLv3
+Files: libheif.[dylib|so|dll]
+  For details, see https://github.com/strukturag/libheif/tree/v1.23.2/COPYING
+  Source code: https://github.com/strukturag/libheif/tree/v1.23.2
+
+Name: libde265
+License: LGPLv3
+Files: libde265.[dylib|so|dll]
+  For details, see https://github.com/strukturag/libde265/tree/v1.1.1/COPYING
+  Source code: https://github.com/strukturag/libde265/tree/v1.1.1
+
+Name: x265
+License: GPLv2
+Files: libx265.[dylib|so|dll]
+  For details, see https://bitbucket.org/multicoreware/x265_git/src/4.2/COPYING
+  Source code: https://bitbucket.org/multicoreware/x265_git/src/4.2
+
+Name: MinGW-w64 runtime (Windows wheels only)
+License: GPL-3.0-with-GCC-exception (libgcc, libstdc++), MIT and BSD (libwinpthread)
+Files: libgcc_s_seh-1.dll, libstdc++-6.dll, libwinpthread-1.dll
+  For details, see https://sourceforge.net/p/mingw-w64/mingw-w64/ci/master/tree/COPYING
+
+---
+
 Name: protobuf
 Version: 6.33.4
 License: 3-Clause BSD License
@@ -23625,6 +23625,38 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+
+Name: PySocks
+Version: 1.7.1
+License: BSD
+Author: Anorov
+License Text:
+===
+
+Copyright 2006 Dan-Haim. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+3. Neither the name of Dan Haim nor the names of his contributors may be used
+   to endorse or promote products derived from this software without specific
+   prior written permission.
+   
+THIS SOFTWARE IS PROVIDED BY DAN HAIM "AS IS" AND ANY EXPRESS OR IMPLIED
+WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO
+EVENT SHALL DAN HAIM OR HIS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA
+OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMANGE.
 
 ---
 
