@@ -1731,25 +1731,44 @@ class AdminContent {
         }
     }
 
-    async pruneAlbums() {
+    pruneAlbums() {
         const btn = document.getElementById('prune-albums-btn');
         if (!btn) return;
 
-        btn.disabled = true;
+        const modal = new ModalHelper({
+            id: 'prune-albums-modal',
+            type: 'warning',
+            title: window.i18n.t('common.confirm_1_title'),
+            message: window.i18n.t('admin.albums_management.maintenance.prune_albums_description'),
+            confirmText: window.i18n.t('common.yes'),
+            cancelText: window.i18n.t('common.no'),
+            confirmId: 'prune-albums-confirm-yes',
+            cancelId: 'prune-albums-confirm-no',
+            onConfirm: async () => {
+                btn.disabled = true;
 
-        try {
-            const response = await app.apiCall('/api/albums/prune', { method: 'POST' });
-            app.showNotification(
-                window.i18n.t('admin.albums_management.maintenance.albums_pruned', {
-                    count: response.count
-                }),
-                'success'
-            );
-        } catch (error) {
-            app.showNotification(error.message, 'error');
-        } finally {
-            btn.disabled = false;
-        }
+                try {
+                    const response = await app.apiCall('/api/albums/prune', { method: 'POST' });
+                    app.showNotification(
+                        window.i18n.t('admin.albums_management.maintenance.albums_pruned', {
+                            count: response.count
+                        }),
+                        'success'
+                    );
+                    await this.loadAlbumStats();
+                    if (this.albumTree) {
+                        await this.albumTree.loadAlbums();
+                        this.albumTree.render();
+                    }
+                    await this.loadAlbums();
+                } catch (error) {
+                    app.showNotification(error.message, 'error');
+                } finally {
+                    btn.disabled = false;
+                }
+            }
+        });
+        modal.show();
     }
 
     async loadAlbumStats() {
