@@ -753,7 +753,8 @@ class MediaViewer extends MediaViewerBase {
             markLoaded();
         }
 
-        link.appendChild(img);
+        const blurWrapperOrImg = window.wrapBlurThumbnail(img, media, item);
+        link.appendChild(blurWrapperOrImg);
         item.appendChild(link);
 
         if (media.is_shared) {
@@ -1064,7 +1065,8 @@ class MediaViewer extends MediaViewerBase {
             if (!res.ok) return;
 
             const data = await res.json();
-            const { prev_id, prev_hash, next_id, next_hash } = data;
+            const { prev_id, prev_hash, prev_rating, next_id, next_hash, next_rating } = data;
+            const shouldBlur = window.shouldBlurExplicit();
 
             if (!prev_id && !next_id) {
                 if (navBar) navBar.style.display = 'none';
@@ -1088,8 +1090,14 @@ class MediaViewer extends MediaViewerBase {
                     if (prevThumb) {
                         prevThumb.src = `/api/media/${prev_id}/thumbnail${prev_hash ? '?v=' + prev_hash : ''}`;
                     }
+                    if (prev_rating === 'explicit' && shouldBlur) {
+                        prevBtn.classList.add('blur-content');
+                    } else {
+                        prevBtn.classList.remove('blur-content');
+                    }
                 } else {
                     prevBtn.style.visibility = 'hidden';
+                    prevBtn.classList.remove('blur-content');
                 }
             }
 
@@ -1101,8 +1109,14 @@ class MediaViewer extends MediaViewerBase {
                     if (nextThumb) {
                         nextThumb.src = `/api/media/${next_id}/thumbnail${next_hash ? '?v=' + next_hash : ''}`;
                     }
+                    if (next_rating === 'explicit' && shouldBlur) {
+                        nextBtn.classList.add('blur-content');
+                    } else {
+                        nextBtn.classList.remove('blur-content');
+                    }
                 } else {
                     nextBtn.style.visibility = 'hidden';
+                    nextBtn.classList.remove('blur-content');
                 }
             }
 

@@ -1673,24 +1673,30 @@ class BaseGallery {
 
     createAlbumCard(album) {
         const thumbnails = album.thumbnail_paths || [];
+        const ratings = album.thumbnail_ratings || [];
+        const shouldBlur = window.shouldBlurExplicit();
         let thumbnailHTML;
 
         if (thumbnails.length >= 4) {
             thumbnailHTML = `
                 <div class="relative aspect-square overflow-hidden w-full">
                     <div class="grid grid-cols-2 gap-0.5 w-full h-full">
-                        ${thumbnails.slice(0, 4).map(thumb => `
-                            <div class="relative overflow-hidden w-full h-full aspect-square">
+                        ${thumbnails.slice(0, 4).map((thumb, idx) => {
+                            const isExplicit = ratings[idx] === 'explicit' && shouldBlur;
+                            return `
+                            <div class="relative overflow-hidden w-full h-full aspect-square ${isExplicit ? 'album-thumb-blur' : ''}">
                                 <img src="${thumb}" class="absolute inset-0 w-full h-full object-cover" loading="lazy" 
                                     onerror="this.src='/static/images/no-thumbnail.png'">
                             </div>
-                        `).join('')}
+                            `;
+                        }).join('')}
                     </div>
                 </div>
             `;
         } else if (thumbnails.length > 0) {
+            const isExplicit = ratings[0] === 'explicit' && shouldBlur;
             thumbnailHTML = `
-                <div class="relative aspect-square overflow-hidden w-full">
+                <div class="relative aspect-square overflow-hidden w-full ${isExplicit ? 'album-thumb-blur' : ''}">
                     <img src="${thumbnails[0]}" class="absolute inset-0 w-full h-full object-cover" loading="lazy" 
                         onerror="this.src='/static/images/no-thumbnail.png'">
                 </div>
@@ -1826,7 +1832,9 @@ class BaseGallery {
         } else {
             link.href = basePath;
         }
-        link.appendChild(img);
+
+        const blurWrapperOrImg = window.wrapBlurThumbnail(img, media, item);
+        link.appendChild(blurWrapperOrImg);
 
         link.addEventListener('click', (e) => {
             if (app.isAdminMode && this.isSelectionMode) {

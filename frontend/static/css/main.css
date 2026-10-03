@@ -1016,3 +1016,123 @@ body.reorder-active-mode .gallery-item .select-checkbox {
 .reorder-active-item {
     -webkit-touch-callout: none !important;
 }
+
+/* Blur Explicit Thumbnails */
+.gallery-item.blur-content .blur-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.gallery-item.blur-content .blur-wrapper>img,
+.gallery-item.blur-content .blur-wrapper>img.loaded {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    filter: blur(8px);
+    border: none !important;
+}
+
+.gallery-item.blur-content .blur-wrapper::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-width: 2px;
+    border-style: solid;
+    border-color: var(--border);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.gallery-item.blur-content.parent-item .blur-wrapper::after {
+    border-color: var(--parent-outline);
+}
+
+.gallery-item.blur-content.child-item .blur-wrapper::after {
+    border-color: var(--child-outline);
+}
+
+.gallery-item.blur-content.video .blur-wrapper::after {
+    border-color: var(--video-outline);
+}
+
+.gallery-item.blur-content.video.parent-item .blur-wrapper::after {
+    border-left-color: var(--video-outline);
+    border-top-color: var(--video-outline);
+    border-right-color: var(--parent-outline);
+    border-bottom-color: var(--parent-outline);
+}
+
+.gallery-item.blur-content.video.child-item .blur-wrapper::after {
+    border-left-color: var(--video-outline);
+    border-top-color: var(--video-outline);
+    border-right-color: var(--child-outline);
+    border-bottom-color: var(--child-outline);
+}
+
+.gallery-item.blur-content.gif .blur-wrapper::after {
+    border-color: var(--gif-outline);
+}
+
+.gallery-item.blur-content.gif.parent-item .blur-wrapper::after {
+    border-left-color: var(--gif-outline);
+    border-top-color: var(--gif-outline);
+    border-right-color: var(--parent-outline);
+    border-bottom-color: var(--parent-outline);
+}
+
+.gallery-item.blur-content.gif.child-item .blur-wrapper::after {
+    border-left-color: var(--gif-outline);
+    border-top-color: var(--gif-outline);
+    border-right-color: var(--child-outline);
+    border-bottom-color: var(--child-outline);
+}
+
+.gallery-item.blur-content.selected .blur-wrapper::after,
+.gallery-item.blur-content:hover .blur-wrapper::after,
+.gallery-item.blur-content a:focus .blur-wrapper::after,
+.gallery-item.blur-content a:focus-visible .blur-wrapper::after,
+.gallery-item.blur-content:focus-within .blur-wrapper::after {
+    border-color: var(--primary-color);
+}
+
+/* Album Card and Media Nav Button Thumbnails */
+.album-thumb-blur {
+    overflow: hidden;
+    position: relative;
+}
+
+.album-thumb-blur img,
+#nav-prev-btn.blur-content #nav-prev-thumb,
+#nav-next-btn.blur-content #nav-next-thumb {
+    filter: blur(8px);
+}
+
+/* Administrative Tasks and Admin Views Exception: Never blur */
+body.reorder-active-mode .gallery-item.blur-content .blur-wrapper > img,
+body.reorder-active-mode .album-thumb-blur img,
+body.reorder-active-mode #nav-prev-btn #nav-prev-thumb,
+body.reorder-active-mode #nav-next-btn #nav-next-thumb,
+.selection-mode .gallery-item.blur-content .blur-wrapper > img,
+.selection-mode .album-thumb-blur img,
+.gallery-item.selected.blur-content .blur-wrapper > img,
+#admin-panel .blur-content img,
+#admin-panel .blur-wrapper > img,
+#admin-panel .album-thumb-blur img,
+.mpicker-gallery img,
+.mpicker-container img,
+.bulk-modal img,
+#bulk-tag-modal img,
+#bulk-edit-modal img,
+#bulk-wd-tagger-modal img {
+    filter: none !important;
+}

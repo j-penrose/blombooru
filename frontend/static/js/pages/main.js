@@ -767,5 +767,32 @@ class Blombooru {
     }
 }
 
+// Explicit Thumbnail Blur Helpers
+window.shouldBlurExplicit = function () {
+    return document.body.dataset.blurExplicit === 'true';
+};
+
+window.wrapBlurThumbnail = function (img, media, item) {
+    if (!media || media.rating !== 'explicit' || !window.shouldBlurExplicit()) {
+        return img;
+    }
+    const blurWrapper = document.createElement('div');
+    blurWrapper.classList.add('blur-wrapper');
+    if (media.width && media.height) {
+        blurWrapper.style.aspectRatio = `${media.width} / ${media.height}`;
+    } else {
+        img.addEventListener('load', () => {
+            if (img.naturalWidth && img.naturalHeight) {
+                blurWrapper.style.aspectRatio = `${img.naturalWidth} / ${img.naturalHeight}`;
+            }
+        }, { once: true });
+    }
+    blurWrapper.appendChild(img);
+    if (item) {
+        item.classList.add('blur-content');
+    }
+    return blurWrapper;
+};
+
 // Initialize app
 const app = new Blombooru();
