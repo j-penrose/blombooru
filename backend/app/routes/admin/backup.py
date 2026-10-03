@@ -138,6 +138,7 @@ async def backup_full_db(
             "rating": rating_val,
             "source": m.source,
             "description": m.description,
+            "description_enlarged": bool(m.description_enlarged),
             "uploaded_at": m.uploaded_at.isoformat() if m.uploaded_at else None,
             "is_shared": bool(m.is_shared),
             "share_uuid": m.share_uuid,

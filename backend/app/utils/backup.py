@@ -439,6 +439,7 @@ def import_media_logical(db: Session, zf: zipfile.ZipFile, media_list: List[dict
             rating=rating_enum,
             source=media_data.get('source'),
             description=media_data.get('description'),
+            description_enlarged=bool(media_data.get('description_enlarged', False)),
             uploaded_at=uploaded_at_val,
             is_shared=bool(media_data.get('is_shared', False)),
             share_uuid=media_data.get('share_uuid'),

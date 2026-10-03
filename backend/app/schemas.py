@@ -32,6 +32,7 @@ class MediaUpdate(BaseModel):
     tags: Optional[List[str]] = None
     source: Optional[str] = None
     description: Optional[str] = None
+    description_enlarged: Optional[bool] = None
     parent_id: Optional[int] = None
 
 class MediaResponse(MediaBase):
@@ -53,6 +54,7 @@ class MediaResponse(MediaBase):
     share_language: Optional[str] = None
     source: Optional[str] = None
     description: Optional[str] = None
+    description_enlarged: bool = False
     parent_id: Optional[int] = None
     has_children: bool = False
     tags: List[TagResponse] = []

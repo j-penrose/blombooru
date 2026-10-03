@@ -183,6 +183,7 @@ def check_and_migrate_schema(engine):
         migrate_add_parent_id,
         migrate_add_share_language,
         migrate_add_description,
+        migrate_add_description_enlarged,
         migrate_add_implication_patterns,
         migrate_implication_patterns_to_jsonb,
         migrate_file_size_to_bigint,
@@ -272,6 +273,25 @@ def migrate_add_description(engine, inspector):
     with engine.connect() as conn:
         conn.execute(text(
             "ALTER TABLE blombooru_media ADD COLUMN description TEXT"
+        ))
+        conn.commit()
+
+def migrate_add_description_enlarged(engine, inspector):
+    """Add description_enlarged column to media table"""
+    from sqlalchemy import text
+    
+    columns = [c['name'] for c in inspector.get_columns('blombooru_media')]
+    
+    if 'description_enlarged' in columns:
+        return
+    
+    logger.info("Adding description_enlarged column to blombooru_media...")
+    
+    is_sqlite = engine.dialect.name == 'sqlite'
+    col_type = "BOOLEAN DEFAULT 0 NOT NULL" if is_sqlite else "BOOLEAN DEFAULT FALSE NOT NULL"
+    with engine.connect() as conn:
+        conn.execute(text(
+            f"ALTER TABLE blombooru_media ADD COLUMN description_enlarged {col_type}"
         ))
         conn.commit()
 

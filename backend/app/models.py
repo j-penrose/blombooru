@@ -48,6 +48,7 @@ class Media(Base):
     share_language = Column(String(10), nullable=True, default=None)
     source = Column(String(500), nullable=True)
     description = Column(Text, nullable=True)
+    description_enlarged = Column(Boolean, default=False, nullable=False, server_default='0')
     parent_id = Column(Integer, ForeignKey('blombooru_media.id', ondelete='SET NULL'), nullable=True, index=True)
     
     tags = relationship('Tag', secondary=blombooru_media_tags, back_populates='media')
