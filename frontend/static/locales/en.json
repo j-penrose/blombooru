@@ -644,6 +644,7 @@
         "password": "Password",
         "password_placeholder": "Leave empty for none",
         "port": "Port",
+        "preview": "Preview",
         "previous": "Previous",
         "remove": "Remove",
         "save": "Save",

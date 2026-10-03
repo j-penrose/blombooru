@@ -645,6 +645,7 @@
         "password": "Пароль",
         "password_placeholder": "Оставьте пустым, если не используется",
         "port": "Порт",
+        "preview": "",
         "previous": "Предыдущий",
         "remove": "Удалить",
         "save": "Сохранить",

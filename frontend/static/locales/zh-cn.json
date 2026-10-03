@@ -644,6 +644,7 @@
         "password": "密码",
         "password_placeholder": "留空则不设密码",
         "port": "端口",
+        "preview": "",
         "previous": "",
         "remove": "",
         "save": "保存",
