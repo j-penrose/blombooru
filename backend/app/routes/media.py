@@ -7,7 +7,7 @@ from typing import List, Optional, Set
 from fastapi import (APIRouter, BackgroundTasks, Depends, File, Form,
                      HTTPException, Query, Request, UploadFile)
 from fastapi.responses import FileResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session, joinedload, selectinload
 
@@ -19,7 +19,8 @@ from ..database import get_db
 from ..models import (Album, Media, Tag, User, blombooru_album_media,
                       blombooru_media_tags)
 from ..schemas import (AlbumListResponse, BatchMediaRequest, BatchMetadataRequest,
-                       BulkTagUpdateRequest, BulkTagUpdateResponse, MediaResponse,
+                       BulkTagUpdateRequest, BulkTagUpdateResponse,
+                       MediaDetailResponse, MediaResponse,
                        MediaUpdate, RatingEnum, ShareSettingsUpdate)
 from ..utils.album_utils import (get_bulk_album_thumbnails, get_flattened_media_ids,
                                 handle_media_deleted, handle_media_rating_changed,
@@ -68,7 +69,7 @@ class PostUpdateRequest(BaseModel):
     update_file: bool = False
     file_url: Optional[str] = None
 
-@router.patch("/{media_id}/update-from-source", response_model=MediaResponse)
+@router.patch("/{media_id}/update-from-source", response_model=MediaDetailResponse)
 async def update_from_source(
     media_id: int,
     req: PostUpdateRequest,
@@ -260,9 +261,9 @@ async def update_from_source(
     if file_updated or filename_changed:
         await rebuild_stripped_cache_if_needed(media, background_tasks)
 
-    return MediaResponse.model_validate(media)
+    return MediaDetailResponse.model_validate(media)
 
-@router.post("/{media_id}/update-file-finalize", response_model=MediaResponse)
+@router.post("/{media_id}/update-file-finalize", response_model=MediaDetailResponse)
 async def update_file_finalize(
     media_id: int,
     upload_id: str = Form(...),
@@ -389,7 +390,7 @@ async def update_file_finalize(
 
         await rebuild_stripped_cache_if_needed(media, background_tasks)
 
-        return MediaResponse.model_validate(media)
+        return MediaDetailResponse.model_validate(media)
 
     except HTTPException:
         raise
@@ -1202,6 +1203,21 @@ async def get_adjacent_media(
         logger.error(f"Error in get_adjacent_media: {e}")
         return {"prev_id": None, "prev_hash": None, "next_id": None, "next_hash": None}
 
+class DescriptionPreviewRequest(BaseModel):
+    text: str = Field("", max_length=50000)
+
+class DescriptionPreviewResponse(BaseModel):
+    html: str
+
+@router.post("/preview-description", response_model=DescriptionPreviewResponse)
+async def preview_media_description(
+    req: DescriptionPreviewRequest,
+    current_user: User = Depends(require_admin_mode),
+):
+    """Render a draft media description as Markdown (admin only)."""
+    from ..utils.markdown import render_description_markdown
+    return DescriptionPreviewResponse(html=render_description_markdown(req.text))
+
 @router.get("/{media_id}")
 async def get_media(media_id: int, db: Session = Depends(get_db)):
     """Get media by ID"""
@@ -1209,7 +1225,7 @@ async def get_media(media_id: int, db: Session = Depends(get_db)):
     if not media:
         raise HTTPException(status_code=404, detail="Media not found")
     
-    result = MediaResponse.model_validate(media).model_dump()
+    result = MediaDetailResponse.model_validate(media).model_dump()
     result['share_ai_metadata'] = media.share_ai_metadata if hasattr(media, 'share_ai_metadata') else False
     
     # Add parent and siblings info
@@ -1372,7 +1388,7 @@ async def upload_media(
 
         raise HTTPException(status_code=500, detail=safe_error_detail("Upload failed", e))
 
-@router.patch("/{media_id}", response_model=MediaResponse)
+@router.patch("/{media_id}", response_model=MediaDetailResponse)
 async def update_media(
     media_id: int,
     updates: MediaUpdate,
@@ -1452,7 +1468,7 @@ async def update_media(
         invalidate_media_cache()
         invalidate_tag_cache()
     
-    return MediaResponse.model_validate(media)
+    return MediaDetailResponse.model_validate(media)
 
 
 @router.delete("/{media_id}")

@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Dict, List, Literal, Optional, Union
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 from .enums import (ApiKeyPermissionEnum, FileTypeEnum, RatingEnum,
                     TagCategoryEnum)
@@ -58,6 +58,21 @@ class MediaResponse(MediaBase):
     tags: List[TagResponse] = []
     
     model_config = ConfigDict(from_attributes=True)
+
+class MediaDetailResponse(MediaResponse):
+    @computed_field
+    @property
+    def description_html(self) -> Optional[str]:
+        if not self.description:
+            return None
+        try:
+            from .utils.markdown import render_description_markdown
+            return render_description_markdown(self.description)
+        except Exception as e:
+            import html as html_lib
+            import logging
+            logging.getLogger(__name__).error(f"Error rendering media description: {e}")
+            return f'<p class="mb-3 text-xs last:mb-0 leading-relaxed">{html_lib.escape(self.description)}</p>'
 
 class SharedTagResponse(TagBase):
     model_config = ConfigDict(from_attributes=True)
