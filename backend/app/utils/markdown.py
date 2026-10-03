@@ -1,11 +1,29 @@
+from functools import lru_cache
+
 from wenmode import HTMLRenderer, Wenmode
+from wenmode.nodes import Text
 from wenmode.presets import github
-from wenmode.renderers.html import render_list_item
+from wenmode.renderers.html import SOFT_BREAK_SPACE_RE, render_list_item
 
 class TailwindHTMLRenderer(HTMLRenderer):
-    def __init__(self, heading_color: str = "primary", **kwargs):
+    def __init__(
+        self,
+        heading_color: str = "primary",
+        soft_breaks: bool = False,
+        is_description: bool = False,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         self.heading_color = heading_color
+        self.soft_breaks = soft_breaks
+        self.is_description = is_description
+
+@TailwindHTMLRenderer.register("text")
+def _render_text(renderer: TailwindHTMLRenderer, node: Text, ctx) -> str:
+    escaped = renderer.escape_html(SOFT_BREAK_SPACE_RE.sub("", node.value))
+    if renderer.soft_breaks:
+        escaped = escaped.replace("\n", "<br />\n")
+    return escaped
 
 @TailwindHTMLRenderer.register("heading")
 def _render_heading(renderer: TailwindHTMLRenderer, node, ctx) -> str:
@@ -34,13 +52,15 @@ def _render_heading(renderer: TailwindHTMLRenderer, node, ctx) -> str:
 
 @TailwindHTMLRenderer.register("paragraph")
 def _render_paragraph(renderer: TailwindHTMLRenderer, node, ctx) -> str:
-    return f'<p class="mb-3 text-sm last:mb-0 leading-relaxed">{renderer.render_children(node.children, ctx)}</p>\n'
+    text_size = "text-xs" if renderer.is_description else "text-sm"
+    return f'<p class="mb-3 {text_size} last:mb-0 leading-relaxed">{renderer.render_children(node.children, ctx)}</p>\n'
 
 @TailwindHTMLRenderer.register("list")
 def _render_list(renderer: TailwindHTMLRenderer, node, ctx) -> str:
     tag = "ol" if node.ordered else "ul"
     list_type = "list-decimal" if node.ordered else "list-disc"
-    attrs = {"class": f"{list_type} pl-5 mb-3 last:mb-0 space-y-1 text-sm"}
+    text_size = "text-xs" if renderer.is_description else "text-sm"
+    attrs = {"class": f"{list_type} pl-5 mb-3 last:mb-0 space-y-1 {text_size}"}
     if node.ordered and node.start not in (None, 1):
         attrs["start"] = node.start
 
@@ -77,14 +97,34 @@ def _render_link(renderer: TailwindHTMLRenderer, node, ctx) -> str:
 
 @TailwindHTMLRenderer.register("blockquote")
 def _render_blockquote(renderer: TailwindHTMLRenderer, node, ctx) -> str:
+    if renderer.is_description:
+        return f'<blockquote class="border-l-2 border-primary surface p-2 pl-3 text-secondary mb-3">{renderer.render_children(node.children, ctx)}</blockquote>\n'
     return f'<blockquote class="border-l-2 border-primary pl-3 text-secondary mb-3">{renderer.render_children(node.children, ctx)}</blockquote>\n'
 
-_primary_wen = Wenmode(github(), renderer=TailwindHTMLRenderer(heading_color="primary"))
-_info_wen = Wenmode(github(), renderer=TailwindHTMLRenderer(heading_color="info"))
+@lru_cache(maxsize=8)
+def _get_renderer(heading_color: str, soft_breaks: bool, is_description: bool) -> Wenmode:
+    return Wenmode(
+        github(),
+        renderer=TailwindHTMLRenderer(
+            heading_color=heading_color,
+            soft_breaks=soft_breaks,
+            is_description=is_description,
+        ),
+    )
 
-def render_markdown(text: str, heading_color: str = "primary") -> str:
+def render_markdown(
+    text: str,
+    heading_color: str = "primary",
+    soft_breaks: bool = False,
+    is_description: bool = False,
+) -> str:
     """Render markdown to HTML with Tailwind CSS classes on all elements."""
     if not text:
         return ""
-    wen = _info_wen if heading_color == "info" else _primary_wen
-    return wen.render(text)
+    return _get_renderer(heading_color, soft_breaks, is_description).render(text)
+
+def render_description_markdown(text: str, heading_color: str = "primary") -> str:
+    """Render a media description with soft breaks and description-specific sizing."""
+    return render_markdown(
+        text, heading_color=heading_color, soft_breaks=True, is_description=True
+    )
