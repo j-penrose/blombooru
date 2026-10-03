@@ -28,6 +28,7 @@ class MediaViewer extends MediaViewerBase {
             characterThreshold: 0.85,
             modelName: 'wd-eva02-large-tagger-v3'
         };
+        this._descPreviewRequestId = 0;
 
         this.init();
     }
@@ -101,12 +102,13 @@ class MediaViewer extends MediaViewerBase {
             await this.renderHierarchy(this.currentMedia.hierarchy);
             await this.loadRelatedMedia();
 
-            // Show description for all users when it is set and not in admin mode
+            // Show rendered description for non-admin viewers (admins get the preview tab instead)
             if (this.currentMedia.description && !app.isAdminMode) {
                 const displaySection = this.el('description-display-section');
                 const displayText = this.el('description-display-text');
                 if (displaySection && displayText) {
-                    displayText.textContent = this.currentMedia.description;
+                    displayText.innerHTML = this.currentMedia.description_html
+                        || this.escapeHtml(this.currentMedia.description);
                     displaySection.style.display = 'block';
                 }
             }
@@ -130,11 +132,12 @@ class MediaViewer extends MediaViewerBase {
             sourceInput.value = this.currentMedia.source || '';
         }
 
-        // Set description input value
+        // Set description input value and tabs
         const descriptionInput = this.el('description-input');
         if (descriptionInput) {
             descriptionInput.value = this.currentMedia.description || '';
         }
+        this.setupDescriptionTabs();
 
         // Initialize tag autocomplete
         const tagsInput = this.el('tags-input');
@@ -1401,17 +1404,184 @@ class MediaViewer extends MediaViewerBase {
         }
     }
 
+    setupDescriptionTabs() {
+        const toggleBtn = this.el('desc-toggle-mode-btn');
+        if (!toggleBtn) return;
+
+        if (!this._descEventsInitialized) {
+            this._descEventsInitialized = true;
+
+            toggleBtn.addEventListener('click', () => {
+                const nextMode = this.descMode === 'preview' ? 'edit' : 'preview';
+                this.showDescriptionMode(nextMode);
+                if (nextMode === 'edit') {
+                    const input = this.el('description-input');
+                    if (input) input.focus();
+                }
+            });
+
+            const descriptionInput = this.el('description-input');
+            if (descriptionInput) {
+                descriptionInput.addEventListener('input', () => {
+                    this.updateSaveDescriptionButtonVisibility();
+                    this.updateDescriptionToggleVisibility();
+                    this.autoResizeDescriptionInput();
+                });
+            }
+        }
+
+        // Preview mode by default when a description exists, edit mode when empty
+        this.showDescriptionMode(this.currentMedia.description ? 'preview' : 'edit');
+        this.updateSaveDescriptionButtonVisibility();
+        this.updateDescriptionToggleVisibility();
+    }
+
+    updateDescriptionToggleVisibility() {
+        const toggleBtn = this.el('desc-toggle-mode-btn');
+        const input = this.el('description-input');
+        if (!toggleBtn) return;
+
+        const hasContent = input ? input.value.trim().length > 0 : false;
+        toggleBtn.style.display = hasContent ? 'block' : 'none';
+    }
+
+    autoResizeDescriptionInput() {
+        const textarea = this.el('description-input');
+        if (!textarea) return;
+
+        if (!textarea.offsetParent) return;
+
+        textarea.style.height = 'auto';
+
+        const computed = window.getComputedStyle(textarea);
+        const borderTop = parseFloat(computed.borderTopWidth) || 0;
+        const borderBottom = parseFloat(computed.borderBottomWidth) || 0;
+        const borderVertical = borderTop + borderBottom;
+
+        const minHeight = parseFloat(computed.minHeight) || 80;
+        const maxHeight = parseFloat(computed.maxHeight) || 320;
+
+        const totalContentHeight = textarea.scrollHeight + borderVertical;
+        const targetHeight = Math.min(Math.max(totalContentHeight, minHeight), maxHeight);
+
+        textarea.style.height = `${targetHeight}px`;
+        textarea.style.overflowY = totalContentHeight > maxHeight ? 'auto' : 'hidden';
+    }
+
+    updateSaveDescriptionButtonVisibility() {
+        const input = this.el('description-input');
+        const saveBtn = this.el('save-description-btn');
+        if (!saveBtn) return;
+
+        const currentVal = input ? input.value.trim() : '';
+        const savedVal = (this.currentMedia && this.currentMedia.description) ? this.currentMedia.description.trim() : '';
+        const isDifferent = currentVal !== savedVal;
+
+        saveBtn.style.display = isDifferent ? 'block' : 'none';
+    }
+
+    async showDescriptionMode(mode) {
+        const editPane = this.el('desc-edit-pane');
+        const previewPane = this.el('desc-preview-pane');
+        const toggleBtn = this.el('desc-toggle-mode-btn');
+        const previewIcon = this.el('desc-preview-icon');
+        const editIcon = this.el('desc-edit-icon');
+        if (!editPane || !previewPane) return;
+
+        this.descMode = mode;
+        const isPreview = mode === 'preview';
+
+        editPane.style.display = isPreview ? 'none' : 'block';
+        previewPane.style.display = isPreview ? 'block' : 'none';
+
+        if (toggleBtn) {
+            if (isPreview) {
+                // In preview mode: show the edit button
+                if (previewIcon) previewIcon.style.display = 'none';
+                if (editIcon) editIcon.style.display = 'block';
+                const label = window.i18n.t('common.edit');
+                toggleBtn.title = label;
+                toggleBtn.setAttribute('aria-label', label);
+            } else {
+                // In edit mode: show the preview button
+                if (previewIcon) previewIcon.style.display = 'block';
+                if (editIcon) editIcon.style.display = 'none';
+                const label = window.i18n.t('common.preview');
+                toggleBtn.title = label;
+                toggleBtn.setAttribute('aria-label', label);
+            }
+        }
+
+        if (isPreview) {
+            await this.renderDescriptionPreview();
+        } else {
+            this.autoResizeDescriptionInput();
+        }
+        this.updateDescriptionToggleVisibility();
+    }
+
+    async renderDescriptionPreview() {
+        const requestId = ++this._descPreviewRequestId;
+        const content = this.el('desc-preview-content');
+        const input = this.el('description-input');
+        if (!content || !input) return;
+
+        const text = input.value;
+        if (!text.trim()) {
+            content.innerHTML = '';
+            return;
+        }
+
+        if (this.currentMedia && this.currentMedia.description === text && this.currentMedia.description_html) {
+            content.innerHTML = this.currentMedia.description_html;
+            return;
+        }
+        try {
+            const res = await app.apiCall('/api/media/preview-description', {
+                method: 'POST',
+                body: JSON.stringify({ text })
+            });
+            if (requestId !== this._descPreviewRequestId) return;
+            content.innerHTML = res.html || '';
+        } catch (e) {
+            if (requestId !== this._descPreviewRequestId) return;
+            content.textContent = text;
+            app.showNotification(e.message, 'error');
+        }
+    }
+
     async saveDescription() {
         const descriptionInput = this.el('description-input');
         const descriptionValue = descriptionInput ? descriptionInput.value.trim() : '';
 
         try {
-            await app.apiCall(`/api/media/${this.mediaId}`, {
+            const updated = await app.apiCall(`/api/media/${this.mediaId}`, {
                 method: 'PATCH',
                 body: JSON.stringify({ description: descriptionValue || null })
             });
+            this.currentMedia.description = updated.description;
+            this.currentMedia.description_html = updated.description_html;
+
+            if (descriptionInput) {
+                descriptionInput.value = updated.description || '';
+            }
+            const previewContent = this.el('desc-preview-content');
+            if (previewContent) {
+                previewContent.innerHTML = updated.description_html || '';
+            }
+            const displayText = this.el('description-display-text');
+            if (displayText) {
+                displayText.innerHTML = updated.description_html || '';
+            }
+            if (updated.description) {
+                await this.showDescriptionMode('preview');
+            } else {
+                await this.showDescriptionMode('edit');
+            }
+            this.updateSaveDescriptionButtonVisibility();
+            this.updateDescriptionToggleVisibility();
+
             app.showNotification(window.i18n.t('notifications.media.description_updated'), 'success');
-            location.reload();
         } catch (e) {
             app.showNotification(e.message, 'error', window.i18n.t('notifications.media.error_updating_description'));
         }
