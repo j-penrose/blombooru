@@ -136,7 +136,8 @@ class Settings:
                 }
             },
             "stripped_cache_max_mb": 0,
-            "booru_proxy_url": None
+            "booru_proxy_url": None,
+            "blur_explicit_thumbnails": False
         }
     
     def get_items_per_page(self) -> int:
@@ -289,6 +290,16 @@ class Settings:
         if env_val is not None:
             return env_val.lower() in ("true", "1", "yes")
         return self.settings.get("require_auth", False)
+    
+    @property
+    def BLUR_EXPLICIT_THUMBNAILS(self) -> bool:
+        val = self.file_settings.get("blur_explicit_thumbnails")
+        if val is not None:
+            return bool(val)
+        env_val = os.getenv("BLOMBOORU_BLUR_EXPLICIT_THUMBNAILS")
+        if env_val is not None:
+            return env_val.lower() in ("true", "1", "yes")
+        return bool(self.settings.get("blur_explicit_thumbnails", False))
     
     @property
     def SIDEBAR_FILTER_MODE(self) -> str:

@@ -280,6 +280,7 @@ templates.env.globals['current_language'] = lambda: settings.CURRENT_LANGUAGE
 templates.env.globals['available_languages'] = lambda: [lang.to_dict() for lang in language_registry.get_all_languages()]
 templates.env.globals['custom_background'] = lambda: settings.CUSTOM_BACKGROUND
 templates.env.globals['require_auth'] = lambda: settings.REQUIRE_AUTH
+templates.env.globals['blur_explicit_thumbnails'] = lambda: settings.BLUR_EXPLICIT_THUMBNAILS
 templates.env.globals['canonicalize_query'] = canonicalize_query
 templates.env.globals['get_supported_formats_json'] = lambda: json.dumps(format_registry.to_json_dict())
 

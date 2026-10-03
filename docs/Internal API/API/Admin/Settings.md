@@ -32,6 +32,7 @@ Content-Type: application/json
   "language": "en",
   "external_share_url": null,
   "require_auth": false,
+  "blur_explicit_thumbnails": false,
   "sidebar_filter_mode": "rating",
   "sidebar_custom_buttons": [],
   "stripped_cache_max_mb": 0,

@@ -168,6 +168,7 @@ class SettingsUpdate(BaseModel):
     similarity_weights: Optional[SimilarityWeights] = None
     stripped_cache_max_mb: Optional[int] = None
     booru_proxy_url: Optional[str] = None
+    blur_explicit_thumbnails: Optional[bool] = None
 
 class ShareSettingsUpdate(BaseModel):
     share_ai_metadata: Optional[bool] = None
@@ -199,6 +200,7 @@ class AlbumListResponse(AlbumBase):
     id: int
     last_modified: datetime
     thumbnail_paths: List[str] = []
+    thumbnail_ratings: List[str] = []
     rating: RatingEnum = RatingEnum.safe
     media_count: int = 0
     
