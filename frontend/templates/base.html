@@ -77,7 +77,8 @@
 </head>
 
 <body class="bg text text-xs flex flex-col h-screen h-dvh overflow-hidden"
-    data-sidebar-mode="{{ sidebar_filter_mode if sidebar_filter_mode is defined else 'rating' }}">
+    data-sidebar-mode="{{ sidebar_filter_mode if sidebar_filter_mode is defined else 'rating' }}"
+    data-blur-explicit="{{ 'true' if blur_explicit_thumbnails() else 'false' }}">
     {{ icon_sprite() }}
     {% set bg = custom_background() %}
     {% set _is_login = is_login_page if is_login_page is defined else false %}

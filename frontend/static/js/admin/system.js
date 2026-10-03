@@ -700,6 +700,11 @@ class AdminSystem {
                 if (requireAuthCheckbox) requireAuthCheckbox.checked = settings.require_auth;
             }
 
+            if (settings.blur_explicit_thumbnails !== undefined) {
+                const blurExplicitCheckbox = document.getElementById('blur-explicit-thumbnails');
+                if (blurExplicitCheckbox) blurExplicitCheckbox.checked = settings.blur_explicit_thumbnails;
+            }
+
             if (settings.redis) {
                 const redisEnabled = document.getElementById('redis-enabled');
                 if (redisEnabled) {
@@ -883,6 +888,7 @@ class AdminSystem {
         const popularTagsLimitRaw = document.getElementById('popular-tags-limit')?.value;
         const popularTagsLimit = popularTagsLimitRaw ? Math.max(1, Math.min(100, parseInt(popularTagsLimitRaw) || 20)) : 20;
         const requireAuth = document.getElementById('require-auth')?.checked || false;
+        const blurExplicitThumbnails = document.getElementById('blur-explicit-thumbnails')?.checked || false;
 
         const sidebarMode = this.sidebarFilterModeSelect ? this.sidebarFilterModeSelect.getValue() : 'rating';
 
@@ -913,6 +919,7 @@ class AdminSystem {
             popular_tags_limit: popularTagsLimit,
             external_share_url: externalShareUrl || null,
             require_auth: requireAuth,
+            blur_explicit_thumbnails: blurExplicitThumbnails,
             sidebar_filter_mode: sidebarMode,
             sidebar_custom_buttons: validButtons
         };

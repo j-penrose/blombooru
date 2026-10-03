@@ -274,6 +274,8 @@
             "popular_tags_limit": "Tag Limit",
             "require_auth": "Require Authentication to View Media",
             "require_auth_hint": "When enabled, users must log in to view media. Public routes such as share links and static files remain public.",
+            "blur_explicit_thumbnails": "Blur Explicit Thumbnails",
+            "blur_explicit_thumbnails_hint": "When enabled, thumbnails for media rated explicit are blurred.",
             "save_settings": "Save Settings",
             "security": "Security",
             "settings_saved": "Settings saved successfully",

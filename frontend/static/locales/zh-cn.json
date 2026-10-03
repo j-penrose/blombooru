@@ -274,6 +274,8 @@
             "popular_tags_limit": "",
             "require_auth": "查看媒体需要身份验证",
             "require_auth_hint": "启用后，用户必须登录才能查看媒体。公共路由（如共享链接和静态文件）仍保持公开。",
+            "blur_explicit_thumbnails": "",
+            "blur_explicit_thumbnails_hint": "",
             "save_settings": "保存设置",
             "security": "安全",
             "settings_saved": "设置保存成功",

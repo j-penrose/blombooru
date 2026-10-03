@@ -274,6 +274,8 @@
             "popular_tags_limit": "Antal Populära Taggar",
             "require_auth": "Kräv autentisering för att visa media",
             "require_auth_hint": "När aktiverat måste användare logga in för att visa media. Publika rutter som delningslänkar och statiska filer förblir publika.",
+            "blur_explicit_thumbnails": "Blurra Explicita Miniatyrer",
+            "blur_explicit_thumbnails_hint": "Blurrar miniatyrer för explicit media när aktiverat.",
             "save_settings": "Spara inställningar",
             "security": "Säkerhet",
             "settings_saved": "Inställningar sparade",
