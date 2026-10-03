@@ -304,6 +304,7 @@ class SimilarityIndex:
         media_id: int,
         limit: int = 12,
         album_media_ids: Optional[Set[int]] = None,
+        excluded_media_ids: Optional[Set[int]] = None,
     ) -> List[Tuple[int, float]]:
         """
         Find top similar media items using cosine similarity of category-weighted TF-IDF vectors.
@@ -312,6 +313,7 @@ class SimilarityIndex:
             media_id: ID of the query media.
             limit: Maximum number of results to return.
             album_media_ids: Optional set of media IDs to restrict results to (for album context).
+            excluded_media_ids: Optional set of media IDs to exclude from results.
 
         Returns:
             List of (media_id, similarity_score) sorted descending by score.
@@ -335,12 +337,18 @@ class SimilarityIndex:
         # Exclude self
         scores[row_idx] = -1.0
 
+        if excluded_media_ids:
+            for ex_id in excluded_media_ids:
+                ex_row = data.media_id_to_row.get(ex_id)
+                if ex_row is not None:
+                    scores[ex_row] = -1.0
+
         if album_media_ids is not None:
             # Mask out items not in the album
             album_row_indices = [
                 data.media_id_to_row[mid]
                 for mid in album_media_ids
-                if mid in data.media_id_to_row and mid != media_id
+                if mid in data.media_id_to_row and mid != media_id and (not excluded_media_ids or mid not in excluded_media_ids)
             ]
             if not album_row_indices:
                 return []

@@ -2,7 +2,7 @@ import json
 import shutil
 import uuid
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Set
 
 from fastapi import (APIRouter, BackgroundTasks, Depends, File, Form,
                      HTTPException, Query, Request, UploadFile)
@@ -1037,19 +1037,38 @@ async def get_related_media(
     if isinstance(album_id, int):
         album_media_ids = set(get_flattened_media_ids(db, album_id))
 
+    # Exclude parent, siblings, and children of current media
+    excluded_hierarchy_ids: Set[int] = set()
+    curr_media = db.query(Media.parent_id).filter(Media.id == media_id).first()
+    if curr_media:
+        parent_id = curr_media[0]
+        if parent_id is not None:
+            # Parent
+            excluded_hierarchy_ids.add(parent_id)
+            # Siblings (and self)
+            for (sid,) in db.query(Media.id).filter(Media.parent_id == parent_id).all():
+                excluded_hierarchy_ids.add(sid)
+        # Children
+        for (cid,) in db.query(Media.id).filter(Media.parent_id == media_id).all():
+            excluded_hierarchy_ids.add(cid)
+
     has_filters = bool(rating or custom_filter)
     fetch_limit = max(limit * 5, 50) if has_filters else limit
 
     similar_pairs = similarity_index.get_similar_media(
         media_id=media_id,
         limit=fetch_limit,
-        album_media_ids=album_media_ids
+        album_media_ids=album_media_ids,
+        excluded_media_ids=excluded_hierarchy_ids,
     )
 
     if not similar_pairs:
         return {"items": [], "status": "ready"}
 
-    similar_ids = [mid for mid, _ in similar_pairs]
+    similar_ids = [mid for mid, _ in similar_pairs if mid not in excluded_hierarchy_ids]
+    if not similar_ids:
+        return {"items": [], "status": "ready"}
+
     media_query = db.query(Media).options(selectinload(Media.tags)).filter(Media.id.in_(similar_ids))
 
     if rating:
@@ -1066,7 +1085,7 @@ async def get_related_media(
 
     items = []
     for mid in similar_ids:
-        if mid in media_dict:
+        if mid in media_dict and mid not in excluded_hierarchy_ids:
             items.append(MediaResponse.model_validate(media_dict[mid]))
             if len(items) >= limit:
                 break
