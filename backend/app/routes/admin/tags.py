@@ -8,11 +8,11 @@ from sqlalchemy import case, desc, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
-from ...auth import get_current_admin_user, require_admin_mode
+from ...auth import require_admin_mode
 from ...config import settings
 from ...utils.request_helpers import safe_error_detail
 from ...database import get_db
-from ...models import Media, Tag, TagAlias, User
+from ...models import Media, Tag, TagAlias, TagImplication, User
 from ...utils.cache import invalidate_tag_cache
 from ...utils.logger import logger
 
@@ -262,10 +262,12 @@ async def get_tag_stats(
     """Get tag statistics"""
     total_tags = db.query(Tag).count()
     total_aliases = db.query(TagAlias).count()
+    total_implications = db.query(TagImplication).count()
     
     return {
         "total_tags": total_tags,
         "total_aliases": total_aliases,
+        "total_implications": total_implications,
     }
 
 @router.get("/search-tags")

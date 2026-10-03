@@ -780,9 +780,11 @@ class AdminContent {
 
             const totalTagsEl = document.getElementById('total-tags');
             const totalAliasesEl = document.getElementById('total-aliases');
+            const totalImplicationsEl = document.getElementById('total-implications');
 
             if (totalTagsEl) totalTagsEl.textContent = stats.total_tags;
             if (totalAliasesEl) totalAliasesEl.textContent = stats.total_aliases;
+            if (totalImplicationsEl) totalImplicationsEl.textContent = stats.total_implications;
         } catch (error) {
             console.error('Error loading tag stats:', error);
         }
@@ -1696,7 +1698,7 @@ class AdminContent {
         // Recalculate album metrics button
         const recalculateBtn = document.getElementById('recalculate-album-metrics-btn');
         recalculateBtn?.addEventListener('click', () => this.recalculateAlbumMetrics());
-    
+
         // Prune albums button
         const pruneBtn = document.getElementById('prune-albums-btn');
         pruneBtn?.addEventListener('click', () => this.pruneAlbums());
