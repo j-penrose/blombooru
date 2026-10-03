@@ -101,17 +101,20 @@ async def get_albums(
     else:
         counts_map = {a.id: (a.cached_media_count or 0) for a in page_albums}
     
-    album_list = [
-        AlbumListResponse(
-            id=album.id,
-            name=album.name,
-            last_modified=album.last_modified,
-            thumbnail_paths=thumbnails_map.get(album.id, []),
-            rating=album.cached_rating or RatingEnum.safe,
-            media_count=counts_map[album.id]
+    album_list = []
+    for album in page_albums:
+        thumb_info = thumbnails_map.get(album.id, {"paths": [], "ratings": []})
+        album_list.append(
+            AlbumListResponse(
+                id=album.id,
+                name=album.name,
+                last_modified=album.last_modified,
+                thumbnail_paths=thumb_info.get("paths", []),
+                thumbnail_ratings=thumb_info.get("ratings", []),
+                rating=album.cached_rating or RatingEnum.safe,
+                media_count=counts_map[album.id]
+            )
         )
-        for album in page_albums
-    ]
     
     return {
         "items": album_list,
@@ -510,17 +513,20 @@ async def get_album_contents(
     else:
         child_counts_map = {c.id: (c.cached_media_count or 0) for c in child_albums}
     
-    child_album_list = [
-        AlbumListResponse(
-            id=child.id,
-            name=child.name,
-            last_modified=child.last_modified,
-            thumbnail_paths=child_thumbnails_map.get(child.id, []),
-            rating=child.cached_rating or RatingEnum.safe,
-            media_count=child_counts_map[child.id]
+    child_album_list = []
+    for child in child_albums:
+        thumb_info = child_thumbnails_map.get(child.id, {"paths": [], "ratings": []})
+        child_album_list.append(
+            AlbumListResponse(
+                id=child.id,
+                name=child.name,
+                last_modified=child.last_modified,
+                thumbnail_paths=thumb_info.get("paths", []),
+                thumbnail_ratings=thumb_info.get("ratings", []),
+                rating=child.cached_rating or RatingEnum.safe,
+                media_count=child_counts_map[child.id]
+            )
         )
-        for child in child_albums
-    ]
     
     return {
         "media": [MediaResponse.model_validate(m) for m in media_items],
@@ -650,17 +656,21 @@ async def get_child_albums(
     child_ids = [c.id for c in children]
     thumbnails_map = get_bulk_album_thumbnails(child_ids, db, count=4)
     
-    return [
-        AlbumListResponse(
-            id=child.id,
-            name=child.name,
-            last_modified=child.last_modified,
-            thumbnail_paths=thumbnails_map.get(child.id, []),
-            rating=child.cached_rating or RatingEnum.safe,
-            media_count=child.cached_media_count or 0
+    result = []
+    for child in children:
+        thumb_info = thumbnails_map.get(child.id, {"paths": [], "ratings": []})
+        result.append(
+            AlbumListResponse(
+                id=child.id,
+                name=child.name,
+                last_modified=child.last_modified,
+                thumbnail_paths=thumb_info.get("paths", []),
+                thumbnail_ratings=thumb_info.get("ratings", []),
+                rating=child.cached_rating or RatingEnum.safe,
+                media_count=child.cached_media_count or 0
+            )
         )
-        for child in children
-    ]
+    return result
 
 @router.get("/{album_id}/parents")
 async def get_parent_albums(

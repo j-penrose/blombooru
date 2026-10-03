@@ -1,4 +1,5 @@
 import enum
+from typing import Any
 
 class RatingEnum(str, enum.Enum):
     safe = "safe"
@@ -21,3 +22,8 @@ class ApiKeyPermissionEnum(str, enum.Enum):
     read = "read"
     write = "write"
     admin = "admin"
+
+def rating_to_str(rating: Any) -> str:
+    if rating is None:
+        return "safe"
+    return rating.value if hasattr(rating, "value") else str(rating)

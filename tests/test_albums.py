@@ -366,9 +366,10 @@ class TestAlbumArchitecture(BackupTestBase):
 
         thumbs = get_bulk_album_thumbnails([root.id], self.db, count=4)
         self.assertIn(root.id, thumbs)
-        self.assertEqual(len(thumbs[root.id]), 4)
+        self.assertEqual(len(thumbs[root.id]["paths"]), 4)
+        self.assertEqual(len(thumbs[root.id]["ratings"]), 4)
         expected_urls = {f"/api/media/{mid}/thumbnail" for mid in [m1.id, m2.id, m3.id, m4.id]}
-        self.assertEqual(set(thumbs[root.id]), expected_urls)
+        self.assertEqual(set(thumbs[root.id]["paths"]), expected_urls)
 
     def test_recalculate_endpoint(self):
         from backend.app.routes.albums import recalculate_all_albums_endpoint
@@ -721,7 +722,8 @@ class TestAlbumArchitecture(BackupTestBase):
 
         # Initially no sort_position set: thumbnails returned without error
         thumbs_initial = get_bulk_album_thumbnails([alb.id], self.db, count=4)
-        self.assertEqual(len(thumbs_initial[alb.id]), 4)
+        self.assertEqual(len(thumbs_initial[alb.id]["paths"]), 4)
+        self.assertEqual(len(thumbs_initial[alb.id]["ratings"]), 4)
 
         # Set manual sort order: m4 first, m2 second
         asyncio.run(reorder_album_media(
@@ -732,10 +734,10 @@ class TestAlbumArchitecture(BackupTestBase):
         ))
 
         thumbs_ordered = get_bulk_album_thumbnails([alb.id], self.db, count=4)
-        self.assertEqual(len(thumbs_ordered[alb.id]), 4)
+        self.assertEqual(len(thumbs_ordered[alb.id]["paths"]), 4)
         # First two thumbnails must correspond to m4 and m2
-        self.assertEqual(thumbs_ordered[alb.id][0], f"/api/media/{m4.id}/thumbnail")
-        self.assertEqual(thumbs_ordered[alb.id][1], f"/api/media/{m2.id}/thumbnail")
+        self.assertEqual(thumbs_ordered[alb.id]["paths"][0], f"/api/media/{m4.id}/thumbnail")
+        self.assertEqual(thumbs_ordered[alb.id]["paths"][1], f"/api/media/{m2.id}/thumbnail")
     def test_album_pagination_large_limit(self):
         # Plain limit=5000 is preserved and not clamped
         large_limit_res = asyncio.run(get_albums(

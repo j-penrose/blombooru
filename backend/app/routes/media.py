@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session, joinedload, selectinload
 
 from ..auth import require_admin_mode
 from ..config import settings
+from ..enums import rating_to_str
 from ..utils.request_helpers import safe_error_detail
 from ..database import get_db
 from ..models import (Album, Media, Tag, User, blombooru_album_media,
@@ -1175,21 +1176,27 @@ async def get_adjacent_media(
             next_id = None
 
         prev_hash = None
+        prev_rating = None
         next_hash = None
+        next_rating = None
         if prev_id:
-            m_prev = db.query(Media.hash).filter(Media.id == prev_id).first()
+            m_prev = db.query(Media.hash, Media.rating).filter(Media.id == prev_id).first()
             if m_prev:
                 prev_hash = m_prev.hash
+                prev_rating = rating_to_str(m_prev.rating)
         if next_id:
-            m_next = db.query(Media.hash).filter(Media.id == next_id).first()
+            m_next = db.query(Media.hash, Media.rating).filter(Media.id == next_id).first()
             if m_next:
                 next_hash = m_next.hash
+                next_rating = rating_to_str(m_next.rating)
 
         return {
             "prev_id": prev_id,
             "prev_hash": prev_hash,
+            "prev_rating": prev_rating,
             "next_id": next_id,
-            "next_hash": next_hash
+            "next_hash": next_hash,
+            "next_rating": next_rating
         }
     except Exception as e:
         logger.error(f"Error in get_adjacent_media: {e}")
@@ -1607,17 +1614,20 @@ async def get_media_albums(
     album_ids = [a.id for a in albums]
     thumbnails_map = get_bulk_album_thumbnails(album_ids, db, count=4)
     
-    result = [
-        AlbumListResponse(
-            id=album.id,
-            name=album.name,
-            last_modified=album.last_modified,
-            thumbnail_paths=thumbnails_map.get(album.id, []),
-            rating=album.cached_rating or RatingEnum.safe,
-            media_count=album.cached_media_count or 0
+    result = []
+    for album in albums:
+        thumb_info = thumbnails_map.get(album.id, {"paths": [], "ratings": []})
+        result.append(
+            AlbumListResponse(
+                id=album.id,
+                name=album.name,
+                last_modified=album.last_modified,
+                thumbnail_paths=thumb_info.get("paths", []),
+                thumbnail_ratings=thumb_info.get("ratings", []),
+                rating=album.cached_rating or RatingEnum.safe,
+                media_count=album.cached_media_count or 0
+            )
         )
-        for album in albums
-    ]
     
     return {"albums": result}
 

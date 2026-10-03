@@ -1,6 +1,6 @@
 from collections import deque
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Set, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 from fastapi import HTTPException
 from sqlalchemy import and_, func, or_, text
@@ -10,6 +10,7 @@ from .cache import invalidate_album_cache
 from .search_parser import (apply_custom_filters_or, apply_search_criteria,
                             build_search_criteria_conditions,
                             parse_search_query)
+from ..enums import rating_to_str
 from ..models import (Album, Media, RatingEnum, blombooru_album_hierarchy,
                       blombooru_album_media, blombooru_media_tags, Tag)
 
@@ -708,8 +709,8 @@ def get_bulk_album_thumbnails(
     rating: Optional[str] = None,
     custom_filter: Optional[Any] = None,
     q: Optional[str] = None
-) -> Dict[int, List[str]]:
-    """Fetches up to `count` thumbnails for multiple albums using window functions, filtered by active rating/custom filters."""
+) -> Dict[int, Dict[str, List[str]]]:
+    """Fetches up to `count` thumbnails and their ratings for multiple albums using window functions, filtered by active rating/custom filters."""
     if not album_ids:
         return {}
 
@@ -720,7 +721,7 @@ def get_bulk_album_thumbnails(
         all_needed_album_ids.update(dset)
 
     if not all_needed_album_ids:
-        return {aid: [] for aid in album_ids}
+        return {aid: {"paths": [], "ratings": []} for aid in album_ids}
 
     # 2. Windowed query to sample up to `count` thumbnails per sub-album
     rn_col = func.row_number().over(
@@ -734,6 +735,7 @@ def get_bulk_album_thumbnails(
     subq_query = db.query(
         blombooru_album_media.c.album_id,
         Media.id.label("media_id"),
+        Media.rating.label("rating"),
         rn_col
     ).join(
         Media, Media.id == blombooru_album_media.c.media_id
@@ -747,42 +749,46 @@ def get_bulk_album_thumbnails(
 
     thumbnail_rows = db.query(
         subq.c.album_id,
-        subq.c.media_id
+        subq.c.media_id,
+        subq.c.rating
     ).filter(subq.c.rn <= count).all()
 
     # Map sub-album to its thumbnails
-    sub_thumbnails: Dict[int, List[int]] = {}
-    for aid, mid in thumbnail_rows:
-        sub_thumbnails.setdefault(aid, []).append(mid)
+    sub_thumbnails: Dict[int, List[Tuple[int, str]]] = {}
+    for aid, mid, mrating in thumbnail_rows:
+        sub_thumbnails.setdefault(aid, []).append((mid, rating_to_str(mrating)))
 
     # 3. For each requested album, prioritize direct media, then fold in descendant media
-    thumbnails_map: Dict[int, List[str]] = {}
+    thumbnails_map: Dict[int, Dict[str, List[str]]] = {}
     for target_aid in album_ids:
         descendants = descendant_map.get(target_aid, {target_aid})
-        gathered_mids: List[int] = []
+        gathered_items: List[Tuple[int, str]] = []
         seen_mids: Set[int] = set()
 
         # Prioritize direct album media first
-        for mid in sub_thumbnails.get(target_aid, []):
+        for mid, mrating in sub_thumbnails.get(target_aid, []):
             if mid not in seen_mids:
                 seen_mids.add(mid)
-                gathered_mids.append(mid)
+                gathered_items.append((mid, mrating))
 
         # If we need more thumbnails, pull from descendant albums
-        if len(gathered_mids) < count:
+        if len(gathered_items) < count:
             for desc_aid in descendants:
                 if desc_aid == target_aid:
                     continue
-                for mid in sub_thumbnails.get(desc_aid, []):
+                for mid, mrating in sub_thumbnails.get(desc_aid, []):
                     if mid not in seen_mids:
                         seen_mids.add(mid)
-                        gathered_mids.append(mid)
-                        if len(gathered_mids) >= count:
+                        gathered_items.append((mid, mrating))
+                        if len(gathered_items) >= count:
                             break
-                if len(gathered_mids) >= count:
+                if len(gathered_items) >= count:
                     break
 
-        thumbnails_map[target_aid] = [f"/api/media/{mid}/thumbnail" for mid in gathered_mids[:count]]
+        thumbnails_map[target_aid] = {
+            "paths": [f"/api/media/{mid}/thumbnail" for mid, _ in gathered_items[:count]],
+            "ratings": [mrating for _, mrating in gathered_items[:count]]
+        }
 
     return thumbnails_map
 
