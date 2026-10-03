@@ -49,6 +49,11 @@ router = APIRouter(prefix="/api/media", tags=["media"])
 # Maximum number of IDs per SQL IN-clause to avoid parameter limits
 BATCH_CHUNK_SIZE = 500
 
+def sync_description_enlarged(media: Media) -> None:
+    """Ensure media cannot be marked as enlarged if it has no description."""
+    if not media.description:
+        media.description_enlarged = False
+
 class PostUpdateRequest(BaseModel):
     """Request body for the Update Post (from-source) endpoint.
 
@@ -118,6 +123,7 @@ async def update_from_source(
 
     if req.update_description:
         media.description = req.description or None
+        sync_description_enlarged(media)
 
     if req.update_filename and req.filename:
         new_filename = sanitize_filename(req.filename)
@@ -1411,6 +1417,11 @@ async def update_media(
     
     if 'description' in updates.model_fields_set:
         media.description = updates.description if updates.description else None
+    
+    if 'description_enlarged' in updates.model_fields_set and updates.description_enlarged is not None:
+        media.description_enlarged = updates.description_enlarged
+
+    sync_description_enlarged(media)
     
     affected_tag_ids = []
     if updates.tags is not None:
